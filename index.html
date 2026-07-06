@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sejarah Hub AI | SMK Taman Jasmin 2</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="portal-body">
+  <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
+  <header class="hero">
+    <img src="logo-smktj2.jpg" class="logo" alt="Logo SMK Taman Jasmin 2" onerror="this.onerror=null;this.src='assets/logo-smktj2.jpg'" />
+    <div class="hero-text">
+      <p class="eyebrow">Smart History Management System</p>
+      <h1>SEJARAH HUB AI</h1>
+      <p class="subtitle">Panitia Sejarah SMK Taman Jasmin 2</p>
+      <div class="top-controls">
+        <label>Tahun Akademik
+          <select id="yearSelect"><option>2026</option><option>2027</option><option>2028</option><option>2029</option></select>
+        </label>
+        <button id="reloadBtn" class="pill">🔄 Refresh Data</button>
+        <a href="admin.html" class="pill primary">🔐 Panel Pentadbir</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="glass welcome">
+      <div>
+        <h2>Selamat datang, Cikgu</h2>
+        <p>Semua bahan Panitia Sejarah dalam satu pusat: PBD, DSKP, buku teks, analisis item, biodata guru, BBM digital, galeri dan pengumuman.</p>
+      </div>
+      <div class="stat-strip" id="statStrip"></div>
+    </section>
+
+    <section class="hex-grid" id="menuGrid"></section>
+
+    <section class="grid-3">
+      <article class="glass panel">
+        <h2>📢 Pengumuman</h2>
+        <div id="pengumumanGrid" class="stack"></div>
+      </article>
+      <article class="glass panel">
+        <h2>🔗 Link Pantas</h2>
+        <div id="linkGrid" class="stack"></div>
+      </article>
+      <article class="glass panel">
+        <h2>📚 DSKP / Dokumen</h2>
+        <div id="dskpGrid" class="stack"></div>
+      </article>
+    </section>
+
+    <section class="glass panel" id="guruPanel">
+      <div class="section-head">
+        <h2>👥 Ahli Panitia</h2>
+        <input id="searchGuru" placeholder="Cari nama, jawatan, kelas..." />
+      </div>
+      <div id="guruGrid" class="guru-grid"></div>
+    </section>
+
+    <section class="glass panel">
+      <div class="section-head"><h2>🎮 BBM / AR / Game</h2><span class="note">Baca dari tab BBM</span></div>
+      <div id="bbmGrid" class="mini-grid"></div>
+    </section>
+
+    <section class="glass panel">
+      <div class="section-head"><h2>🖼️ Galeri Aktiviti</h2><span class="note">Baca dari tab GALERI</span></div>
+      <div id="galeriGrid" class="gallery-grid"></div>
+    </section>
+  </main>
+
+  <dialog id="profileDialog" class="profile-dialog">
+    <button class="close" onclick="closeProfile()">×</button>
+    <div id="profileBody"></div>
+  </dialog>
+
+  <footer>Versi 4.0 • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panel Pentadbir | Sejarah Hub AI</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="admin-body">
+  <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
+  <header class="hero compact">
+    <img src="logo-smktj2.jpg" class="logo" alt="Logo" onerror="this.onerror=null;this.src='assets/logo-smktj2.jpg'" />
+    <div class="hero-text">
+      <p class="eyebrow">Panel Pentadbir</p>
+      <h1>Urus Sejarah Hub AI</h1>
+      <p><a href="index.html" class="back">← Kembali ke Portal</a></p>
+    </div>
+  </header>
+
+  <main class="admin-layout">
+    <aside class="glass sidebar">
+      <h2>Modul</h2>
+      <button class="active" data-module="guru">👩‍🏫 Guru</button>
+      <button data-module="pengumuman">📢 Pengumuman</button>
+      <button data-module="dskp">📚 DSKP</button>
+      <button data-module="linkPantas">🔗 Link Pantas</button>
+      <button data-module="galeri">🖼 Galeri</button>
+      <button data-module="bbm">🎮 BBM / AR / Game</button>
+      <hr>
+      <p class="note" id="statusText">Status: sedia</p>
+    </aside>
+
+    <section class="glass form-panel">
+      <h2 id="formTitle">Tambah Data</h2>
+      <form id="dataForm"></form>
+    </section>
+
+    <section class="glass list-panel">
+      <div class="section-head"><h2 id="listTitle">Senarai Data</h2><input id="adminSearch" placeholder="Cari..." /></div>
+      <div id="adminList" class="admin-list"></div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
