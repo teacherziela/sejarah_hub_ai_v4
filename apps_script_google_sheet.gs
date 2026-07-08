@@ -1,5 +1,5 @@
-// SEJARAH HUB AI v5.6.1 - Apps Script ES5 Fix
-// Fungsi: Hub + PBD Native + Auto Galeri TP5/TP6
+// SEJARAH HUB AI v5.7 - Apps Script ES5 Fix
+// Fungsi: Hub + PBD Native + Seksyen PBD Terbaik TP5/TP6
 
 var HUB_SPREADSHEET_ID = '1IDRv2QCN08MgWWQZm861qpqAUcuVZYnwBKebbMz4bs4';
 var PBD_SPREADSHEET_ID = '1NE4UcW7K4G_nVcxL0vU0_CVtAubzu6yOkKAWRLiVooU';
@@ -23,6 +23,7 @@ function doGet(e) {
   if (action === 'hub') return jsonResponse(readHub(year));
   if (action === 'module') return jsonResponse(readModule(e.parameter.module || 'guru', year));
   if (action === 'pbdInit') return jsonResponse(readPbdInit());
+  if (action === 'pbdBestGallery') return jsonResponse(readPbdBestGallery(year, 60));
 
   return jsonResponse({ success:false, message:'Action tidak sah' });
 }
@@ -57,15 +58,13 @@ function getSheet(module) {
 }
 
 function readHub(year) {
-  var manualGaleri = readModule('galeri', year);
-  var autoGaleri = readPbdBestGallery(year, 30);
-
   return {
     guru: readModule('guru'),
     pengumuman: readModule('pengumuman', year),
     dskp: readModule('dskp', year),
     linkPantas: readModule('linkPantas', year),
-    galeri: manualGaleri.concat(autoGaleri),
+    galeri: readModule('galeri', year),
+    pbdBest: readPbdBestGallery(year, 60),
     bbm: readModule('bbm', year)
   };
 }
