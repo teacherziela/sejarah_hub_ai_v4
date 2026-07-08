@@ -43,6 +43,7 @@ async function apiHub(year){
 }
 function openUrl(url){ if(url) window.open(url,'_blank'); }
 function scrollToPanel(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
+function isBiodataGuruLink(x){ const text=[x?.Nama,x?.Kategori,x?.title].join(' ').toLowerCase(); return text.includes('biodata') || text.includes('guru'); }
 async function init(){
   document.getElementById('yearSelect').value = CONFIG.DEFAULT_YEAR || '2026';
   document.getElementById('yearSelect').addEventListener('change', loadYear);
@@ -67,15 +68,20 @@ function renderStats(year){
 }
 function renderMenu(year){
   const fixed=[{icon:'📝',title:'Isi PBD',target:'pbdPanel'},{icon:'👥',title:'Ahli Panitia',target:'guruPanel'}];
-  const quick=byYear(hub.linkPantas,year).map(x=>({icon:x.Icon||'🔗',title:x.Nama,url:x.Link}));
+  const quick=byYear(hub.linkPantas,year).map(x=>isBiodataGuruLink(x)
+    ? {icon:x.Icon||'👩‍🏫',title:x.Nama,target:'guruPanel'}
+    : {icon:x.Icon||'🔗',title:x.Nama,url:x.Link});
   const menus=[...fixed,...quick].slice(0,12);
   document.getElementById('menuGrid').innerHTML = menus.map(m=>`<div class="hex" onclick="${m.url?`openUrl('${String(m.url).replace(/'/g,"\\'")}')`:`scrollToPanel('${m.target}')`}"><div><span class="ico">${esc(m.icon)}</span>${esc(m.title)}</div></div>`).join('');
 }
-function miniCard(title, text, icon, url){ return `<article class="mini-card"><div class="mini-ico">${esc(icon||'🔗')}</div><h3>${esc(title)}</h3>${text?`<p>${esc(text)}</p>`:''}${url?`<button onclick="openUrl('${String(url).replace(/'/g,"\\'")}')">Buka</button>`:''}</article>`; }
+function miniCard(title, text, icon, url, target){
+  const action = target ? `scrollToPanel('${target}')` : (url ? `openUrl('${String(url).replace(/'/g,"\\'")}')` : '');
+  return `<article class="mini-card"><div class="mini-ico">${esc(icon||'🔗')}</div><h3>${esc(title)}</h3>${text?`<p>${esc(text)}</p>`:''}${action?`<button onclick="${action}">Buka</button>`:''}</article>`;
+}
 function renderPengumuman(list){
   document.getElementById('pengumumanGrid').innerHTML = list.length ? list.map(p=>miniCard(p.Tajuk, `${fmtDate(p.Tarikh)} ${p.Isi||''}`, '📢', p.Link)).join('') : '<p class="note">Belum ada pengumuman aktif.</p>';
 }
-function renderLinks(list){ document.getElementById('linkGrid').innerHTML = list.length ? list.map(l=>miniCard(l.Nama, l.Kategori, l.Icon||'🔗', l.Link)).join('') : '<p class="note">Belum ada link pantas.</p>'; }
+function renderLinks(list){ document.getElementById('linkGrid').innerHTML = list.length ? list.map(l=>miniCard(l.Nama, l.Kategori, l.Icon||'🔗', isBiodataGuruLink(l)?'':l.Link, isBiodataGuruLink(l)?'guruPanel':'' )).join('') : '<p class="note">Belum ada link pantas.</p>'; }
 function renderDskp(list){ document.getElementById('dskpGrid').innerHTML = list.length ? list.map(d=>miniCard(d.Tajuk, d.Tingkatan, '📚', d.Link)).join('') : '<p class="note">Belum ada DSKP/dokumen aktif.</p>'; }
 function renderBbm(list){ document.getElementById('bbmGrid').innerHTML = list.length ? list.map(b=>miniCard(b.Tajuk, [b.Tingkatan,b.Bab,b.Jenis].filter(Boolean).join(' • '), '🎮', b.Link)).join('') : '<p class="note">Belum ada BBM aktif.</p>'; }
 function renderGaleri(list){
