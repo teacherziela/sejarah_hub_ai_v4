@@ -22,3 +22,11 @@
 .pbd-controls option{color:#111}.pbd-students{display:grid;gap:10px;margin-top:16px}.pbd-row{display:grid;grid-template-columns:1.4fr 1fr 220px;gap:12px;align-items:center;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:18px;background:rgba(255,255,255,.07)}
 .pbd-name{display:flex;flex-direction:column;gap:3px}.pbd-name span{opacity:.72;font-size:.9rem}.tp-buttons{display:flex;flex-wrap:wrap;gap:6px}.tp{border:0;border-radius:999px;padding:8px 10px;font-weight:800;cursor:pointer;opacity:.76}.tp.active{outline:3px solid rgba(255,255,255,.65);opacity:1;transform:translateY(-1px)}.tp1{background:#fecaca}.tp2{background:#fed7aa}.tp3{background:#fef08a}.tp4{background:#bbf7d0}.tp5{background:#86efac}.tp6{background:#bfdbfe}.pbd-actions{margin-top:16px}
 @media(max-width:900px){.pbd-controls{grid-template-columns:1fr}.pbd-row{grid-template-columns:1fr}.tp-buttons{justify-content:flex-start}}
+
+/* Modul PBD v5.2 - kemas simpan & elak tekan berulang */
+.pbd-status-box{margin-top:14px;padding:12px 14px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.07)}
+.pbd-progress{margin-top:8px;color:#c7d2fe;font-weight:800;letter-spacing:.2px}
+.pbd-row.pbd-saved{border-color:rgba(34,197,94,.65);background:linear-gradient(135deg,rgba(34,197,94,.18),rgba(255,255,255,.06))}
+.pbd-row.pbd-saved .save-state{color:#86efac;font-weight:900}
+.save-state{color:#fde68a;font-weight:800;min-height:18px}
+.pill:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.2)}

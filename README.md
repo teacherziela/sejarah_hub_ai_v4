@@ -1,17 +1,15 @@
-# Sejarah Hub AI v5.1
+SEJARAH HUB AI v5.2 PBD Stabil
+SMK Taman Jasmin 2
 
-Versi ini menambah modul **Isi PBD dalam Hub**.
+Kemas kini v5.2:
+- Modul Isi PBD lebih kemas.
+- Butang Simpan ada loading dan disable sementara menyimpan supaya tidak tertekan dua kali.
+- Selepas simpan, murid ditanda hijau dan mesej "Sudah disimpan" dipaparkan.
+- ID Murid dipaparkan pada kad murid.
+- Rekod TP kekal sebagai rekod baharu setiap kali guru menilai murid.
+- Data masih disimpan ke Google Sheet REKOD TP.
 
-## Cara pasang
-1. Upload semua fail ke GitHub repo yang sama.
-2. Ganti kod Apps Script lama dengan `apps_script_google_sheet.gs`.
-3. Apps Script: Save → Deploy → Manage deployments → Edit → New version → Deploy.
-4. Refresh portal.
-
-## Modul PBD
-- Pilih Tingkatan
-- Pilih Kelas
-- Pilih Topik/SP
-- Papar murid
-- Klik TP1–TP6
-- Simpan terus ke sheet `REKOD TP` dalam fail PBD Sejarah.
+Cara guna:
+1. Upload/ganti fail portal dalam GitHub.
+2. Pastikan config.js masih guna Web App URL yang betul.
+3. Jika Apps Script sudah v5, tidak perlu tukar Apps Script untuk kemas kini ini.

@@ -155,6 +155,14 @@ function renderPbdTopik(){
   document.getElementById('pbdTopik').innerHTML='<option value="">Pilih Topik / SP</option>'+opts.map(t=>`<option value="${esc(t.IDTopik)}">${esc((t['SK (Standard Kandungan)']||t.Topik||'')+' — '+(t['SP (Standard Pembelajaran)']||''))}</option>`).join('');
 }
 function selectedTopik(){ const id=document.getElementById('pbdTopik').value; return (pbdData.topik||[]).find(t=>String(t.IDTopik)===String(id)); }
+function muridIdOf(m){ return m.IDMurid || m['IDMurid '] || m['ID Murid'] || m.idMurid || ''; }
+function updatePbdProgress(){
+  const rows=[...document.querySelectorAll('.pbd-row')];
+  const chosen=rows.filter(r=>r.dataset.tp).length;
+  const saved=rows.filter(r=>r.classList.contains('pbd-saved')).length;
+  const box=document.getElementById('pbdProgress');
+  if(box) box.textContent = rows.length ? `${chosen} dipilih • ${saved} baru disimpan • ${rows.length} murid` : '';
+}
 function loadPbdStudents(){
   const ting=document.getElementById('pbdTingkatan').value;
   const kelas=document.getElementById('pbdKelas').value;
@@ -163,41 +171,63 @@ function loadPbdStudents(){
   const students=(pbdData.murid||[]).filter(m=>String(m.Tingkatan)==String(ting)&&String(m.Kelas)==String(kelas)&&String(m.Status||'AKTIF').toUpperCase()!=='PINDAH');
   const rekodMap={};
   (pbdData.rekod||[]).filter(r=>String(r['ID Topik'])===String(topik.IDTopik)).forEach(r=>{ rekodMap[String(r.IDMurid)] = r.TP; });
-  document.getElementById('pbdStatus').textContent=`${students.length} murid dipaparkan untuk ${ting} ${kelas}.`;
+  document.getElementById('pbdStatus').innerHTML=`✅ ${students.length} murid dipaparkan untuk <b>Tingkatan ${esc(ting)} ${esc(kelas)}</b>. Pilih TP murid, kemudian tekan Simpan.`;
   document.getElementById('pbdStudents').innerHTML = students.map((m,i)=>{
-    const muridId = m.IDMurid || m['IDMurid '] || m['ID Murid'] || m.idMurid || '';
+    const muridId = muridIdOf(m);
     const current=rekodMap[String(muridId)]||'';
     return `<article class="pbd-row" data-id="${esc(muridId)}" data-name="${esc(m['Nama Murid'])}">
-      <div class="pbd-name"><b>${i+1}. ${esc(m['Nama Murid'])}</b><span>${esc(ting+' '+kelas)}</span></div>
+      <div class="pbd-name"><b>${i+1}. ${esc(m['Nama Murid'])}</b><span>${esc(ting+' '+kelas)} • ID: ${esc(muridId||'-')}</span><small class="save-state"></small></div>
       <div class="tp-buttons">${[1,2,3,4,5,6].map(tp=>`<button type="button" class="tp tp${tp} ${String(current)===String(tp)?'active':''}" onclick="pickTp(this,${tp})">TP${tp}</button>`).join('')}</div>
       <input class="catatan" placeholder="Catatan jika perlu" />
     </article>`;
   }).join('');
   document.getElementById('pbdSaveBtn').style.display=students.length?'inline-flex':'none';
+  updatePbdProgress();
 }
 function pickTp(btn,tp){
   const row=btn.closest('.pbd-row');
   row.dataset.tp=tp;
+  row.classList.remove('pbd-saved');
+  row.querySelector('.save-state').textContent='Belum disimpan';
   row.querySelectorAll('.tp').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+  updatePbdProgress();
 }
 async function savePbdBatch(){
+  const saveBtn=document.getElementById('pbdSaveBtn');
+  if(saveBtn.dataset.busy==='1') return;
   const topik=selectedTopik();
   const ting=document.getElementById('pbdTingkatan').value;
   const kelas=document.getElementById('pbdKelas').value;
-  const guru=document.getElementById('pbdGuru').value || 'Guru Sejarah';
-  const rows=[...document.querySelectorAll('.pbd-row')].filter(r=>r.dataset.tp).map(r=>({
+  const guru=cleanName(document.getElementById('pbdGuru').value || 'Guru Sejarah');
+  const activeRows=[...document.querySelectorAll('.pbd-row')].filter(r=>r.dataset.tp);
+  const rows=activeRows.map(r=>({
     idMurid:r.dataset.id, namaMurid:r.dataset.name, tingkatan:ting, kelas:kelas, idTopik:topik.IDTopik,
     topik:topik.Topik, sk:topik['SK (Standard Kandungan)'], sp:topik['SP (Standard Pembelajaran)'],
     tp:r.dataset.tp, catatan:r.querySelector('.catatan').value, ditafsirOleh:guru
   }));
   if(!rows.length){ document.getElementById('pbdStatus').textContent='Pilih TP sekurang-kurangnya seorang murid.'; return; }
-  document.getElementById('pbdStatus').textContent='Menyimpan TP...';
+  saveBtn.dataset.busy='1';
+  saveBtn.disabled=true;
+  const oldText=saveBtn.textContent;
+  saveBtn.textContent='⏳ Menyimpan...';
+  document.getElementById('pbdStatus').textContent=`Menyimpan ${rows.length} rekod TP...`;
   try{
     const res=await fetch(CONFIG.SHEET_API_URL,{method:'POST',body:JSON.stringify({action:'savePbdBatch',records:rows})});
     const out=await res.json();
     if(!out.success) throw new Error(out.message||'Gagal simpan');
-    document.getElementById('pbdStatus').textContent=`Berjaya simpan ${out.count||rows.length} rekod TP.`;
-    await initPbd();
-  }catch(e){ document.getElementById('pbdStatus').textContent='Gagal simpan: '+e.message; }
+    activeRows.forEach(r=>{
+      r.classList.add('pbd-saved');
+      r.querySelector('.save-state').textContent='✅ Sudah disimpan';
+      delete r.dataset.tp;
+    });
+    document.getElementById('pbdStatus').innerHTML=`✅ Berjaya simpan <b>${out.count||rows.length}</b> rekod TP. Data sudah masuk ke Google Sheet.`;
+    updatePbdProgress();
+  }catch(e){
+    document.getElementById('pbdStatus').textContent='Gagal simpan: '+e.message;
+  }finally{
+    saveBtn.dataset.busy='0';
+    saveBtn.disabled=false;
+    saveBtn.textContent=oldText;
+  }
 }
