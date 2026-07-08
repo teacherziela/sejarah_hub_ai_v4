@@ -37,12 +37,14 @@ function getSheet(module) {
 }
 
 function readHub(year) {
+  const manualGaleri = readModule('galeri', year);
+  const autoGaleri = readPbdBestGallery(year, 30);
   return {
     guru: readModule('guru'),
     pengumuman: readModule('pengumuman', year),
     dskp: readModule('dskp', year),
     linkPantas: readModule('linkPantas', year),
-    galeri: readModule('galeri', year),
+    galeri: manualGaleri.concat(autoGaleri),
     bbm: readModule('bbm', year)
   };
 }
@@ -109,6 +111,7 @@ function jsonResponse(data) {
 
 // ================= MODUL PBD DALAM HUB v5 =================
 const PBD_SPREADSHEET_ID = '1NE4UcW7K4G_nVcxL0vU0_CVtAubzu6yOkKAWRLiVooU';
+const PBD_GALERI_FOLDER_ID = '1iNinTVUr5DLYU7agis8_hC1G1f9CkMTE';
 function getPbdSs(){ return SpreadsheetApp.openById(PBD_SPREADSHEET_ID); }
 function rowsToObjects(values){
   if(values.length<=1) return [];
@@ -134,4 +137,59 @@ function savePbdBatch(records){
   ]);
   sh.getRange(sh.getLastRow()+1,1,rows.length,15).setValues(rows);
   return {success:true,count:rows.length,message:'Rekod TP berjaya disimpan'};
+}
+
+
+// Auto Galeri: paparkan hasil murid PBD terbaik daripada REKOD TP yang ada Foto dan TP 5/6.
+function readPbdBestGallery(year, limit) {
+  try {
+    const ss = getPbdSs();
+    const sh = ss.getSheetByName('REKOD TP');
+    if (!sh) return [];
+    const values = sh.getDataRange().getValues();
+    if (values.length <= 1) return [];
+    const headers = values[0].map(h => String(h).trim());
+    const idx = {};
+    headers.forEach((h, i) => idx[h] = i);
+    const folder = DriveApp.getFolderById(PBD_GALERI_FOLDER_ID);
+    const rows = [];
+
+    for (let r = 1; r < values.length; r++) {
+      const row = values[r];
+      const tp = Number(row[idx['TP']] || 0);
+      const fotoPath = String(row[idx['Foto']] || '').trim();
+      if (!(tp === 5 || tp === 6) || !fotoPath) continue;
+
+      const tarikh = row[idx['Tarikh']];
+      const y = tarikh instanceof Date ? String(tarikh.getFullYear()) : String(year || '').trim();
+      if (year && y && String(y) !== String(year)) continue;
+
+      const fileName = fotoPath.split('/').pop();
+      const fileUrl = findFileUrlByName_(folder, fileName);
+      if (!fileUrl) continue;
+
+      rows.push({
+        ID: 'AUTO-' + String(row[idx['IDRekod']] || fileName),
+        Tahun: y || String(year || ''),
+        Tajuk: '⭐ Hasil Murid PBD Terbaik',
+        Tarikh: tarikh,
+        Kelas: row[idx['KELAS BETUL']] || ((row[idx['Tingkatan']] || '') + ' ' + (row[idx['Kelas']] || '')).trim(),
+        Penerangan: (row[idx['Nama Murid']] || '') + ' • ' + (row[idx['Topik']] || '') + ' • TP' + tp,
+        Photo: fileUrl,
+        Status: 'Aktif'
+      });
+    }
+
+    rows.sort((a, b) => new Date(b.Tarikh).getTime() - new Date(a.Tarikh).getTime());
+    return rows.slice(0, limit || 30);
+  } catch (err) {
+    return [];
+  }
+}
+
+function findFileUrlByName_(folder, fileName) {
+  const files = folder.getFilesByName(fileName);
+  if (!files.hasNext()) return '';
+  const f = files.next();
+  return 'https://drive.google.com/file/d/' + f.getId() + '/view?usp=drive_link';
 }

@@ -1,14 +1,12 @@
-SEJARAH HUB AI v5.5 PBD GURU DROPDOWN
+SEJARAH HUB AI v5.6 Auto Galeri TP5/TP6
 
 Kemas kini:
-- Nama guru di Modul Isi PBD kini boleh dipilih melalui dropdown.
-- Senarai guru dibaca daripada tab BIODATA_GURU.
-- Data PBD masih simpan sebagai rekod baru, tidak update rekod lama.
-- Apps Script tidak perlu tukar untuk versi ini.
+- Galeri Aktiviti auto tambah gambar murid daripada REKOD TP jika TP ialah 5 atau 6 dan kolum Foto mempunyai fail.
+- Gambar diambil daripada folder REKOD TP_Images.
+- Data PBD asal tidak dipadam dan tidak diubah.
 
-Upload/ganti fail portal sahaja ke GitHub.
-
-
-KEMAS KINI v5.5
-- Biodata Cikgu Sejarah scroll ke bahagian Ahli Panitia dalam Hub, bukan buka folder Drive.
-- Link pantas lain masih buka link masing-masing.
+Cara upload:
+1. Upload/ganti fail portal ke GitHub.
+2. Ganti Apps Script dengan apps_script_google_sheet.gs.
+3. Save dan Deploy new version.
+4. Refresh Hub.
