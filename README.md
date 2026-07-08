@@ -1,15 +1,9 @@
-SEJARAH HUB AI v5.2 PBD Stabil
-SMK Taman Jasmin 2
+SEJARAH HUB AI v5.3 PBD GURU DROPDOWN
 
-Kemas kini v5.2:
-- Modul Isi PBD lebih kemas.
-- Butang Simpan ada loading dan disable sementara menyimpan supaya tidak tertekan dua kali.
-- Selepas simpan, murid ditanda hijau dan mesej "Sudah disimpan" dipaparkan.
-- ID Murid dipaparkan pada kad murid.
-- Rekod TP kekal sebagai rekod baharu setiap kali guru menilai murid.
-- Data masih disimpan ke Google Sheet REKOD TP.
+Kemas kini:
+- Nama guru di Modul Isi PBD kini boleh dipilih melalui dropdown.
+- Senarai guru dibaca daripada tab BIODATA_GURU.
+- Data PBD masih simpan sebagai rekod baru, tidak update rekod lama.
+- Apps Script tidak perlu tukar untuk versi ini.
 
-Cara guna:
-1. Upload/ganti fail portal dalam GitHub.
-2. Pastikan config.js masih guna Web App URL yang betul.
-3. Jika Apps Script sudah v5, tidak perlu tukar Apps Script untuk kemas kini ini.
+Upload/ganti fail portal sahaja ke GitHub.

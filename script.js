@@ -59,7 +59,7 @@ async function loadYear(){
   const year=getYear();
   hub = await apiHub(year);
   guruData = (hub.guru||[]).filter(isAktif);
-  renderStats(year); renderMenu(year); renderPengumuman(byYear(hub.pengumuman,year)); renderLinks(byYear(hub.linkPantas,year)); renderDskp(byYear(hub.dskp,year)); renderGuru(guruData); renderBbm(byYear(hub.bbm,year)); renderGaleri(byYear(hub.galeri,year));
+  renderStats(year); renderMenu(year); renderPengumuman(byYear(hub.pengumuman,year)); renderLinks(byYear(hub.linkPantas,year)); renderDskp(byYear(hub.dskp,year)); renderGuru(guruData); renderPbdGuruOptions(); renderBbm(byYear(hub.bbm,year)); renderGaleri(byYear(hub.galeri,year));
 }
 function renderStats(year){
   const stats=[['Guru',guruData.length],['Pengumuman',byYear(hub.pengumuman,year).length],['Link',byYear(hub.linkPantas,year).length],['Galeri',byYear(hub.galeri,year).length]];
@@ -86,6 +86,15 @@ function renderGuru(list){
   const grid=document.getElementById('guruGrid');
   if(!list.length){grid.innerHTML='<p class="note">Belum ada biodata guru aktif dalam Google Sheet.</p>';return;}
   grid.innerHTML=list.map(g=>`<div class="guru-card premium-card"><img class="avatar" src="${driveImg(g.Foto)||logo()}" onerror="this.onerror=null;this.src='logo-smktj2.jpg'"><div><h3>${esc(cleanName(g.Nama))}</h3><p>${esc(g.Jawatan||'Guru Akademik')}</p><p class="note">${esc(yearsText(g.Pengalaman)||g.Kelas||'')}</p>${String(g.Opsyen||'').split(',').filter(Boolean).map(t=>`<span class="tag">${esc(t.trim())}</span>`).join('')}</div><button onclick="openProfile('${esc(g.ID)}')">Lihat Profil</button></div>`).join('');
+}
+function renderPbdGuruOptions(){
+  const sel=document.getElementById('pbdGuru');
+  if(!sel) return;
+  const current=sel.value;
+  const names=[...new Set((guruData||[]).map(g=>cleanName(g.Nama)).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Pilih guru</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  if(current && names.includes(current)) sel.value=current;
+  else if(names.length) sel.value=names[0];
 }
 function openProfile(id){
   const g=guruData.find(x=>String(x.ID)===String(id)); if(!g) return;
@@ -133,8 +142,7 @@ async function initPbd(){
     if(!pbdData.success) throw new Error(pbdData.message||'Gagal baca data PBD');
     const tings = [...new Set((pbdData.murid||[]).map(m=>String(m.Tingkatan||'').trim()).filter(Boolean))].sort();
     document.getElementById('pbdTingkatan').innerHTML = '<option value="">Pilih Tingkatan</option>' + tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
-    const firstGuru=(guruData[0]&&cleanName(guruData[0].Nama))||'';
-    document.getElementById('pbdGuru').value = firstGuru;
+    renderPbdGuruOptions();
     document.getElementById('pbdStatus').textContent='Sedia. Pilih tingkatan, kelas dan topik.';
   }catch(e){
     document.getElementById('pbdStatus').textContent='Gagal muat PBD: '+e.message;
