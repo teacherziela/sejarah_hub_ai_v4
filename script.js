@@ -165,8 +165,9 @@ function loadPbdStudents(){
   (pbdData.rekod||[]).filter(r=>String(r['ID Topik'])===String(topik.IDTopik)).forEach(r=>{ rekodMap[String(r.IDMurid)] = r.TP; });
   document.getElementById('pbdStatus').textContent=`${students.length} murid dipaparkan untuk ${ting} ${kelas}.`;
   document.getElementById('pbdStudents').innerHTML = students.map((m,i)=>{
-    const current=rekodMap[String(m['IDMurid '])]||'';
-    return `<article class="pbd-row" data-id="${esc(m['IDMurid '])}" data-name="${esc(m['Nama Murid'])}">
+    const muridId = m.IDMurid || m['IDMurid '] || m['ID Murid'] || m.idMurid || '';
+    const current=rekodMap[String(muridId)]||'';
+    return `<article class="pbd-row" data-id="${esc(muridId)}" data-name="${esc(m['Nama Murid'])}">
       <div class="pbd-name"><b>${i+1}. ${esc(m['Nama Murid'])}</b><span>${esc(ting+' '+kelas)}</span></div>
       <div class="tp-buttons">${[1,2,3,4,5,6].map(tp=>`<button type="button" class="tp tp${tp} ${String(current)===String(tp)?'active':''}" onclick="pickTp(this,${tp})">TP${tp}</button>`).join('')}</div>
       <input class="catatan" placeholder="Catatan jika perlu" />
