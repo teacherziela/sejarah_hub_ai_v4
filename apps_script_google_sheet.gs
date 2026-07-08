@@ -13,6 +13,7 @@ function doGet(e) {
   if (action === 'list') return jsonResponse(readModule('guru'));
   if (action === 'hub') return jsonResponse(readHub(year));
   if (action === 'module') return jsonResponse(readModule(e.parameter.module || 'guru', year));
+  if (action === 'pbdInit') return jsonResponse(readPbdInit());
   return jsonResponse({ success:false, message:'Action tidak sah' });
 }
 
@@ -22,6 +23,7 @@ function doPost(e) {
   if (data.action === 'add') return jsonResponse(addRecord(module, data));
   if (data.action === 'update') return jsonResponse(updateRecord(module, data));
   if (data.action === 'delete') return jsonResponse(deleteRecord(module, data.id));
+  if (data.action === 'savePbdBatch') return jsonResponse(savePbdBatch(data.records || []));
   return jsonResponse({ success:false, message:'Action tidak sah' });
 }
 
@@ -102,4 +104,34 @@ function valueForHeader(h, d) {
 
 function jsonResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+
+// ================= MODUL PBD DALAM HUB v5 =================
+const PBD_SPREADSHEET_ID = '1NE4UcW7K4G_nVcxL0vU0_CVtAubzu6yOkKAWRLiVooU';
+function getPbdSs(){ return SpreadsheetApp.openById(PBD_SPREADSHEET_ID); }
+function rowsToObjects(values){
+  if(values.length<=1) return [];
+  const headers=values[0];
+  return values.slice(1).filter(r=>r.some(c=>c!==''&&c!==null)).map(r=>{
+    const o={}; headers.forEach((h,i)=>o[String(h).trim()]=r[i]||''); return o;
+  });
+}
+function readPbdInit(){
+  const ss=getPbdSs();
+  const murid=rowsToObjects(ss.getSheetByName('MURID').getDataRange().getValues());
+  const topik=rowsToObjects(ss.getSheetByName('TOPIK').getDataRange().getValues());
+  const rekod=rowsToObjects(ss.getSheetByName('REKOD TP').getDataRange().getValues());
+  return {success:true, murid:murid, topik:topik, rekod:rekod};
+}
+function savePbdBatch(records){
+  if(!records.length) return {success:false,message:'Tiada rekod untuk disimpan'};
+  const ss=getPbdSs();
+  const sh=ss.getSheetByName('REKOD TP');
+  const now=new Date();
+  const rows=records.map(r=>[
+    Utilities.getUuid().slice(0,8), now, r.idMurid||'', r.namaMurid||'', r.idTopik||'', r.tingkatan||'', r.kelas||'', r.topik||'', r.sk||'', r.sp||'', r.tp||'', r.catatan||'', r.ditafsirOleh||'', '', ((r.tingkatan||'')+' '+(r.kelas||'')).trim()
+  ]);
+  sh.getRange(sh.getLastRow()+1,1,rows.length,15).setValues(rows);
+  return {success:true,count:rows.length,message:'Rekod TP berjaya disimpan'};
 }

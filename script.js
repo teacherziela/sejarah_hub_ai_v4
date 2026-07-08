@@ -48,7 +48,12 @@ async function init(){
   document.getElementById('yearSelect').addEventListener('change', loadYear);
   document.getElementById('reloadBtn').addEventListener('click', loadYear);
   document.getElementById('searchGuru').addEventListener('input', e=>{ const q=e.target.value.toLowerCase(); renderGuru(guruData.filter(g=>Object.values(g).join(' ').toLowerCase().includes(q))); });
+  document.getElementById('pbdTingkatan').addEventListener('change', onPbdTingkatan);
+  document.getElementById('pbdKelas').addEventListener('change', onPbdKelas);
+  document.getElementById('pbdLoadBtn').addEventListener('click', loadPbdStudents);
+  document.getElementById('pbdSaveBtn').addEventListener('click', savePbdBatch);
   await loadYear();
+  await initPbd();
 }
 async function loadYear(){
   const year=getYear();
@@ -61,7 +66,7 @@ function renderStats(year){
   document.getElementById('statStrip').innerHTML = stats.map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join('');
 }
 function renderMenu(year){
-  const fixed=[{icon:'👥',title:'Ahli Panitia',target:'guruPanel'}];
+  const fixed=[{icon:'📝',title:'Isi PBD',target:'pbdPanel'},{icon:'👥',title:'Ahli Panitia',target:'guruPanel'}];
   const quick=byYear(hub.linkPantas,year).map(x=>({icon:x.Icon||'🔗',title:x.Nama,url:x.Link}));
   const menus=[...fixed,...quick].slice(0,12);
   document.getElementById('menuGrid').innerHTML = menus.map(m=>`<div class="hex" onclick="${m.url?`openUrl('${String(m.url).replace(/'/g,"\\'")}')`:`scrollToPanel('${m.target}')`}"><div><span class="ico">${esc(m.icon)}</span>${esc(m.title)}</div></div>`).join('');
@@ -111,3 +116,87 @@ function openProfile(id){
 }
 function closeProfile(){document.getElementById('profileDialog').close();}
 init();
+
+
+// ================= MODUL ISI PBD DALAM HUB =================
+let pbdData = { murid:[], topik:[], rekod:[] };
+function pbdApiUrl(params){
+  const qs = new URLSearchParams(params);
+  qs.set('v', Date.now());
+  return `${CONFIG.SHEET_API_URL}?${qs.toString()}`;
+}
+async function initPbd(){
+  try{
+    document.getElementById('pbdStatus').textContent='Memuat data PBD...';
+    const res = await fetch(pbdApiUrl({action:'pbdInit'}));
+    pbdData = await res.json();
+    if(!pbdData.success) throw new Error(pbdData.message||'Gagal baca data PBD');
+    const tings = [...new Set((pbdData.murid||[]).map(m=>String(m.Tingkatan||'').trim()).filter(Boolean))].sort();
+    document.getElementById('pbdTingkatan').innerHTML = '<option value="">Pilih Tingkatan</option>' + tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
+    const firstGuru=(guruData[0]&&cleanName(guruData[0].Nama))||'';
+    document.getElementById('pbdGuru').value = firstGuru;
+    document.getElementById('pbdStatus').textContent='Sedia. Pilih tingkatan, kelas dan topik.';
+  }catch(e){
+    document.getElementById('pbdStatus').textContent='Gagal muat PBD: '+e.message;
+  }
+}
+function onPbdTingkatan(){
+  const ting=document.getElementById('pbdTingkatan').value;
+  const kelas=[...new Set((pbdData.murid||[]).filter(m=>String(m.Tingkatan)==String(ting) && String(m.Status||'AKTIF').toUpperCase()!=='PINDAH').map(m=>String(m.Kelas||'').trim()).filter(Boolean))].sort();
+  document.getElementById('pbdKelas').innerHTML='<option value="">Pilih Kelas</option>'+kelas.map(k=>`<option value="${esc(k)}">${esc(ting+' '+k)}</option>`).join('');
+  renderPbdTopik();
+  document.getElementById('pbdStudents').innerHTML='';
+  document.getElementById('pbdSaveBtn').style.display='none';
+}
+function onPbdKelas(){ document.getElementById('pbdStudents').innerHTML=''; document.getElementById('pbdSaveBtn').style.display='none'; }
+function renderPbdTopik(){
+  const ting=document.getElementById('pbdTingkatan').value;
+  const opts=(pbdData.topik||[]).filter(t=>!ting || String(t.Tingkatan)==String(ting));
+  document.getElementById('pbdTopik').innerHTML='<option value="">Pilih Topik / SP</option>'+opts.map(t=>`<option value="${esc(t.IDTopik)}">${esc((t['SK (Standard Kandungan)']||t.Topik||'')+' — '+(t['SP (Standard Pembelajaran)']||''))}</option>`).join('');
+}
+function selectedTopik(){ const id=document.getElementById('pbdTopik').value; return (pbdData.topik||[]).find(t=>String(t.IDTopik)===String(id)); }
+function loadPbdStudents(){
+  const ting=document.getElementById('pbdTingkatan').value;
+  const kelas=document.getElementById('pbdKelas').value;
+  const topik=selectedTopik();
+  if(!ting||!kelas||!topik){ document.getElementById('pbdStatus').textContent='Pilih Tingkatan, Kelas dan Topik dulu.'; return; }
+  const students=(pbdData.murid||[]).filter(m=>String(m.Tingkatan)==String(ting)&&String(m.Kelas)==String(kelas)&&String(m.Status||'AKTIF').toUpperCase()!=='PINDAH');
+  const rekodMap={};
+  (pbdData.rekod||[]).filter(r=>String(r['ID Topik'])===String(topik.IDTopik)).forEach(r=>{ rekodMap[String(r.IDMurid)] = r.TP; });
+  document.getElementById('pbdStatus').textContent=`${students.length} murid dipaparkan untuk ${ting} ${kelas}.`;
+  document.getElementById('pbdStudents').innerHTML = students.map((m,i)=>{
+    const current=rekodMap[String(m['IDMurid '])]||'';
+    return `<article class="pbd-row" data-id="${esc(m['IDMurid '])}" data-name="${esc(m['Nama Murid'])}">
+      <div class="pbd-name"><b>${i+1}. ${esc(m['Nama Murid'])}</b><span>${esc(ting+' '+kelas)}</span></div>
+      <div class="tp-buttons">${[1,2,3,4,5,6].map(tp=>`<button type="button" class="tp tp${tp} ${String(current)===String(tp)?'active':''}" onclick="pickTp(this,${tp})">TP${tp}</button>`).join('')}</div>
+      <input class="catatan" placeholder="Catatan jika perlu" />
+    </article>`;
+  }).join('');
+  document.getElementById('pbdSaveBtn').style.display=students.length?'inline-flex':'none';
+}
+function pickTp(btn,tp){
+  const row=btn.closest('.pbd-row');
+  row.dataset.tp=tp;
+  row.querySelectorAll('.tp').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+async function savePbdBatch(){
+  const topik=selectedTopik();
+  const ting=document.getElementById('pbdTingkatan').value;
+  const kelas=document.getElementById('pbdKelas').value;
+  const guru=document.getElementById('pbdGuru').value || 'Guru Sejarah';
+  const rows=[...document.querySelectorAll('.pbd-row')].filter(r=>r.dataset.tp).map(r=>({
+    idMurid:r.dataset.id, namaMurid:r.dataset.name, tingkatan:ting, kelas:kelas, idTopik:topik.IDTopik,
+    topik:topik.Topik, sk:topik['SK (Standard Kandungan)'], sp:topik['SP (Standard Pembelajaran)'],
+    tp:r.dataset.tp, catatan:r.querySelector('.catatan').value, ditafsirOleh:guru
+  }));
+  if(!rows.length){ document.getElementById('pbdStatus').textContent='Pilih TP sekurang-kurangnya seorang murid.'; return; }
+  document.getElementById('pbdStatus').textContent='Menyimpan TP...';
+  try{
+    const res=await fetch(CONFIG.SHEET_API_URL,{method:'POST',body:JSON.stringify({action:'savePbdBatch',records:rows})});
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Gagal simpan');
+    document.getElementById('pbdStatus').textContent=`Berjaya simpan ${out.count||rows.length} rekod TP.`;
+    await initPbd();
+  }catch(e){ document.getElementById('pbdStatus').textContent='Gagal simpan: '+e.message; }
+}

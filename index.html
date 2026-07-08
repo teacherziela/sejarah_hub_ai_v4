@@ -35,6 +35,34 @@
 
     <section class="hex-grid" id="menuGrid"></section>
 
+    <section class="glass panel pbd-panel" id="pbdPanel">
+      <div class="section-head">
+        <h2>📝 Isi PBD Dalam Hub</h2>
+        <span class="note">Data terus disimpan ke Google Sheet REKOD TP</span>
+      </div>
+      <div class="pbd-controls">
+        <label>Tingkatan
+          <select id="pbdTingkatan"><option value="">Pilih Tingkatan</option></select>
+        </label>
+        <label>Kelas
+          <select id="pbdKelas"><option value="">Pilih Kelas</option></select>
+        </label>
+        <label>Topik / SP
+          <select id="pbdTopik"><option value="">Pilih Topik</option></select>
+        </label>
+        <label>Ditafsir oleh
+          <input id="pbdGuru" placeholder="Nama guru" />
+        </label>
+        <button class="pill primary" id="pbdLoadBtn">Papar Murid</button>
+      </div>
+      <div id="pbdStatus" class="note"></div>
+      <div id="pbdStudents" class="pbd-students"></div>
+      <div class="pbd-actions">
+        <button class="pill primary" id="pbdSaveBtn" style="display:none">💾 Simpan TP ke Google Sheet</button>
+      </div>
+    </section>
+
+
     <section class="grid-3">
       <article class="glass panel">
         <h2>📢 Pengumuman</h2>
@@ -74,7 +102,7 @@
     <div id="profileBody"></div>
   </dialog>
 
-  <footer>Versi 4.0 • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <footer>Versi 5.0 • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
   <script src="config.js"></script>
   <script src="script.js"></script>
 </body>

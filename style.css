@@ -13,3 +13,12 @@
 /* v4.1 Kad Profil Guru Premium */
 .premium-card{position:relative;overflow:hidden}.premium-card:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent,rgba(49,216,255,.08),transparent);pointer-events:none}.profile-dialog{background:linear-gradient(135deg,#101634,#132b44);overflow:hidden}.profile-hero{display:flex;gap:22px;align-items:center;padding:10px 0 22px;border-bottom:1px solid var(--line)}.profile-hero h2{font-size:30px;margin:0 0 8px}.profile-job{color:var(--muted);font-weight:800;margin:0}.profile-info{display:grid;gap:12px;margin-top:20px}.profile-info p{display:grid;grid-template-columns:170px 1fr;gap:16px;margin:0;padding:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.07)}.profile-info span,.profile-info a{color:var(--muted)}.profile-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}.profile-actions button{border:0;border-radius:16px;padding:13px 18px;color:#fff;background:linear-gradient(135deg,var(--purple),var(--cyan));font-weight:900;cursor:pointer}.profile-tags{margin-top:8px}
 @media(max-width:560px){.profile-hero{display:block;text-align:center}.profile-info p{grid-template-columns:1fr}.profile-actions button{width:100%}}
+
+
+/* Modul PBD v5 */
+.pbd-controls{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:14px;align-items:end}
+.pbd-controls label{display:flex;flex-direction:column;gap:6px;font-weight:700;color:#eef2ff}
+.pbd-controls select,.pbd-controls input,.catatan{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;border-radius:14px;padding:11px 12px;outline:none}
+.pbd-controls option{color:#111}.pbd-students{display:grid;gap:10px;margin-top:16px}.pbd-row{display:grid;grid-template-columns:1.4fr 1fr 220px;gap:12px;align-items:center;padding:12px;border:1px solid rgba(255,255,255,.15);border-radius:18px;background:rgba(255,255,255,.07)}
+.pbd-name{display:flex;flex-direction:column;gap:3px}.pbd-name span{opacity:.72;font-size:.9rem}.tp-buttons{display:flex;flex-wrap:wrap;gap:6px}.tp{border:0;border-radius:999px;padding:8px 10px;font-weight:800;cursor:pointer;opacity:.76}.tp.active{outline:3px solid rgba(255,255,255,.65);opacity:1;transform:translateY(-1px)}.tp1{background:#fecaca}.tp2{background:#fed7aa}.tp3{background:#fef08a}.tp4{background:#bbf7d0}.tp5{background:#86efac}.tp6{background:#bfdbfe}.pbd-actions{margin-top:16px}
+@media(max-width:900px){.pbd-controls{grid-template-columns:1fr}.pbd-row{grid-template-columns:1fr}.tp-buttons{justify-content:flex-start}}

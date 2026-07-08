@@ -1,15 +1,17 @@
-SEJARAH HUB AI v4.0
-SMK Taman Jasmin 2
+# Sejarah Hub AI v5.0
 
-Kemas kini utama:
-- Portal utama baca semua modul daripada Google Sheet.
-- Panel Pentadbir tambah/edit/padam Guru, Pengumuman, DSKP, Link Pantas, Galeri dan BBM.
-- Pilihan Tahun Akademik.
-- Logo dicari daripada logo-smktj2.jpg di root dan assets/logo-smktj2.jpg sebagai fallback.
+Versi ini menambah modul **Isi PBD dalam Hub**.
 
-Cara upload ke GitHub:
-1. Extract zip.
-2. Upload semua fail/folder ke repository GitHub.
-3. Pastikan index.html, admin.html, script.js, admin.js, style.css, config.js berada di root.
-4. Pastikan logo-smktj2.jpg berada di root.
-5. Jika guna Apps Script baru, ganti Code.gs dengan apps_script_google_sheet.gs, Save, Deploy > Manage deployments > New version > Deploy.
+## Cara pasang
+1. Upload semua fail ke GitHub repo yang sama.
+2. Ganti kod Apps Script lama dengan `apps_script_google_sheet.gs`.
+3. Apps Script: Save → Deploy → Manage deployments → Edit → New version → Deploy.
+4. Refresh portal.
+
+## Modul PBD
+- Pilih Tingkatan
+- Pilih Kelas
+- Pilih Topik/SP
+- Papar murid
+- Klik TP1–TP6
+- Simpan terus ke sheet `REKOD TP` dalam fail PBD Sejarah.
