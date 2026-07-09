@@ -341,16 +341,16 @@ async function renderPbdSummary(){
     const percent = s.totalActive ? Math.round((s.adaTp/s.totalActive)*100) : 0;
     const guruText = (data.guruKelas && data.guruKelas.length) ? data.guruKelas.join(', ') : 'Belum dipadankan';
 
-    meta.innerHTML = `📌 <b>Tingkatan ${esc(ting)} ${esc(kelas)}</b><br>👩‍🏫 Guru kelas / guru sejarah: <b>${esc(guruText)}</b><br><span class="note">Kiraan ini guna <b>TP terkini setiap murid</b>. Kalau seorang murid ada banyak rekod, sistem ambil rekod paling baru sahaja.</span>`;
+    meta.innerHTML = `📌 <b>Tingkatan ${esc(ting)} ${esc(kelas)}</b><br>👩‍🏫 Guru kelas / guru sejarah: <b>${esc(guruText)}</b><br><span class="note">Kiraan ini guna <b>TP tertinggi setiap murid</b>. Kalau seorang murid ada banyak rekod, sistem ambil TP paling tinggi. Jika TP sama, sistem ambil rekod paling baru.</span>`;
 
     const summary = [
       ['👨‍🎓 Murid Aktif', s.totalActive||0, 'Bilangan murid aktif dalam kelas'],
-      ['✅ Ada TP', s.adaTp||0, `${percent}% murid sudah ada TP terkini`],
+      ['✅ Ada TP', s.adaTp||0, `${percent}% murid sudah ada TP`],
       ['❌ Tiada Rekod', s.tiadaTp||0, 'Murid langsung belum ada rekod TP'],
       ['🚨 TP1–TP2', s.weakCount||0, 'Murid lemah / perlu bimbingan'],
       ['⭐ TP5', tp[5]||0, 'Murid cemerlang'],
       ['🏆 TP6', tp[6]||0, 'Murid tahap tertinggi'],
-      ['📊 Purata TP', s.avgTp || '-', 'Purata TP terkini kelas'],
+      ['📊 Purata TP', s.avgTp || '-', 'Purata TP tertinggi kelas'],
       ['🗂️ Jumlah Rekod', s.totalRecords||0, 'Semua rekod asal kelas ini']
     ];
 
@@ -363,7 +363,7 @@ async function renderPbdSummary(){
 
     const max = Math.max(1, ...[1,2,3,4,5,6].map(n=>tp[n]||0));
     chart.innerHTML = `
-      <h3>Graf Taburan TP Terkini Kelas</h3>
+      <h3>Graf Taburan TP Tertinggi Kelas</h3>
       ${[1,2,3,4,5,6].map(n=>`
         <div class="tp-bar-row">
           <span>TP${n}</span>
@@ -373,13 +373,13 @@ async function renderPbdSummary(){
 
     teacherBox.innerHTML = `
       <h3>Nota Rumusan</h3>
-      <div class="teacher-row"><span>Kaedah kiraan</span><b>1 murid = 1 TP terkini</b></div>
+      <div class="teacher-row"><span>Kaedah kiraan</span><b>1 murid = 1 TP tertinggi</b></div>
       <div class="teacher-row"><span>TP1–TP2</span><b>${s.weakCount||0} murid perlu bimbingan</b></div>
       <div class="teacher-row"><span>Belum direkod</span><b>${s.tiadaTp||0} murid</b></div>`;
 
     document.getElementById('pbdWeakList').innerHTML = renderStudentTable(data.weakList||[], ['Bil','Nama Murid','TP','Tarikh','Guru'], 'Tiada murid TP1–TP2. Alhamdulillah, kelas nampak steady.');
     document.getElementById('pbdNoRecordList').innerHTML = renderStudentTable(data.noRecordList||[], ['Bil','Nama Murid','Status'], 'Semua murid aktif sudah ada rekod TP.');
-    document.getElementById('pbdAllTpList').innerHTML = renderStudentTable(data.allList||[], ['Bil','Nama Murid','TP Terkini','Tarikh','Guru'], 'Belum ada senarai murid.');
+    document.getElementById('pbdAllTpList').innerHTML = renderStudentTable(data.allList||[], ['Bil','Nama Murid','TP Tertinggi','Tarikh','Guru'], 'Belum ada senarai murid.');
   }catch(e){
     renderEmptySummary('Gagal muat rumusan: '+esc(e.message));
   }

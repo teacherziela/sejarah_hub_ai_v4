@@ -1,7 +1,7 @@
-// SEJARAH HUB AI v6.1 - RUMUSAN KELAS TP FIX
+// SEJARAH HUB AI v6.2 - RUMUSAN KELAS TP TERTINGGI
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
-// Kiraan: 1 murid = 1 TP terkini walaupun murid ada banyak rekod.
+// Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
 // Tiada DriveApp / gambar PBD terbaik.
 
 var HUB_SPREADSHEET_ID = '1IDRv2QCN08MgWWQZm861qpqAUcuVZYnwBKebbMz4bs4';
@@ -295,7 +295,7 @@ function readPbdClassSummary(tingkatan, kelas){
       muridByName[normalize_(murid[i].nama)] = murid[i];
     }
 
-    var latestByKey={};
+    var bestByKey={};
     var totalRecords=0;
 
     for(var r=0;r<rekodAll.length;r++){
@@ -310,10 +310,11 @@ function readPbdClassSummary(tingkatan, kelas){
       totalRecords++;
       var key=m.id || normalize_(m.nama);
 
-      if(!latestByKey[key] ||
-        rec.dateNum > latestByKey[key].dateNum ||
-        (rec.dateNum === latestByKey[key].dateNum && rec.row > latestByKey[key].row)){
-        latestByKey[key]=rec;
+      if(!bestByKey[key] ||
+        rec.tp > bestByKey[key].tp ||
+        (rec.tp === bestByKey[key].tp && rec.dateNum > bestByKey[key].dateNum) ||
+        (rec.tp === bestByKey[key].tp && rec.dateNum === bestByKey[key].dateNum && rec.row > bestByKey[key].row)){
+        bestByKey[key]=rec;
       }
     }
 
@@ -324,7 +325,7 @@ function readPbdClassSummary(tingkatan, kelas){
     for(var j=0;j<murid.length;j++){
       var student=murid[j];
       var key2=student.id || normalize_(student.nama);
-      var lr=latestByKey[key2];
+      var lr=bestByKey[key2];
 
       if(!lr){
         noRecord.push({ id:student.id, nama:student.nama, status:'Tiada rekod' });
