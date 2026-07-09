@@ -1,28 +1,21 @@
-SEJARAH HUB AI v6.2 - RUMUSAN TP TERTINGGI
+SEJARAH HUB AI v6.2.1 - ISI PBD FIX
 
-Perubahan penting:
-- Rumusan ikut KELAS sahaja.
-- Tiada pilihan Topik/Guru pada rumusan.
-- 1 murid = 1 TP TERTINGGI.
-- Jika murid ada banyak rekod, sistem ambil TP paling tinggi.
-- Jika TP sama, sistem ambil rekod paling baru.
-- Papar TP1, TP2, TP3, TP4, TP5, TP6.
-- Papar senarai TP1-TP2.
-- Papar senarai murid tiada rekod langsung.
-- Tiada DriveApp / gambar PBD terbaik.
+Punca pilihan Tingkatan/Kelas kosong:
+Apps Script menghantar data murid dengan nama medan kecil (tingkatan, kelas, nama), tetapi modul Isi PBD membaca nama medan lama (Tingkatan, Kelas, Nama Murid).
 
-GitHub:
-1. Ganti index.html
-2. Ganti script.js
-3. Ganti style.css
-4. Ganti config.js jika perlu
-5. Commit changes
-6. Tunggu 1-2 minit
-7. Refresh Hub dengan Ctrl+F5
+Versi ini membetulkan kedua-dua bahagian:
+- Isi PBD: Tingkatan, Kelas dan murid keluar semula.
+- Rumusan: kekal guna TP tertinggi setiap murid.
+- Data MURID dan REKOD TP tidak dipadam atau diubah oleh pembetulan ini.
 
-Apps Script Panitia Ai:
-1. Ganti Code.gs dengan apps_script_google_sheet.gs
-2. Ganti appsscript.json
-3. Save
-4. Run testPbdClassSummary
-5. Deploy > Manage deployments > Edit > New version > Deploy
+LANGKAH APPS SCRIPT PANITIA AI
+1. Ganti Code.gs dengan apps_script_google_sheet.gs dalam pakej ini.
+2. Save.
+3. Run testPbdClassSummary sekali.
+4. Deploy > Manage deployments > Edit > New version > Deploy.
+
+LANGKAH GITHUB
+1. Ganti index.html dan script.js.
+2. Boleh ganti semua fail dalam pakej untuk paling selamat.
+3. Commit changes.
+4. Tunggu 1-2 minit dan tekan Ctrl+F5.

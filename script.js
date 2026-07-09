@@ -150,7 +150,7 @@ async function initPbd(){
     const res = await fetch(pbdApiUrl({action:'pbdInitLite'}));
     pbdData = await res.json();
     if(!pbdData.success) throw new Error(pbdData.message||'Gagal baca data PBD');
-    const tings = [...new Set((pbdData.murid||[]).map(m=>String(m.Tingkatan||'').trim()).filter(Boolean))].sort();
+    const tings = [...new Set((pbdData.murid||[]).map(m=>muridTing(m)).filter(Boolean))].sort((a,b)=>Number(a)-Number(b));
     document.getElementById('pbdTingkatan').innerHTML = '<option value="">Pilih Tingkatan</option>' + tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
     renderPbdGuruOptions();
     initPbdSummaryControls();
@@ -162,7 +162,7 @@ async function initPbd(){
 }
 function onPbdTingkatan(){
   const ting=document.getElementById('pbdTingkatan').value;
-  const kelas=[...new Set((pbdData.murid||[]).filter(m=>String(m.Tingkatan)==String(ting) && String(m.Status||'AKTIF').toUpperCase()!=='PINDAH').map(m=>String(m.Kelas||'').trim()).filter(Boolean))].sort();
+  const kelas=[...new Set((pbdData.murid||[]).filter(m=>String(muridTing(m))===String(ting) && muridStatus(m)!=='PINDAH').map(m=>muridKelas(m)).filter(Boolean))].sort();
   document.getElementById('pbdKelas').innerHTML='<option value="">Pilih Kelas</option>'+kelas.map(k=>`<option value="${esc(k)}">${esc(ting+' '+k)}</option>`).join('');
   renderPbdTopik();
   document.getElementById('pbdStudents').innerHTML='';
@@ -175,7 +175,9 @@ function renderPbdTopik(){
   document.getElementById('pbdTopik').innerHTML='<option value="">Pilih Topik / SP</option>'+opts.map(t=>`<option value="${esc(t.IDTopik)}">${esc((t['SK (Standard Kandungan)']||t.Topik||'')+' — '+(t['SP (Standard Pembelajaran)']||''))}</option>`).join('');
 }
 function selectedTopik(){ const id=document.getElementById('pbdTopik').value; return (pbdData.topik||[]).find(t=>String(t.IDTopik)===String(id)); }
-function muridIdOf(m){ return m.IDMurid || m['IDMurid '] || m['ID Murid'] || m.idMurid || ''; }
+function muridIdOf(m){ return m.IDMurid || m['IDMurid '] || m['ID Murid'] || m.idMurid || m.id || ''; }
+function muridNama(m){ return String(val(m,['Nama Murid','Nama','nama'])).trim(); }
+function muridStatus(m){ return String(val(m,['Status','status'])||'AKTIF').trim().toUpperCase(); }
 function updatePbdProgress(){
   const rows=[...document.querySelectorAll('.pbd-row')];
   const chosen=rows.filter(r=>r.dataset.tp).length;
@@ -188,15 +190,15 @@ function loadPbdStudents(){
   const kelas=document.getElementById('pbdKelas').value;
   const topik=selectedTopik();
   if(!ting||!kelas||!topik){ document.getElementById('pbdStatus').textContent='Pilih Tingkatan, Kelas dan Topik dulu.'; return; }
-  const students=(pbdData.murid||[]).filter(m=>String(m.Tingkatan)==String(ting)&&String(m.Kelas)==String(kelas)&&String(m.Status||'AKTIF').toUpperCase()!=='PINDAH');
+  const students=(pbdData.murid||[]).filter(m=>String(muridTing(m))===String(ting)&&String(muridKelas(m))===String(kelas)&&muridStatus(m)!=='PINDAH');
   const rekodMap={};
   (pbdData.rekod||[]).filter(r=>String(r['ID Topik'])===String(topik.IDTopik)).forEach(r=>{ rekodMap[String(r.IDMurid)] = r.TP; });
   document.getElementById('pbdStatus').innerHTML=`✅ ${students.length} murid dipaparkan untuk <b>Tingkatan ${esc(ting)} ${esc(kelas)}</b>. Pilih TP murid, kemudian tekan Simpan.`;
   document.getElementById('pbdStudents').innerHTML = students.map((m,i)=>{
     const muridId = muridIdOf(m);
     const current=rekodMap[String(muridId)]||'';
-    return `<article class="pbd-row" data-id="${esc(muridId)}" data-name="${esc(m['Nama Murid'])}">
-      <div class="pbd-name"><b>${i+1}. ${esc(m['Nama Murid'])}</b><span>${esc(ting+' '+kelas)} • ID: ${esc(muridId||'-')}</span><small class="save-state"></small></div>
+    return `<article class="pbd-row" data-id="${esc(muridId)}" data-name="${esc(muridNama(m))}">
+      <div class="pbd-name"><b>${i+1}. ${esc(muridNama(m))}</b><span>${esc(ting+' '+kelas)} • ID: ${esc(muridId||'-')}</span><small class="save-state"></small></div>
       <div class="tp-buttons">${[1,2,3,4,5,6].map(tp=>`<button type="button" class="tp tp${tp} ${String(current)===String(tp)?'active':''}" onclick="pickTp(this,${tp})">TP${tp}</button>`).join('')}</div>
       <input class="catatan" placeholder="Catatan jika perlu" />
     </article>`;

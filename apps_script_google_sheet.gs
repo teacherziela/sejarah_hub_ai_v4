@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v6.2 - RUMUSAN KELAS TP TERTINGGI
+// SEJARAH HUB AI v6.2.1 - ISI PBD + RUMUSAN TP TERTINGGI FIX
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -220,12 +220,24 @@ function tpNum_(v){
 }
 
 function muridObj_(o){
+  var id = String(pick_(o,['IDMurid','ID Murid','ID'])).trim();
+  var nama = String(pick_(o,['Nama Murid','Nama'])).trim();
+  var tingkatan = String(pick_(o,['Tingkatan','Tingkat','Tingka'])).trim();
+  var kelas = String(pick_(o,['Kelas'])).trim();
+  var status = String(pick_(o,['Status']) || 'AKTIF').trim();
+
+  // Hantar kedua-dua format supaya modul Rumusan dan Isi PBD sama-sama boleh baca.
   return {
-    id: String(pick_(o,['IDMurid','ID Murid','ID'])).trim(),
-    nama: String(pick_(o,['Nama Murid','Nama'])).trim(),
-    tingkatan: String(pick_(o,['Tingkatan','Tingkat','Tingka'])).trim(),
-    kelas: String(pick_(o,['Kelas'])).trim(),
-    status: String(pick_(o,['Status']) || 'AKTIF').trim()
+    id: id,
+    nama: nama,
+    tingkatan: tingkatan,
+    kelas: kelas,
+    status: status,
+    IDMurid: id,
+    'Nama Murid': nama,
+    Tingkatan: tingkatan,
+    Kelas: kelas,
+    Status: status
   };
 }
 
