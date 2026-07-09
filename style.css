@@ -109,3 +109,11 @@
   .summary-controls{grid-template-columns:1fr}
   .tp-bar-row{grid-template-columns:48px 1fr 42px}
 }
+
+
+/* v6.0 Rumusan Kelas TP */
+.class-only-controls label{min-width:220px}
+.pbd-list-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:18px}
+.pbd-list-card{border:1px solid rgba(255,255,255,.16);border-radius:22px;background:rgba(13,20,42,.38);padding:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.pbd-list-card h3{margin:0 0 12px;font-size:20px}.full-list-card{margin-top:18px}.table-scroll{overflow:auto;max-height:360px;border-radius:16px}.pbd-table{width:100%;border-collapse:collapse;font-size:14px}.pbd-table th,.pbd-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.1);text-align:left;vertical-align:top}.pbd-table th{position:sticky;top:0;background:rgba(25,28,63,.96);z-index:1}.pbd-table small{color:#c9d4ff}.summary-card b{display:block;font-size:34px;color:#67f3ff;margin:8px 0}.summary-card span{font-weight:800}.summary-card small{color:#c9d4ff}
+@media(max-width:900px){.pbd-list-grid{grid-template-columns:1fr}.class-only-controls label{min-width:100%}}
