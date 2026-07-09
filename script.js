@@ -1,6 +1,6 @@
-let hub = { guru:[], pengumuman:[], dskp:[], linkPantas:[], galeri:[], pbdBest:[], bbm:[] };
+let hub = { guru:[], pengumuman:[], dskp:[], linkPantas:[], galeri:[], bbm:[] };
 let guruData = [];
-const fallback = { guru:[], pengumuman:[], dskp:[], linkPantas:[], galeri:[], pbdBest:[], bbm:[] };
+const fallback = { guru:[], pengumuman:[], dskp:[], linkPantas:[], galeri:[], bbm:[] };
 function esc(s){return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));}
 function isAktif(x){ return String(x.Status||'Aktif').toLowerCase() !== 'tidak aktif'; }
 function byYear(list, year){ return (list||[]).filter(x=>String(x.Tahun||year)===String(year) && isAktif(x)); }
@@ -65,10 +65,10 @@ async function loadYear(){
   const year=getYear();
   hub = await apiHub(year);
   guruData = (hub.guru||[]).filter(isAktif);
-  renderStats(year); renderMenu(year); renderPengumuman(byYear(hub.pengumuman,year)); renderLinks(byYear(hub.linkPantas,year)); renderDskp(byYear(hub.dskp,year)); renderGuru(guruData); renderPbdGuruOptions(); renderBbm(byYear(hub.bbm,year)); renderGaleri(byYear(hub.galeri,year)); renderPbdBest(byYear(hub.pbdBest,year));
+  renderStats(year); renderMenu(year); renderPengumuman(byYear(hub.pengumuman,year)); renderLinks(byYear(hub.linkPantas,year)); renderDskp(byYear(hub.dskp,year)); renderGuru(guruData); renderPbdGuruOptions(); renderBbm(byYear(hub.bbm,year)); renderGaleri(byYear(hub.galeri,year));
 }
 function renderStats(year){
-  const stats=[['Guru',guruData.length],['Pengumuman',byYear(hub.pengumuman,year).length],['Link',byYear(hub.linkPantas,year).length],['Galeri',byYear(hub.galeri,year).length],['PBD Terbaik',byYear(hub.pbdBest,year).length]];
+  const stats=[['Guru',guruData.length],['Pengumuman',byYear(hub.pengumuman,year).length],['Link',byYear(hub.linkPantas,year).length],['Galeri',byYear(hub.galeri,year).length]];
   document.getElementById('statStrip').innerHTML = stats.map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join('');
 }
 function renderMenu(year){
@@ -93,11 +93,7 @@ function renderGaleri(list){
   const box=document.getElementById('galeriGrid');
   box.innerHTML = list.length ? list.map(g=>`<article class="gallery-card"><img src="${driveImg(g.Photo||g.Foto)||logo()}" onerror="this.onerror=null;this.src='logo-smktj2.jpg'"><h3>${esc(g.Tajuk)}</h3><p>${esc(fmtDate(g.Tarikh))} ${esc(g.Kelas||'')}</p><p>${esc(g.Penerangan||'')}</p></article>`).join('') : '<p class="note">Belum ada galeri aktiviti.</p>';
 }
-function renderPbdBest(list){
-  const box=document.getElementById('pbdBestGrid');
-  if(!box) return;
-  box.innerHTML = list.length ? list.map(g=>`<article class="gallery-card pbd-best-card"><img src="${driveImg(g.Photo||g.Foto)||logo()}" onerror="this.onerror=null;this.src='logo-smktj2.jpg'"><h3>${esc(g.Tajuk||'⭐ Hasil Murid PBD Terbaik')}</h3><p>${esc(fmtDate(g.Tarikh))} ${esc(g.Kelas||'')}</p><p>${esc(g.Penerangan||'')}</p></article>`).join('') : '<p class="note">Belum ada gambar PBD TP5/TP6. Pastikan Apps Script sudah deploy dan folder REKOD TP_Images boleh dibaca.</p>';
-}
+function renderPbdBest(list){ return; }
 function renderGuru(list){
   const grid=document.getElementById('guruGrid');
   if(!list.length){grid.innerHTML='<p class="note">Belum ada biodata guru aktif dalam Google Sheet.</p>';return;}
