@@ -37,8 +37,39 @@
 
     <section class="glass panel pbd-panel" id="pbdPanel">
       <div class="section-head">
-        <h2>📝 Isi PBD Dalam Hub</h2>
-        <span class="note">Data terus disimpan ke Google Sheet REKOD TP</span>
+        <h2>📊 PBD Dalam Hub</h2>
+        <span class="note">Rumusan + Isi TP terus disimpan ke Google Sheet REKOD TP</span>
+      </div>
+
+      <div class="pbd-summary-block">
+        <div class="section-head compact-head">
+          <h2>📈 Rumusan PBD Kelas</h2>
+          <span class="note">Pilih kelas/topik/guru untuk lihat graf ringkas.</span>
+        </div>
+        <div class="pbd-controls summary-controls">
+          <label>Tingkatan
+            <select id="rumusTingkatan"><option value="">Semua Tingkatan</option></select>
+          </label>
+          <label>Kelas
+            <select id="rumusKelas"><option value="">Semua Kelas</option></select>
+          </label>
+          <label>Topik
+            <select id="rumusTopik"><option value="">Semua Topik</option></select>
+          </label>
+          <label>Guru
+            <select id="rumusGuru"><option value="">Semua Guru</option></select>
+          </label>
+          <button class="pill primary" id="rumusRefreshBtn">Papar Rumusan</button>
+        </div>
+        <div id="pbdSummaryMeta" class="note pbd-status-box">Rumusan akan keluar selepas data PBD dimuatkan.</div>
+        <div id="pbdSummaryCards" class="summary-cards"></div>
+        <div id="pbdTpChart" class="pbd-chart"></div>
+        <div id="pbdGuruSummary" class="teacher-summary"></div>
+      </div>
+
+      <div class="section-head compact-head isi-head">
+        <h2>📝 Isi PBD</h2>
+        <span class="note">Pilih murid dan TP, kemudian simpan.</span>
       </div>
       <div class="pbd-controls">
         <label>Tingkatan
@@ -108,7 +139,7 @@
     <div id="profileBody"></div>
   </dialog>
 
-  <footer>Versi 5.7 • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <footer>Versi 5.8 • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
   <script src="config.js"></script>
   <script src="script.js"></script>
 </body>

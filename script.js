@@ -53,6 +53,11 @@ async function init(){
   document.getElementById('pbdKelas').addEventListener('change', onPbdKelas);
   document.getElementById('pbdLoadBtn').addEventListener('click', loadPbdStudents);
   document.getElementById('pbdSaveBtn').addEventListener('click', savePbdBatch);
+  document.getElementById('rumusTingkatan')?.addEventListener('change', onRumusTingkatan);
+  document.getElementById('rumusKelas')?.addEventListener('change', renderPbdSummary);
+  document.getElementById('rumusTopik')?.addEventListener('change', renderPbdSummary);
+  document.getElementById('rumusGuru')?.addEventListener('change', renderPbdSummary);
+  document.getElementById('rumusRefreshBtn')?.addEventListener('click', renderPbdSummary);
   await loadYear();
   await initPbd();
 }
@@ -67,7 +72,7 @@ function renderStats(year){
   document.getElementById('statStrip').innerHTML = stats.map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join('');
 }
 function renderMenu(year){
-  const fixed=[{icon:'📝',title:'Isi PBD',target:'pbdPanel'},{icon:'👥',title:'Ahli Panitia',target:'guruPanel'}];
+  const fixed=[{icon:'📊',title:'PBD / Rumusan',target:'pbdPanel'},{icon:'👥',title:'Ahli Panitia',target:'guruPanel'}];
   const quick=byYear(hub.linkPantas,year).map(x=>isBiodataGuruLink(x)
     ? {icon:x.Icon||'👩‍🏫',title:x.Nama,target:'guruPanel'}
     : {icon:x.Icon||'🔗',title:x.Nama,url:x.Link});
@@ -154,6 +159,8 @@ async function initPbd(){
     const tings = [...new Set((pbdData.murid||[]).map(m=>String(m.Tingkatan||'').trim()).filter(Boolean))].sort();
     document.getElementById('pbdTingkatan').innerHTML = '<option value="">Pilih Tingkatan</option>' + tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
     renderPbdGuruOptions();
+    initPbdSummaryControls();
+    renderPbdSummary();
     document.getElementById('pbdStatus').textContent='Sedia. Pilih tingkatan, kelas dan topik.';
   }catch(e){
     document.getElementById('pbdStatus').textContent='Gagal muat PBD: '+e.message;
@@ -249,4 +256,175 @@ async function savePbdBatch(){
     saveBtn.disabled=false;
     saveBtn.textContent=oldText;
   }
+}
+
+
+// ================= RUMUSAN PBD DALAM HUB v5.8 =================
+function val(obj, names){
+  for(const n of names){
+    if(obj && obj[n] !== undefined && obj[n] !== null && String(obj[n]).trim() !== '') return obj[n];
+  }
+  const keys = Object.keys(obj||{});
+  const norm = x => String(x||'').toLowerCase().replace(/\s+/g,'').replace(/_/g,'');
+  for(const n of names){
+    const wanted = norm(n);
+    const k = keys.find(x=>norm(x)===wanted);
+    if(k && obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== '') return obj[k];
+  }
+  return '';
+}
+function muridTing(m){ return String(val(m,['Tingkatan','Tingkat','Tingka'])).trim(); }
+function muridKelas(m){ return String(val(m,['Kelas'])).trim(); }
+function muridNama(m){ return String(val(m,['Nama Murid','Nama'])).trim(); }
+function rekodTing(r){
+  const kb=String(val(r,['KELAS BETUL','Kelas Betul','Kelas_Betul'])).trim();
+  if(kb && /^\d+/.test(kb)) return kb.split(/\s+/)[0];
+  return String(val(r,['Tingkatan','Tingkat','Tingka'])).trim();
+}
+function rekodKelas(r){
+  const kb=String(val(r,['KELAS BETUL','Kelas Betul','Kelas_Betul'])).trim();
+  if(kb && /^\d+\s+/.test(kb)) return kb.replace(/^\d+\s+/,'').trim();
+  return String(val(r,['Kelas'])).trim();
+}
+function rekodMuridId(r){ return String(val(r,['IDMurid','ID Murid','ID Murid '])).trim(); }
+function rekodNama(r){ return String(val(r,['Nama Murid','Nama'])).trim(); }
+function rekodTopikId(r){ return String(val(r,['ID Topik','IDTopik','ID Topi'])).trim(); }
+function rekodTopikText(r){ return String(val(r,['Topik'])).trim(); }
+function rekodTP(r){
+  const raw = String(val(r,['TP'])).replace(/[^\d.]/g,'');
+  return Number(raw||0);
+}
+function rekodGuru(r){ return cleanName(val(r,['Ditafsir_Oleh','Ditafsir Oleh','Guru','Guru Penilai'])); }
+function rekodDateNum(r){
+  const t = val(r,['Tarikh']);
+  const d = new Date(t);
+  return isNaN(d) ? 0 : d.getTime();
+}
+function activeMuridFor(ting, kelas){
+  return (pbdData.murid||[]).filter(m=>{
+    const aktif = String(val(m,['Status'])||'AKTIF').toUpperCase() !== 'PINDAH';
+    return aktif && (!ting || String(muridTing(m))===String(ting)) && (!kelas || String(muridKelas(m))===String(kelas));
+  });
+}
+function filteredRekod(ting, kelas, topikId, guru){
+  return (pbdData.rekod||[]).filter(r=>{
+    const okT = !ting || String(rekodTing(r))===String(ting);
+    const okK = !kelas || String(rekodKelas(r))===String(kelas);
+    const okTopik = !topikId || String(rekodTopikId(r))===String(topikId);
+    const okGuru = !guru || rekodGuru(r).toLowerCase()===String(guru).toLowerCase();
+    return okT && okK && okTopik && okGuru && rekodTP(r)>0;
+  });
+}
+function initPbdSummaryControls(){
+  const tingSel = document.getElementById('rumusTingkatan');
+  const kelasSel = document.getElementById('rumusKelas');
+  const topikSel = document.getElementById('rumusTopik');
+  const guruSel = document.getElementById('rumusGuru');
+  if(!tingSel || !kelasSel || !topikSel || !guruSel) return;
+
+  const tings = [...new Set((pbdData.murid||[]).map(m=>muridTing(m)).filter(Boolean))].sort();
+  tingSel.innerHTML = '<option value="">Semua Tingkatan</option>' + tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
+  if(tings.length) tingSel.value = tings[0];
+
+  const gurus = [...new Set((pbdData.rekod||[]).map(r=>rekodGuru(r)).filter(Boolean))].sort();
+  guruSel.innerHTML = '<option value="">Semua Guru</option>' + gurus.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+
+  onRumusTingkatan();
+}
+function onRumusTingkatan(){
+  const ting = document.getElementById('rumusTingkatan')?.value || '';
+  const kelasSel = document.getElementById('rumusKelas');
+  const topikSel = document.getElementById('rumusTopik');
+  if(!kelasSel || !topikSel) return;
+
+  const kelas = [...new Set(activeMuridFor(ting,'').map(m=>muridKelas(m)).filter(Boolean))].sort();
+  kelasSel.innerHTML = '<option value="">Semua Kelas</option>' + kelas.map(k=>`<option value="${esc(k)}">${esc(ting ? ting+' '+k : k)}</option>`).join('');
+
+  const topik = (pbdData.topik||[]).filter(t=>!ting || String(val(t,['Tingkatan','Tingkat','Tingka']))===String(ting));
+  topikSel.innerHTML = '<option value="">Semua Topik</option>' + topik.map(t=>{
+    const id = val(t,['IDTopik','ID Topik','ID']);
+    const label = [val(t,['Topik','SK (Standard Kandungan)']), val(t,['SP (Standard Pembelajaran)','SP'])].filter(Boolean).join(' — ');
+    return `<option value="${esc(id)}">${esc(label||id)}</option>`;
+  }).join('');
+
+  renderPbdSummary();
+}
+function renderPbdSummary(){
+  const meta = document.getElementById('pbdSummaryMeta');
+  const cards = document.getElementById('pbdSummaryCards');
+  const chart = document.getElementById('pbdTpChart');
+  const teacherBox = document.getElementById('pbdGuruSummary');
+  if(!meta || !cards || !chart || !teacherBox) return;
+
+  const ting = document.getElementById('rumusTingkatan')?.value || '';
+  const kelas = document.getElementById('rumusKelas')?.value || '';
+  const topikId = document.getElementById('rumusTopik')?.value || '';
+  const guru = document.getElementById('rumusGuru')?.value || '';
+
+  const murid = activeMuridFor(ting, kelas);
+  const rekod = filteredRekod(ting, kelas, topikId, guru);
+  const muridKeys = new Set(murid.map(m=>String(muridIdOf(m)||muridNama(m)).trim()).filter(Boolean));
+
+  const latestByStudent = {};
+  rekod.forEach(r=>{
+    const key = String(rekodMuridId(r) || rekodNama(r)).trim();
+    if(!key) return;
+    if(!latestByStudent[key] || rekodDateNum(r) >= rekodDateNum(latestByStudent[key])){
+      latestByStudent[key] = r;
+    }
+  });
+
+  const dinilaiKeys = new Set(Object.keys(latestByStudent));
+  const tiadaTp = [...muridKeys].filter(k=>!dinilaiKeys.has(k)).length;
+  const adaTp = dinilaiKeys.size;
+
+  const tpCounts = {1:0,2:0,3:0,4:0,5:0,6:0};
+  Object.values(latestByStudent).forEach(r=>{
+    const tp = rekodTP(r);
+    if(tpCounts[tp] !== undefined) tpCounts[tp]++;
+  });
+
+  const rekodTotal = rekod.length;
+  const percent = muridKeys.size ? Math.round((adaTp/muridKeys.size)*100) : 0;
+  const topikText = topikId ? (document.querySelector(`#rumusTopik option[value="${CSS.escape(topikId)}"]`)?.textContent || 'Topik dipilih') : 'Semua topik';
+  const labelKelas = [ting?`Tingkatan ${ting}`:'Semua tingkatan', kelas?kelas:'Semua kelas'].join(' • ');
+
+  meta.innerHTML = `📌 <b>${esc(labelKelas)}</b> | ${esc(topikText)} ${guru?`| Guru: <b>${esc(guru)}</b>`:''}`;
+
+  const summary = [
+    ['👨‍🎓 Murid Aktif', muridKeys.size, 'Bilangan murid aktif dalam pilihan semasa'],
+    ['✅ Ada TP', adaTp, `${percent}% murid ada rekod TP`],
+    ['❌ Tiada TP', tiadaTp, 'Murid belum ada rekod TP untuk pilihan ini'],
+    ['🏆 TP6', tpCounts[6], 'Bilangan murid tahap tertinggi'],
+    ['⭐ TP5', tpCounts[5], 'Bilangan murid cemerlang'],
+    ['🗂️ Jumlah Rekod', rekodTotal, 'Semua rekod penilaian yang dipadankan']
+  ];
+
+  cards.innerHTML = summary.map(([title,num,desc])=>`
+    <div class="summary-card">
+      <span>${esc(title)}</span>
+      <b>${esc(num)}</b>
+      <small>${esc(desc)}</small>
+    </div>`).join('');
+
+  const max = Math.max(1, ...Object.values(tpCounts));
+  chart.innerHTML = `
+    <h3>Graf Taburan TP</h3>
+    ${[1,2,3,4,5,6].map(tp=>`
+      <div class="tp-bar-row">
+        <span>TP${tp}</span>
+        <div class="tp-bar-shell"><div class="tp-bar fill-tp${tp}" style="width:${Math.round((tpCounts[tp]/max)*100)}%"></div></div>
+        <b>${tpCounts[tp]}</b>
+      </div>`).join('')}`;
+
+  const byGuru = {};
+  rekod.forEach(r=>{
+    const g = rekodGuru(r) || 'Tidak dinyatakan';
+    byGuru[g] = (byGuru[g]||0) + 1;
+  });
+  const topGuru = Object.entries(byGuru).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  teacherBox.innerHTML = `
+    <h3>Rumusan Guru / Rekod</h3>
+    ${topGuru.length ? topGuru.map(([g,n])=>`<div class="teacher-row"><span>${esc(g)}</span><b>${n} rekod</b></div>`).join('') : '<p class="note">Belum ada rekod guru untuk pilihan ini.</p>'}
+  `;
 }
