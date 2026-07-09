@@ -1,23 +1,24 @@
-SEJARAH HUB AI v6.0 - RUMUSAN TP KELAS SAHAJA
+SEJARAH HUB AI v6.1 - RUMUSAN KELAS TP FIX
 
-Perubahan penting:
-- Rumusan ikut KELAS sahaja, bukan topik.
-- 1 murid = 1 TP terkini walaupun ada banyak rekod.
-- Papar guru kelas/guru sejarah jika boleh dipadankan.
-- Papar TP1-TP6, TP5, TP6, murid lemah TP1-TP2, murid tiada rekod.
-- Tidak guna DriveApp / gambar PBD terbaik.
+Punca rekod kosong sebelum ini:
+- Portal lama cuba kira rumusan daripada rekod yang tidak dihantar ke browser.
+- REKOD TP besar, jadi pbdInit/testPbdInit boleh jadi berat.
+- Versi ini kira rumusan di Apps Script terus, kemudian hantar hasil ringkas sahaja ke Hub.
 
-Upload GitHub:
-1. Ganti index.html
-2. Ganti script.js
-3. Ganti style.css
-4. Ganti config.js jika perlu
-5. Commit changes
-6. Refresh Hub dengan Ctrl+F5
+Fungsi:
+- Rumusan ikut KELAS sahaja.
+- Tiada pilihan Topik/Guru pada rumusan.
+- 1 murid = 1 TP terkini.
+- Senarai TP1-TP2, tiada rekod, dan semua murid.
+- Tiada DriveApp / gambar PBD terbaik.
+
+GitHub:
+Ganti index.html, script.js, style.css, config.js.
+Commit, tunggu 1-2 minit, tekan Ctrl+F5.
 
 Apps Script Panitia Ai:
-1. Ganti Code.gs dengan apps_script_google_sheet.gs
-2. Ganti appsscript.json
-3. Save
-4. Run testPbdClassSummary sekali
-5. Deploy > Manage deployments > Edit > New version > Deploy
+Ganti Code.gs dengan apps_script_google_sheet.gs.
+Ganti appsscript.json.
+Save.
+Run testPbdClassSummary.
+Deploy > Manage deployments > Edit > New version > Deploy.
