@@ -640,7 +640,7 @@ async function uploadQuestionPaper(file){
 
     currentQuestionPaper={url:out.url||'',name:out.name||file.name,id:out.id||''};
     renderQuestionPaperInfo();
-    status.innerHTML=`✅ <b>${esc(currentQuestionPaper.name)}</b> sudah dimuat naik untuk Tingkatan ${esc(ctx.tingkatan)} • ${esc(ctx.ujian)}. Tekan <b>Salin Pautan untuk Abah</b>.`;
+    status.innerHTML=`✅ <b>${esc(currentQuestionPaper.name)}</b> sudah dimuat naik untuk Tingkatan ${esc(ctx.tingkatan)} • ${esc(ctx.ujian)}. Fail belum dianalisis secara automatik. Tekan <b>Salin Pautan untuk Abah</b>.`;
   }catch(e){
     status.textContent='Gagal muat naik: '+e.message;
   }finally{
@@ -673,7 +673,7 @@ async function loadQuestionPaperInfo(){
     if(out.success&&out.url){
       currentQuestionPaper={url:out.url,name:out.name||'Kertas soalan',id:out.id||''};
       renderQuestionPaperInfo();
-      status.innerHTML=`📄 Kertas semasa: <b>${esc(currentQuestionPaper.name)}</b>.`;
+      status.innerHTML=`📄 Kertas semasa: <b>${esc(currentQuestionPaper.name)}</b>. Pemetaan belum diisi secara automatik.`;
     }else{
       status.textContent='Belum ada kertas soalan untuk tingkatan dan ujian ini.';
     }

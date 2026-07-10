@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v6.4.2 - DRAG & DROP KERTAS SOALAN
+// SEJARAH HUB AI v6.4.3 - BUKA FAIL DRIVE VIEWER FIX - DRAG & DROP KERTAS SOALAN
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -103,7 +103,8 @@ function uploadQuestionPaper(data){
   var safeName='T'+tingkatan+'_'+ujian+'_'+fileName;
   var blob=Utilities.newBlob(bytes,mimeType,safeName);
   var file=questionPaperFolder_().createFile(blob);
-  var info={id:file.getId(),name:file.getName(),url:file.getUrl(),tingkatan:tingkatan,ujian:ujian,uploadedAt:new Date().toISOString()};
+  var viewUrl='https://drive.google.com/file/d/'+file.getId()+'/view';
+  var info={id:file.getId(),name:file.getName(),url:viewUrl,tingkatan:tingkatan,ujian:ujian,uploadedAt:new Date().toISOString()};
   props.setProperty(key,JSON.stringify(info));
 
   return {success:true,id:info.id,name:info.name,url:info.url};
@@ -118,7 +119,7 @@ function readQuestionPaperInfo(tingkatan, ujian){
     if(info.id){
       var file=DriveApp.getFileById(info.id);
       if(file.isTrashed()) return {success:true,url:'',name:'',id:''};
-      return {success:true,id:file.getId(),name:file.getName(),url:file.getUrl(),uploadedAt:info.uploadedAt||''};
+      return {success:true,id:file.getId(),name:file.getName(),url:'https://drive.google.com/file/d/'+file.getId()+'/view',uploadedAt:info.uploadedAt||''};
     }
   }catch(err){}
   return {success:true,url:'',name:'',id:''};
