@@ -73,6 +73,7 @@ async function init(){
   document.getElementById('examSaveBtn')?.addEventListener('click', saveExamRecord);
   document.getElementById('examTH')?.addEventListener('change', updateExamPreview);
   document.getElementById('examMapSaveBtn')?.addEventListener('click', saveExamItemMap);
+  setupQuestionPaperUpload();
 
   await loadYear();
   await initPbd();
@@ -529,6 +530,7 @@ function onExamTingkatan(){
 function onExamContextChanged(){
   populateExamStudents();
   renderExamMapGrid();
+  loadQuestionPaperInfo();
   clearExamAnalysis();
 }
 
@@ -538,6 +540,170 @@ function currentExamContext(){
     kelas:document.getElementById('examKelas')?.value||'',
     ujian:examNorm(document.getElementById('examUjian')?.value||'UPSA')
   };
+}
+
+let currentQuestionPaper={url:'',name:'',id:''};
+
+function setupQuestionPaperUpload(){
+  const zone=document.getElementById('questionDropZone');
+  const input=document.getElementById('questionFileInput');
+  const choose=document.getElementById('questionChooseBtn');
+  const open=document.getElementById('questionOpenBtn');
+  const copy=document.getElementById('questionCopyBtn');
+  if(!zone||!input) return;
+
+  const browse=()=>input.click();
+  zone.addEventListener('click',browse);
+  zone.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){ e.preventDefault(); browse(); }
+  });
+  choose?.addEventListener('click',browse);
+  input.addEventListener('change',()=>{
+    const file=input.files?.[0];
+    if(file) uploadQuestionPaper(file);
+    input.value='';
+  });
+
+  ['dragenter','dragover'].forEach(type=>zone.addEventListener(type,e=>{
+    e.preventDefault();
+    zone.classList.add('dragging');
+  }));
+  ['dragleave','drop'].forEach(type=>zone.addEventListener(type,e=>{
+    e.preventDefault();
+    zone.classList.remove('dragging');
+  }));
+  zone.addEventListener('drop',e=>{
+    const file=e.dataTransfer?.files?.[0];
+    if(file) uploadQuestionPaper(file);
+  });
+
+  open?.addEventListener('click',()=>{
+    if(currentQuestionPaper.url) window.open(currentQuestionPaper.url,'_blank');
+  });
+  copy?.addEventListener('click',copyQuestionPaperLink);
+}
+
+function allowedQuestionFile(file){
+  const name=String(file?.name||'').toLowerCase();
+  const type=String(file?.type||'').toLowerCase();
+  return /\.(pdf|doc|docx|jpg|jpeg|png|webp)$/.test(name) ||
+    /pdf|msword|officedocument|image\//.test(type);
+}
+
+function readFileAsDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=()=>reject(new Error('Fail tidak dapat dibaca.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadQuestionPaper(file){
+  const ctx=currentExamContext();
+  const status=document.getElementById('questionUploadStatus');
+  const zone=document.getElementById('questionDropZone');
+
+  if(!ctx.tingkatan||!ctx.ujian){
+    status.textContent='Pilih tingkatan dan ujian dahulu sebelum memuat naik.';
+    return;
+  }
+  if(!allowedQuestionFile(file)){
+    status.textContent='Format tidak disokong. Gunakan PDF, Word, JPG, PNG atau WEBP.';
+    return;
+  }
+  if(file.size>8*1024*1024){
+    status.textContent='Fail melebihi 8 MB. Kecilkan atau mampatkan fail dahulu.';
+    return;
+  }
+
+  status.textContent=`Memuat naik ${file.name}...`;
+  zone?.classList.add('uploading');
+
+  try{
+    const dataUrl=await readFileAsDataUrl(file);
+    const base64=String(dataUrl).split(',')[1]||'';
+    const res=await fetch(CONFIG.SHEET_API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({
+        action:'uploadQuestionPaper',
+        tingkatan:ctx.tingkatan,
+        ujian:ctx.ujian,
+        fileName:file.name,
+        mimeType:file.type||'application/octet-stream',
+        base64:base64
+      })
+    });
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Muat naik gagal');
+
+    currentQuestionPaper={url:out.url||'',name:out.name||file.name,id:out.id||''};
+    renderQuestionPaperInfo();
+    status.innerHTML=`✅ <b>${esc(currentQuestionPaper.name)}</b> sudah dimuat naik untuk Tingkatan ${esc(ctx.tingkatan)} • ${esc(ctx.ujian)}. Tekan <b>Salin Pautan untuk Abah</b>.`;
+  }catch(e){
+    status.textContent='Gagal muat naik: '+e.message;
+  }finally{
+    zone?.classList.remove('uploading');
+  }
+}
+
+async function loadQuestionPaperInfo(){
+  const ctx=currentExamContext();
+  const status=document.getElementById('questionUploadStatus');
+  if(!status) return;
+
+  currentQuestionPaper={url:'',name:'',id:''};
+  renderQuestionPaperInfo();
+
+  if(!ctx.tingkatan||!ctx.ujian){
+    status.textContent='Pilih tingkatan dan ujian untuk melihat kertas soalan.';
+    return;
+  }
+
+  status.textContent='Menyemak kertas soalan...';
+  try{
+    const res=await fetch(examApiUrl({
+      action:'questionPaperInfo',
+      tingkatan:ctx.tingkatan,
+      ujian:ctx.ujian,
+      v:Date.now()
+    }));
+    const out=await res.json();
+    if(out.success&&out.url){
+      currentQuestionPaper={url:out.url,name:out.name||'Kertas soalan',id:out.id||''};
+      renderQuestionPaperInfo();
+      status.innerHTML=`📄 Kertas semasa: <b>${esc(currentQuestionPaper.name)}</b>.`;
+    }else{
+      status.textContent='Belum ada kertas soalan untuk tingkatan dan ujian ini.';
+    }
+  }catch(e){
+    status.textContent='Tidak dapat menyemak kertas soalan: '+e.message;
+  }
+}
+
+function renderQuestionPaperInfo(){
+  const open=document.getElementById('questionOpenBtn');
+  const copy=document.getElementById('questionCopyBtn');
+  const has=Boolean(currentQuestionPaper.url);
+  if(open) open.hidden=!has;
+  if(copy) copy.hidden=!has;
+}
+
+async function copyQuestionPaperLink(){
+  const ctx=currentExamContext();
+  const status=document.getElementById('questionUploadStatus');
+  if(!currentQuestionPaper.url){
+    status.textContent='Belum ada pautan kertas soalan untuk disalin.';
+    return;
+  }
+  const text=`Tolong petakan kertas soalan Sejarah Tingkatan ${ctx.tingkatan} (${ctx.ujian}) kepada Topik/Bab dan Aras Rendah, Sederhana atau Tinggi bagi setiap item. Pautan: ${currentQuestionPaper.url}`;
+  try{
+    await navigator.clipboard.writeText(text);
+    status.innerHTML='✅ Arahan dan pautan sudah disalin. Tampal dalam chat Abah.';
+  }catch(e){
+    window.prompt('Salin teks ini dan tampal dalam chat Abah:',text);
+  }
 }
 
 function populateExamStudents(){

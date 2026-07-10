@@ -1,8 +1,8 @@
-// SEJARAH HUB AI v6.4.1 - OBJEKTIF 0/1 + PEMETAAN TOPIK DAN ARAS
+// SEJARAH HUB AI v6.4.2 - DRAG & DROP KERTAS SOALAN
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
-// Tiada DriveApp / gambar PBD terbaik.
+// DriveApp digunakan hanya untuk menyimpan kertas soalan yang dimuat naik.
 
 var HUB_SPREADSHEET_ID = '1IDRv2QCN08MgWWQZm861qpqAUcuVZYnwBKebbMz4bs4';
 var PBD_SPREADSHEET_ID = '1NE4UcW7K4G_nVcxL0vU0_CVtAubzu6yOkKAWRLiVooU';
@@ -36,6 +36,7 @@ function doGet(e) {
   if (action === 'examAnalysis') return jsonResponse(readExamAnalysis(e.parameter.tingkatan || '', e.parameter.kelas || '', e.parameter.ujian || ''));
   if (action === 'examStudent') return jsonResponse(readExamStudent(e.parameter.idMurid || '', e.parameter.nama || '', e.parameter.tingkatan || '', e.parameter.kelas || '', e.parameter.ujian || ''));
   if (action === 'itemMap') return jsonResponse(readItemMap(e.parameter.tingkatan || '', e.parameter.ujian || ''));
+  if (action === 'questionPaperInfo') return jsonResponse(readQuestionPaperInfo(e.parameter.tingkatan || '', e.parameter.ujian || ''));
 
   // Biarkan kosong supaya portal lama tidak error
   if (action === 'pbdBestGallery') return jsonResponse([]);
@@ -53,8 +54,74 @@ function doPost(e) {
   if (data.action === 'savePbdBatch') return jsonResponse(savePbdBatch(data.records || []));
   if (data.action === 'saveExamRecord') return jsonResponse(saveExamRecord(data));
   if (data.action === 'saveItemMapBatch') return jsonResponse(saveItemMapBatch(data));
+  if (data.action === 'uploadQuestionPaper') return jsonResponse(uploadQuestionPaper(data));
 
   return jsonResponse({ success:false, message:'Action tidak sah' });
+}
+
+
+var QUESTION_PAPER_FOLDER_NAME = 'KERTAS SOALAN SEJARAH HUB AI';
+
+function questionPaperKey_(tingkatan, ujian){
+  var t=String(tingkatan||'').replace(/[^0-9A-Za-z]/g,'').toUpperCase();
+  var u=String(ujian||'').replace(/[^0-9A-Za-z]/g,'').toUpperCase();
+  return 'QUESTION_PAPER_'+t+'_'+u;
+}
+
+function questionPaperFolder_(){
+  var folders=DriveApp.getFoldersByName(QUESTION_PAPER_FOLDER_NAME);
+  return folders.hasNext() ? folders.next() : DriveApp.createFolder(QUESTION_PAPER_FOLDER_NAME);
+}
+
+function uploadQuestionPaper(data){
+  var tingkatan=String(data.tingkatan||'').trim();
+  var ujian=String(data.ujian||'').trim().toUpperCase();
+  var fileName=String(data.fileName||'kertas-soalan').replace(/[\\/:*?"<>|]/g,'_').trim();
+  var mimeType=String(data.mimeType||'application/octet-stream').trim();
+  var base64=String(data.base64||'').trim();
+
+  if(!tingkatan || !ujian) return {success:false,message:'Tingkatan dan ujian diperlukan.'};
+  if(!base64) return {success:false,message:'Fail kosong.'};
+
+  var allowed=/pdf|msword|officedocument|image\//i.test(mimeType) || /\.(pdf|doc|docx|jpg|jpeg|png|webp)$/i.test(fileName);
+  if(!allowed) return {success:false,message:'Format fail tidak disokong.'};
+
+  var bytes=Utilities.base64Decode(base64);
+  if(bytes.length > 8*1024*1024) return {success:false,message:'Fail melebihi 8 MB.'};
+
+  var props=PropertiesService.getScriptProperties();
+  var key=questionPaperKey_(tingkatan,ujian);
+  var oldRaw=props.getProperty(key);
+
+  if(oldRaw){
+    try{
+      var old=JSON.parse(oldRaw);
+      if(old.id) DriveApp.getFileById(old.id).setTrashed(true);
+    }catch(err){}
+  }
+
+  var safeName='T'+tingkatan+'_'+ujian+'_'+fileName;
+  var blob=Utilities.newBlob(bytes,mimeType,safeName);
+  var file=questionPaperFolder_().createFile(blob);
+  var info={id:file.getId(),name:file.getName(),url:file.getUrl(),tingkatan:tingkatan,ujian:ujian,uploadedAt:new Date().toISOString()};
+  props.setProperty(key,JSON.stringify(info));
+
+  return {success:true,id:info.id,name:info.name,url:info.url};
+}
+
+function readQuestionPaperInfo(tingkatan, ujian){
+  var key=questionPaperKey_(tingkatan,ujian);
+  var raw=PropertiesService.getScriptProperties().getProperty(key);
+  if(!raw) return {success:true,url:'',name:'',id:''};
+  try{
+    var info=JSON.parse(raw);
+    if(info.id){
+      var file=DriveApp.getFileById(info.id);
+      if(file.isTrashed()) return {success:true,url:'',name:'',id:''};
+      return {success:true,id:file.getId(),name:file.getName(),url:file.getUrl(),uploadedAt:info.uploadedAt||''};
+    }
+  }catch(err){}
+  return {success:true,url:'',name:'',id:''};
 }
 
 function getHubSs(){ return SpreadsheetApp.openById(HUB_SPREADSHEET_ID); }

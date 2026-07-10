@@ -348,3 +348,35 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:inve
 .level-rendah{background:rgba(34,197,94,.16)}
 .level-sederhana{background:rgba(250,204,21,.16)}
 .level-tinggi{background:rgba(244,63,94,.16)}
+
+
+/* v6.4.2: Drag & drop kertas soalan */
+.question-drop-zone{
+  margin:14px 0 10px;
+  min-height:145px;
+  border:2px dashed rgba(125,211,252,.55);
+  border-radius:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  text-align:left;
+  padding:22px;
+  cursor:pointer;
+  background:linear-gradient(135deg,rgba(124,58,237,.14),rgba(6,182,212,.11));
+  transition:.2s ease;
+}
+.question-drop-zone:hover,.question-drop-zone:focus,.question-drop-zone.dragging{
+  outline:none;
+  border-color:#67e8f9;
+  background:linear-gradient(135deg,rgba(124,58,237,.27),rgba(6,182,212,.22));
+  transform:translateY(-1px);
+}
+.question-drop-zone.uploading{opacity:.65;pointer-events:none}
+.question-drop-icon{font-size:46px}
+.question-drop-zone b{display:block;font-size:1.06rem;margin-bottom:6px}
+.question-drop-zone p{margin:0;opacity:.78}
+.question-upload-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+@media(max-width:700px){
+  .question-drop-zone{flex-direction:column;text-align:center;min-height:170px}
+}

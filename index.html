@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sejarah Hub AI | SMK Taman Jasmin 2</title>
-  <link rel="stylesheet" href="style.css?v=641" />
+  <link rel="stylesheet" href="style.css?v=642" />
 </head>
 <body class="portal-body">
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
@@ -168,7 +168,23 @@
 
       <details class="exam-details">
         <summary>🗺️ Pemetaan Soalan kepada Topik dan Aras</summary>
-        <p class="note">Pemetaan dibuat sekali berdasarkan kertas soalan. Muat naik kertas soalan kepada Abah; Abah akan bantu tentukan Topik/Bab dan Aras bagi setiap item. Guru lain tidak perlu isi semula.</p>
+        <p class="note">Seret kertas soalan ke kotak di bawah. Fail disimpan dalam Google Drive. Selepas itu salin pautan dan hantarkan kepada Abah untuk pemetaan Topik/Bab dan Aras. Guru lain tidak perlu isi semula.</p>
+
+        <div id="questionDropZone" class="question-drop-zone" tabindex="0" role="button" aria-label="Muat naik kertas soalan">
+          <input id="questionFileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" hidden />
+          <div class="question-drop-icon">📄</div>
+          <div>
+            <b>Seret & lepaskan kertas soalan di sini</b>
+            <p>atau klik untuk pilih PDF, Word atau gambar • maksimum 8 MB</p>
+          </div>
+        </div>
+        <div class="question-upload-actions">
+          <button type="button" class="pill" id="questionChooseBtn">📎 Pilih Fail</button>
+          <button type="button" class="pill" id="questionOpenBtn" hidden>👁️ Buka Fail</button>
+          <button type="button" class="pill primary" id="questionCopyBtn" hidden>📋 Salin Pautan untuk Abah</button>
+        </div>
+        <div id="questionUploadStatus" class="note pbd-status-box">Belum ada kertas soalan untuk tingkatan dan ujian ini.</div>
+
         <div id="examMapGrid" class="exam-map-grid"></div>
         <div class="pbd-actions">
           <button type="button" class="pill primary" id="examMapSaveBtn">💾 Simpan Pemetaan Item</button>
@@ -216,8 +232,8 @@
     <div id="profileBody"></div>
   </dialog>
 
-  <footer>Versi 6.4.1 Objektif 0/1 + Pemetaan Aras • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <footer>Versi 6.4.2 Drag & Drop Kertas Soalan • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
   <script src="config.js"></script>
-  <script src="script.js?v=641"></script>
+  <script src="script.js?v=642"></script>
 </body>
 </html>
