@@ -549,8 +549,10 @@ function setupQuestionPaperUpload(){
   const input=document.getElementById('questionFileInput');
   const choose=document.getElementById('questionChooseBtn');
   const open=document.getElementById('questionOpenBtn');
-  const ai=document.getElementById('questionAiBtn');
   const copy=document.getElementById('questionCopyBtn');
+  const importBtn=document.getElementById('mappingImportBtn');
+  const importInput=document.getElementById('mappingImportInput');
+  const templateBtn=document.getElementById('mappingTemplateBtn');
   if(!zone||!input) return;
 
   const browse=()=>input.click();
@@ -581,8 +583,14 @@ function setupQuestionPaperUpload(){
   open?.addEventListener('click',()=>{
     if(currentQuestionPaper.url) window.open(currentQuestionPaper.url,'_blank');
   });
-  ai?.addEventListener('click',analyzeQuestionPaperAi);
   copy?.addEventListener('click',copyQuestionPaperLink);
+  importBtn?.addEventListener('click',()=>importInput?.click());
+  importInput?.addEventListener('change',async()=>{
+    const file=importInput.files?.[0];
+    if(file) await importExamMappingFile(file);
+    importInput.value='';
+  });
+  templateBtn?.addEventListener('click',downloadExamMappingTemplate);
 }
 
 function allowedQuestionFile(file){
@@ -642,8 +650,7 @@ async function uploadQuestionPaper(file){
 
     currentQuestionPaper={url:out.url||'',name:out.name||file.name,id:out.id||''};
     renderQuestionPaperInfo();
-    status.innerHTML=`✅ <b>${esc(currentQuestionPaper.name)}</b> sudah dimuat naik. AI akan mula membaca soalan...`;
-    await analyzeQuestionPaperAi(true);
+    status.innerHTML=`✅ <b>${esc(currentQuestionPaper.name)}</b> sudah dimuat naik untuk Tingkatan ${esc(ctx.tingkatan)} • ${esc(ctx.ujian)}. Tekan <b>Salin Pautan untuk Abah</b>. Selepas dapat fail pemetaan, tekan <b>Import Pemetaan Abah</b>.`;
   }catch(e){
     status.textContent='Gagal muat naik: '+e.message;
   }finally{
@@ -676,7 +683,7 @@ async function loadQuestionPaperInfo(){
     if(out.success&&out.url){
       currentQuestionPaper={url:out.url,name:out.name||'Kertas soalan',id:out.id||''};
       renderQuestionPaperInfo();
-      status.innerHTML=`📄 Kertas semasa: <b>${esc(currentQuestionPaper.name)}</b>. Tekan <b>Analisis AI & Isi Automatik</b> jika pemetaan belum lengkap.`;
+      status.innerHTML=`📄 Kertas semasa: <b>${esc(currentQuestionPaper.name)}</b>. Salin pautan untuk Abah atau import fail pemetaan yang sudah siap.`;
     }else{
       status.textContent='Belum ada kertas soalan untuk tingkatan dan ujian ini.';
     }
@@ -687,64 +694,10 @@ async function loadQuestionPaperInfo(){
 
 function renderQuestionPaperInfo(){
   const open=document.getElementById('questionOpenBtn');
-  const ai=document.getElementById('questionAiBtn');
   const copy=document.getElementById('questionCopyBtn');
   const has=Boolean(currentQuestionPaper.url);
   if(open) open.hidden=!has;
-  if(ai) ai.hidden=!has;
   if(copy) copy.hidden=!has;
-}
-
-
-async function analyzeQuestionPaperAi(autoRun=false){
-  const ctx=currentExamContext();
-  const status=document.getElementById('questionUploadStatus');
-  const aiBtn=document.getElementById('questionAiBtn');
-
-  if(!ctx.tingkatan||!ctx.ujian){
-    status.textContent='Pilih tingkatan dan ujian dahulu.';
-    return;
-  }
-  if(!currentQuestionPaper.id){
-    status.textContent='Muat naik kertas soalan dahulu.';
-    return;
-  }
-
-  if(aiBtn){
-    aiBtn.disabled=true;
-    aiBtn.textContent='⏳ AI sedang membaca...';
-  }
-  status.innerHTML='🤖 AI sedang membaca kertas soalan dan menentukan <b>Topik/Bab</b> serta <b>Aras</b>. Proses ini mungkin mengambil sedikit masa...';
-
-  try{
-    const res=await fetch(CONFIG.SHEET_API_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({
-        action:'analyzeQuestionPaperAi',
-        tingkatan:ctx.tingkatan,
-        ujian:ctx.ujian
-      })
-    });
-    const out=await res.json();
-    if(!out.success) throw new Error(out.message||'Analisis AI gagal');
-
-    examData.itemMap=(examData.itemMap||[]).filter(r=>!(
-      String(r.Tingkatan||r.tingkatan||'')===String(ctx.tingkatan) &&
-      examNorm(r.Ujian||r.ujian||'')===ctx.ujian
-    )).concat(out.rows||[]);
-
-    renderExamMapGrid();
-    status.innerHTML=`✅ AI selesai memetakan <b>${esc(out.count||0)} item</b> menggunakan <b>${esc(out.model||'OpenAI')}</b>. Semak pemetaan di bawah dan ubah secara manual jika perlu.`;
-    document.getElementById('examMapStatus').innerHTML=`✅ Pemetaan AI telah disimpan untuk <b>Tingkatan ${esc(ctx.tingkatan)} • ${esc(ctx.ujian)}</b>.`;
-  }catch(e){
-    status.innerHTML=`❌ Analisis AI gagal: ${esc(e.message)}<br><small>Fail masih selamat dalam Google Drive. Semak API key, baki API dan deployment Apps Script.</small>`;
-  }finally{
-    if(aiBtn){
-      aiBtn.disabled=false;
-      aiBtn.textContent='🤖 Analisis AI & Isi Automatik';
-    }
-  }
 }
 
 async function copyQuestionPaperLink(){
@@ -754,7 +707,7 @@ async function copyQuestionPaperLink(){
     status.textContent='Belum ada pautan kertas soalan untuk disalin.';
     return;
   }
-  const text=`Tolong petakan kertas soalan Sejarah Tingkatan ${ctx.tingkatan} (${ctx.ujian}) kepada Topik/Bab dan Aras Rendah, Sederhana atau Tinggi bagi setiap item. Pautan: ${currentQuestionPaper.url}`;
+  const text=`Tolong petakan kertas soalan Sejarah Tingkatan ${ctx.tingkatan} (${ctx.ujian}) kepada Topik/Bab dan Aras Rendah, Sederhana atau Tinggi bagi setiap item. Sediakan fail CSV atau JSON untuk saya import ke Sejarah Hub AI. Format: Soalan,Topik,Aras. Pautan: ${currentQuestionPaper.url}`;
   try{
     await navigator.clipboard.writeText(text);
     status.innerHTML='✅ Arahan dan pautan sudah disalin. Tampal dalam chat Abah.';
@@ -762,6 +715,155 @@ async function copyQuestionPaperLink(){
     window.prompt('Salin teks ini dan tampal dalam chat Abah:',text);
   }
 }
+
+
+function mappingCsvEscape(value){
+  const s=String(value??'');
+  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+}
+
+function downloadExamMappingTemplate(){
+  const ctx=currentExamContext();
+  const status=document.getElementById('questionUploadStatus');
+  if(!ctx.tingkatan||!ctx.ujian){
+    status.textContent='Pilih tingkatan dan ujian dahulu.';
+    return;
+  }
+
+  const items=examData.items.length?examData.items:examItemsFallback();
+  const rows=[['Soalan','Topik','Aras'],...items.map(it=>[it.key,'',''])];
+  const csvText=rows.map(row=>row.map(mappingCsvEscape).join(',')).join('\r\n');
+  const blob=new Blob(['\ufeff'+csvText],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`Pemetaan_Sejarah_T${ctx.tingkatan}_${ctx.ujian}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  status.innerHTML='✅ Template CSV sudah dimuat turun. Hantar bersama kertas soalan kepada Abah jika perlu.';
+}
+
+function parseMappingCsv(text){
+  const rows=[];
+  let row=[],cell='',quoted=false;
+
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(ch==='"'){
+      if(quoted&&text[i+1]==='"'){ cell+='"'; i++; }
+      else quoted=!quoted;
+    }else if(ch===','&&!quoted){
+      row.push(cell); cell='';
+    }else if((ch==='\n'||ch==='\r')&&!quoted){
+      if(ch==='\r'&&text[i+1]==='\n') i++;
+      row.push(cell); cell='';
+      if(row.some(v=>String(v).trim()!=='')) rows.push(row);
+      row=[];
+    }else{
+      cell+=ch;
+    }
+  }
+  row.push(cell);
+  if(row.some(v=>String(v).trim()!=='')) rows.push(row);
+  if(!rows.length) return [];
+
+  const headers=rows[0].map(h=>examNorm(String(h).replace(/^\ufeff/,'')));
+  const qIndex=headers.findIndex(h=>['SOALAN','ITEM','QUESTION'].includes(h));
+  const tIndex=headers.findIndex(h=>['TOPIK','TOPIK / BAB','TOPIK/BAB','BAB'].includes(h));
+  const aIndex=headers.findIndex(h=>['ARAS','LEVEL'].includes(h));
+
+  if(qIndex<0||tIndex<0||aIndex<0){
+    throw new Error('Header CSV mesti mempunyai Soalan, Topik dan Aras.');
+  }
+
+  return rows.slice(1).map(r=>({
+    soalan:String(r[qIndex]||'').trim(),
+    topik:String(r[tIndex]||'').trim(),
+    aras:String(r[aIndex]||'').trim()
+  })).filter(r=>r.soalan);
+}
+
+function normalizeImportedMapping(data){
+  const source=Array.isArray(data)?data:(data?.items||data?.rows||[]);
+  if(!Array.isArray(source)) throw new Error('Format JSON tidak sah.');
+
+  return source.map(r=>({
+    soalan:String(r.soalan??r.Soalan??r.item??r.Item??'').trim(),
+    topik:String(r.topik??r.Topik??r.bab??r.Bab??'').trim(),
+    aras:String(r.aras??r.Aras??r.level??r.Level??'').trim()
+  })).filter(r=>r.soalan);
+}
+
+function normalizeMappingLevel(value){
+  const key=examNorm(value);
+  if(key==='RENDAH') return 'Rendah';
+  if(key==='SEDERHANA') return 'Sederhana';
+  if(key==='TINGGI') return 'Tinggi';
+  return '';
+}
+
+async function importExamMappingFile(file){
+  const ctx=currentExamContext();
+  const status=document.getElementById('questionUploadStatus');
+
+  if(!ctx.tingkatan||!ctx.ujian){
+    status.textContent='Pilih tingkatan dan ujian dahulu.';
+    return;
+  }
+
+  if(!/\.(csv|json)$/i.test(file.name)){
+    status.textContent='Gunakan fail CSV atau JSON daripada Abah.';
+    return;
+  }
+
+  try{
+    const text=await file.text();
+    let imported;
+
+    if(/\.json$/i.test(file.name)||/^\s*[\[{]/.test(text)){
+      imported=normalizeImportedMapping(JSON.parse(text));
+    }else{
+      imported=parseMappingCsv(text);
+    }
+
+    if(!imported.length) throw new Error('Fail tidak mempunyai rekod pemetaan.');
+
+    const mapRows=[...document.querySelectorAll('.map-row')];
+    const byKey={};
+    imported.forEach(r=>{ byKey[examNorm(r.soalan)]=r; });
+
+    let filled=0;
+    const missing=[];
+
+    mapRows.forEach(row=>{
+      const key=examNorm(row.dataset.question);
+      const item=byKey[key];
+      if(!item) return;
+
+      const topicInput=row.querySelector('.map-topic');
+      const levelInput=row.querySelector('.map-level');
+      const level=normalizeMappingLevel(item.aras);
+
+      if(topicInput) topicInput.value=item.topik;
+      if(levelInput) levelInput.value=level;
+
+      if(item.topik&&level) filled++;
+      else missing.push(row.dataset.question);
+    });
+
+    status.innerHTML=`✅ Fail <b>${esc(file.name)}</b> berjaya diimport. <b>${filled}</b> item lengkap. Semak paparan di bawah, kemudian tekan <b>Simpan Pemetaan Item</b>.`;
+    document.getElementById('examMapStatus').innerHTML=missing.length
+      ? `⚠️ Import selesai tetapi item ini belum lengkap: ${esc(missing.join(', '))}`
+      : `✅ Semua item yang ditemui dalam fail telah dimasukkan. Tekan Simpan Pemetaan Item.`;
+
+    document.getElementById('examMapGrid')?.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    status.innerHTML=`❌ Import gagal: ${esc(e.message)}`;
+  }
+}
+
 
 function populateExamStudents(){
   const {tingkatan,kelas}=currentExamContext();

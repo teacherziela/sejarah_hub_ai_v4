@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sejarah Hub AI | SMK Taman Jasmin 2</title>
-  <link rel="stylesheet" href="style.css?v=650" />
+  <link rel="stylesheet" href="style.css?v=660" />
 </head>
 <body class="portal-body">
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
@@ -168,7 +168,7 @@
 
       <details class="exam-details">
         <summary>🗺️ Pemetaan Soalan kepada Topik dan Aras</summary>
-        <p class="note">Seret kertas soalan ke kotak di bawah. Selepas fail berjaya dimuat naik, AI akan membaca soalan, menentukan Topik/Bab dan Aras, kemudian mengisi pemetaan secara automatik.</p>
+        <p class="note">Seret kertas soalan ke kotak di bawah. Fail akan disimpan dalam Google Drive. Salin pautan dan hantar kepada Abah. Selepas Abah beri fail pemetaan, import fail itu di sini tanpa bayaran API.</p>
 
         <div id="questionDropZone" class="question-drop-zone" tabindex="0" role="button" aria-label="Muat naik kertas soalan">
           <input id="questionFileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" hidden />
@@ -181,10 +181,12 @@
         <div class="question-upload-actions">
           <button type="button" class="pill" id="questionChooseBtn">📎 Pilih Fail</button>
           <button type="button" class="pill" id="questionOpenBtn" hidden>👁️ Buka Fail</button>
-          <button type="button" class="pill primary" id="questionAiBtn" hidden>🤖 Analisis AI & Isi Automatik</button>
-          <button type="button" class="pill" id="questionCopyBtn" hidden>📋 Salin Pautan (Pilihan Kedua)</button>
+          <button type="button" class="pill primary" id="questionCopyBtn" hidden>📋 Salin Pautan untuk Abah</button>
+          <button type="button" class="pill primary" id="mappingImportBtn">📥 Import Pemetaan Abah</button>
+          <button type="button" class="pill" id="mappingTemplateBtn">📄 Muat Turun Template</button>
+          <input id="mappingImportInput" type="file" accept=".csv,.json,text/csv,application/json" hidden />
         </div>
-        <div id="questionUploadStatus" class="note pbd-status-box">Belum ada kertas soalan untuk tingkatan dan ujian ini.</div>
+        <div id="questionUploadStatus" class="note pbd-status-box">Belum ada kertas soalan. Selepas Abah beri fail CSV/JSON, tekan Import Pemetaan Abah.</div>
 
         <div id="examMapGrid" class="exam-map-grid"></div>
         <div class="pbd-actions">
@@ -233,8 +235,8 @@
     <div id="profileBody"></div>
   </dialog>
 
-  <footer>Versi 6.5 AI Auto Pemetaan Drag & Drop Kertas Soalan • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <footer>Versi 6.6 Import Pemetaan Tanpa API Drag & Drop Kertas Soalan • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
   <script src="config.js"></script>
-  <script src="script.js?v=650"></script>
+  <script src="script.js?v=660"></script>
 </body>
 </html>

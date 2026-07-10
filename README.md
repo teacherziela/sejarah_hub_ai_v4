@@ -1,36 +1,50 @@
-SEJARAH HUB AI v6.5 — AI AUTO PEMETAAN TOPIK DAN ARAS
+SEJARAH HUB AI v6.6 — IMPORT PEMETAAN TANPA API
 
-FUNGSI BAHARU
-- Selepas PDF, DOC, DOCX atau gambar dimuat naik, sistem terus memanggil OpenAI API.
-- AI membaca kertas soalan dan memetakan semua O1–O20, S1a–S4c dan E1a–E2c.
-- AI mengisi Topik/Bab dan Aras Rendah, Sederhana atau Tinggi.
-- Pemetaan terus disimpan dalam tab PEMETAAN ITEM pada fail Analisis Item Sejarah 2026.
-- Butang "Analisis AI & Isi Automatik" disediakan untuk cuba semula tanpa upload semula.
-- Guru masih boleh menyemak dan membetulkan pemetaan secara manual.
+VERSI INI TIDAK MENGGUNAKAN OPENAI API DAN TIDAK MEMERLUKAN BAYARAN TAMBAHAN.
 
-MODEL
-- Lalai: gpt-5.6-luna.
-- Model boleh ditukar melalui Script Property:
-  OPENAI_MODEL = gpt-5.6-terra
-- OPENAI_API_KEY mesti sudah disimpan dalam Script Properties.
+ALIRAN KERJA
+1. Guru pilih Tingkatan dan Ujian.
+2. Guru upload kertas soalan ke portal.
+3. Tekan "Salin Pautan untuk Abah".
+4. Tampal arahan dan pautan dalam chat ChatGPT.
+5. Abah analisis kertas soalan menggunakan langganan ChatGPT pengguna.
+6. Abah beri fail CSV atau JSON.
+7. Dalam portal, tekan "Import Pemetaan Abah".
+8. Pilih fail tersebut.
+9. Semak Topik dan Aras yang terisi.
+10. Tekan "Simpan Pemetaan Item".
+
+FORMAT CSV
+Soalan,Topik,Aras
+O1,Bab 1: Mengenali Sejarah,Rendah
+O2,Bab 1: Mengenali Sejarah,Sederhana
+
+FORMAT JSON
+{
+  "items": [
+    {"soalan":"O1","topik":"Bab 1: Mengenali Sejarah","aras":"Rendah"}
+  ]
+}
+
+ARAS YANG DITERIMA
+- Rendah
+- Sederhana
+- Tinggi
 
 GITHUB — GANTI
-1. index.html
-2. script.js
-3. style.css
-4. admin.html
-5. admin.js
+- index.html
+- script.js
+- style.css
+- admin.html
+- admin.js
 
-APPS SCRIPT PANITIA AI
-1. Ganti Code.gs dengan apps_script_google_sheet.gs.
-2. Ganti appsscript.json.
-3. Save.
-4. Run testOpenAiKeyAndPaper untuk semak key dan fail (fungsi ini tidak menggunakan kredit API).
-5. Deploy > Manage deployments > Edit > New version > Deploy.
-6. Benarkan akses "Connect to an external service" apabila diminta.
-7. Buka portal dan tekan Ctrl+F5.
-8. Untuk kertas T1 UPSA yang sudah dimuat naik, tekan "Analisis AI & Isi Automatik".
+APPS SCRIPT
+- Ganti Code.gs menggunakan apps_script_google_sheet.gs.
+- Save.
+- Deploy > Manage deployments > Edit > New version > Deploy.
+- Buka portal dan tekan Ctrl+F5.
 
 NOTA
-- Fail DOCX boleh dibaca sebagai dokumen kaya, tetapi imej/rajah tertanam lebih tepat jika kertas ditukar kepada PDF.
-- Setiap analisis menggunakan kredit OpenAI API.
+- Tidak perlu simpan OPENAI_API_KEY.
+- Property OPENAI_API_KEY dan OPENAI_MODEL boleh dipadam daripada Script Properties.
+- Fail kertas soalan masih disimpan dalam Google Drive.
