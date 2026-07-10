@@ -18,6 +18,11 @@ function fmtDate(v){
   if(!isNaN(d)) return d.toLocaleDateString('ms-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
   return s;
 }
+function todayInputValue(){
+  const d=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
 function cleanName(n){ return String(n||'').replace(/\s*KPM-Guru\s*$/i,'').trim(); }
 function yearsText(v){
   const s=String(v||'').trim();
@@ -49,6 +54,8 @@ async function init(){
   document.getElementById('yearSelect').addEventListener('change', loadYear);
   document.getElementById('reloadBtn').addEventListener('click', loadYear);
   document.getElementById('searchGuru').addEventListener('input', e=>{ const q=e.target.value.toLowerCase(); renderGuru(guruData.filter(g=>Object.values(g).join(' ').toLowerCase().includes(q))); });
+  const pbdTarikh=document.getElementById('pbdTarikh');
+  if(pbdTarikh && !pbdTarikh.value) pbdTarikh.value=todayInputValue();
   document.getElementById('pbdTingkatan').addEventListener('change', onPbdTingkatan);
   document.getElementById('pbdKelas').addEventListener('change', onPbdKelas);
   document.getElementById('pbdLoadBtn').addEventListener('click', loadPbdStudents);
@@ -221,19 +228,21 @@ async function savePbdBatch(){
   const topik=selectedTopik();
   const ting=document.getElementById('pbdTingkatan').value;
   const kelas=document.getElementById('pbdKelas').value;
+  const tarikh=document.getElementById('pbdTarikh')?.value || '';
   const guru=cleanName(document.getElementById('pbdGuru').value || 'Guru Sejarah');
+  if(!tarikh){ document.getElementById('pbdStatus').textContent='Pilih tarikh pentaksiran melalui kalendar dahulu.'; return; }
   const activeRows=[...document.querySelectorAll('.pbd-row')].filter(r=>r.dataset.tp);
   const rows=activeRows.map(r=>({
     idMurid:r.dataset.id, namaMurid:r.dataset.name, tingkatan:ting, kelas:kelas, idTopik:topik.IDTopik,
     topik:topik.Topik, sk:topik['SK (Standard Kandungan)'], sp:topik['SP (Standard Pembelajaran)'],
-    tp:r.dataset.tp, catatan:r.querySelector('.catatan').value, ditafsirOleh:guru
+    tarikh:tarikh, tp:r.dataset.tp, catatan:r.querySelector('.catatan').value, ditafsirOleh:guru
   }));
   if(!rows.length){ document.getElementById('pbdStatus').textContent='Pilih TP sekurang-kurangnya seorang murid.'; return; }
   saveBtn.dataset.busy='1';
   saveBtn.disabled=true;
   const oldText=saveBtn.textContent;
   saveBtn.textContent='⏳ Menyimpan...';
-  document.getElementById('pbdStatus').textContent=`Menyimpan ${rows.length} rekod TP...`;
+  document.getElementById('pbdStatus').textContent=`Menyimpan ${rows.length} rekod TP untuk ${fmtDate(tarikh)}...`;
   try{
     const res=await fetch(CONFIG.SHEET_API_URL,{method:'POST',body:JSON.stringify({action:'savePbdBatch',records:rows})});
     const out=await res.json();
@@ -243,7 +252,7 @@ async function savePbdBatch(){
       r.querySelector('.save-state').textContent='✅ Sudah disimpan';
       delete r.dataset.tp;
     });
-    document.getElementById('pbdStatus').innerHTML=`✅ Berjaya simpan <b>${out.count||rows.length}</b> rekod TP. Data sudah masuk ke Google Sheet.`;
+    document.getElementById('pbdStatus').innerHTML=`✅ Berjaya simpan <b>${out.count||rows.length}</b> rekod TP bertarikh <b>${esc(fmtDate(tarikh))}</b>. Data sudah masuk ke Google Sheet.`;
     updatePbdProgress();
   }catch(e){
     document.getElementById('pbdStatus').textContent='Gagal simpan: '+e.message;

@@ -1,21 +1,27 @@
-SEJARAH HUB AI v6.2.1 - ISI PBD FIX
+SEJARAH HUB AI v6.3 — KALENDAR TARIKH
 
-Punca pilihan Tingkatan/Kelas kosong:
-Apps Script menghantar data murid dengan nama medan kecil (tingkatan, kelas, nama), tetapi modul Isi PBD membaca nama medan lama (Tingkatan, Kelas, Nama Murid).
+PERUBAHAN
+- Isi PBD mempunyai pilihan Tarikh Pentaksiran melalui kalendar.
+- Tarikh hari ini dipilih secara automatik, tetapi guru boleh memilih tarikh lain.
+- Tarikh pilihan disimpan ke kolum Tarikh dalam REKOD TP.
+- Panel Pentadbir: Tarikh Pengumuman dan Tarikh Galeri menggunakan kalendar.
+- Semasa edit data lama, tarikh ditukar semula kepada format kalendar secara automatik.
+- Tiada tab Google Sheet baharu diwujudkan.
 
-Versi ini membetulkan kedua-dua bahagian:
-- Isi PBD: Tingkatan, Kelas dan murid keluar semula.
-- Rumusan: kekal guna TP tertinggi setiap murid.
-- Data MURID dan REKOD TP tidak dipadam atau diubah oleh pembetulan ini.
+GITHUB — GANTI FAIL INI
+1. index.html
+2. script.js
+3. admin.html
+4. admin.js
+5. style.css
+6. config.js (hanya jika URL Web App berubah)
 
-LANGKAH APPS SCRIPT PANITIA AI
-1. Ganti Code.gs dengan apps_script_google_sheet.gs dalam pakej ini.
+APPS SCRIPT PANITIA AI
+1. Ganti Code.gs dengan kandungan apps_script_google_sheet.gs.
 2. Save.
-3. Run testPbdClassSummary sekali.
-4. Deploy > Manage deployments > Edit > New version > Deploy.
+3. Deploy > Manage deployments > Edit > New version > Deploy.
+4. Buka portal dan tekan Ctrl+F5.
 
-LANGKAH GITHUB
-1. Ganti index.html dan script.js.
-2. Boleh ganti semua fail dalam pakej untuk paling selamat.
-3. Commit changes.
-4. Tunggu 1-2 minit dan tekan Ctrl+F5.
+NOTA
+- appsscript.json tidak perlu diubah jika versi lama sudah menggunakan akses spreadsheets.
+- Tarikh disimpan sebagai tarikh sebenar Google Sheets dengan paparan dd/MM/yyyy.

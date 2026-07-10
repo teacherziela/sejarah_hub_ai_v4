@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v6.2.1 - ISI PBD + RUMUSAN TP TERTINGGI FIX
+// SEJARAH HUB AI v6.3 - KALENDAR TARIKH PBD + PANEL PENTADBIR
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -112,6 +112,7 @@ function addRecord(module, data){
   }
 
   sh.appendRow(row);
+  formatDateColumn_(sh, sh.getLastRow(), cfg);
   return { success:true, message:'Data berjaya ditambah', id:id };
 }
 
@@ -127,6 +128,7 @@ function updateRecord(module, data){
         row.push(h === 'ID' ? data.id : valueForHeader(h, data));
       }
       sh.getRange(r+1,1,1,cfg.headers.length).setValues([row]);
+      formatDateColumn_(sh, r+1, cfg);
       return { success:true, message:'Data berjaya dikemaskini' };
     }
   }
@@ -146,6 +148,27 @@ function deleteRecord(module, id){
   return { success:false, message:'ID tidak dijumpai' };
 }
 
+function parseCalendarDate_(value){
+  if(value instanceof Date && !isNaN(value.getTime())) return value;
+
+  var s=String(value||'').trim();
+  if(!s) return '';
+
+  var iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso) return new Date(Number(iso[1]), Number(iso[2])-1, Number(iso[3]));
+
+  var my=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if(my) return new Date(Number(my[3]), Number(my[2])-1, Number(my[1]));
+
+  var d=new Date(s);
+  return isNaN(d.getTime()) ? s : d;
+}
+
+function formatDateColumn_(sh, row, cfg){
+  var tarikhIndex=cfg.headers.indexOf('Tarikh');
+  if(tarikhIndex > -1) sh.getRange(row, tarikhIndex+1).setNumberFormat('dd/MM/yyyy');
+}
+
 function valueForHeader(h,d){
   var map = {
     'Nama':'nama','Kad Pengenalan':'kadPengenalan','Jawatan':'jawatan','Opsyen':'opsyen','Ijazah':'ijazah',
@@ -153,7 +176,8 @@ function valueForHeader(h,d){
     'Tahun':'tahun','Tajuk':'tajuk','Tarikh':'tarikh','Isi':'isi','Link':'link','Tingkatan':'tingkatan',
     'Kategori':'kategori','Icon':'icon','Penerangan':'penerangan','Photo':'photo','Bab':'bab','Jenis':'jenis'
   };
-  return d[map[h]] || d[h] || '';
+  var value=d[map[h]] || d[h] || '';
+  return h === 'Tarikh' ? parseCalendarDate_(value) : value;
 }
 
 function normalize_(s){
@@ -435,14 +459,14 @@ function savePbdBatch(records){
   var sh=ss.getSheetByName('REKOD TP');
   if(!sh) return { success:false, message:'Sheet REKOD TP tidak dijumpai' };
 
-  var now=new Date();
   var rows=[];
 
   for(var i=0;i<records.length;i++){
     var r=records[i];
+    var selectedDate=parseCalendarDate_(r.tarikh || new Date());
     rows.push([
       Utilities.getUuid().slice(0,8),
-      now,
+      selectedDate,
       r.idMurid||'',
       r.namaMurid||'',
       r.idTopik||'',
@@ -459,7 +483,9 @@ function savePbdBatch(records){
     ]);
   }
 
-  sh.getRange(sh.getLastRow()+1,1,rows.length,15).setValues(rows);
+  var startRow=sh.getLastRow()+1;
+  sh.getRange(startRow,1,rows.length,15).setValues(rows);
+  sh.getRange(startRow,2,rows.length,1).setNumberFormat('dd/MM/yyyy');
 
   return { success:true, count:rows.length, message:'Rekod TP berjaya disimpan' };
 }
