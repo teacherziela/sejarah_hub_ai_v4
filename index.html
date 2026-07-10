@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sejarah Hub AI | SMK Taman Jasmin 2</title>
-  <link rel="stylesheet" href="style.css?v=630" />
+  <link rel="stylesheet" href="style.css?v=640" />
 </head>
 <body class="portal-body">
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
@@ -28,7 +28,7 @@
     <section class="glass welcome">
       <div>
         <h2>Selamat datang, Cikgu</h2>
-        <p>Semua bahan Panitia Sejarah dalam satu pusat: PBD, DSKP, buku teks, analisis item, biodata guru, BBM digital, galeri dan pengumuman.</p>
+        <p>Semua bahan Panitia Sejarah dalam satu pusat: PBD, markah peperiksaan, analisis item, DSKP, biodata guru, BBM digital, galeri dan pengumuman.</p>
       </div>
       <div class="stat-strip" id="statStrip"></div>
     </section>
@@ -106,6 +106,77 @@
     </section>
 
 
+
+    <section class="glass panel exam-panel" id="examPanel">
+      <div class="section-head">
+        <h2>📊 Analisis Peperiksaan + PBD</h2>
+        <span class="note">Data markah dibaca daripada fail Analisis Item Sejarah 2026 dan dibandingkan dengan TP tertinggi murid.</span>
+      </div>
+
+      <div class="exam-controls">
+        <label>Tingkatan
+          <select id="examTingkatan"><option value="">Pilih Tingkatan</option></select>
+        </label>
+        <label>Kelas
+          <select id="examKelas"><option value="">Pilih Kelas</option></select>
+        </label>
+        <label>Ujian
+          <input id="examUjian" list="examUjianList" value="UPSA" placeholder="Contoh: UPSA" />
+          <datalist id="examUjianList"><option value="UPSA"></option></datalist>
+        </label>
+        <button class="pill primary" id="examAnalyseBtn">Papar Analisis</button>
+      </div>
+
+      <div id="examStatus" class="note pbd-status-box">Pilih tingkatan, kelas dan ujian.</div>
+      <div id="examSummaryCards" class="summary-cards exam-summary-cards"></div>
+
+      <div class="exam-two-col">
+        <div class="pbd-list-card">
+          <h3>👩‍🎓 Perbandingan Markah Peperiksaan dan TP</h3>
+          <div id="examStudentTable" class="exam-table-wrap"><p class="note">Belum dipaparkan.</p></div>
+        </div>
+        <div class="pbd-list-card">
+          <h3>🎯 Topik Paling Lemah</h3>
+          <div id="examWeakTopics" class="exam-table-wrap"><p class="note">Belum dipaparkan.</p></div>
+        </div>
+      </div>
+
+      <div class="pbd-list-card full-list-card">
+        <h3>🧩 Analisis Mengikut Soalan dan Topik</h3>
+        <div id="examItemTable" class="exam-table-wrap"><p class="note">Belum dipaparkan.</p></div>
+      </div>
+
+      <details class="exam-details" open>
+        <summary>⌨️ Key In / Edit Markah Murid</summary>
+        <div class="exam-keyin-head">
+          <label>Murid
+            <select id="examStudent"><option value="">Pilih murid</option></select>
+          </label>
+          <label class="check-label">
+            <input id="examTH" type="checkbox" />
+            Tidak Hadir (TH)
+          </label>
+          <button type="button" class="pill" id="examLoadStudentBtn">Muat Markah</button>
+          <div id="examMarkPreview" class="mark-preview">Jumlah: 0/80 • 0% • Gred F</div>
+        </div>
+        <div id="examMarksGrid" class="exam-marks-grid"></div>
+        <div class="pbd-actions">
+          <button type="button" class="pill primary" id="examSaveBtn">💾 Simpan Markah ke Master Markah</button>
+        </div>
+        <div id="examSaveStatus" class="note pbd-status-box">Pilih murid untuk key in markah.</div>
+      </details>
+
+      <details class="exam-details">
+        <summary>🗺️ Pemetaan Nombor Soalan kepada Topik</summary>
+        <p class="note">Isi topik bagi setiap soalan. Sistem akan mengumpulkan soalan yang sama topik dan menunjukkan topik paling lemah.</p>
+        <div id="examMapGrid" class="exam-map-grid"></div>
+        <div class="pbd-actions">
+          <button type="button" class="pill primary" id="examMapSaveBtn">💾 Simpan Pemetaan Item</button>
+        </div>
+        <div id="examMapStatus" class="note pbd-status-box">Pilih tingkatan dan ujian untuk pemetaan.</div>
+      </details>
+    </section>
+
     <section class="grid-3">
       <article class="glass panel">
         <h2>📢 Pengumuman</h2>
@@ -145,8 +216,8 @@
     <div id="profileBody"></div>
   </dialog>
 
-  <footer>Versi 6.3 Kalendar Tarikh • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <footer>Versi 6.4 Analisis Peperiksaan + PBD • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
   <script src="config.js"></script>
-  <script src="script.js?v=630"></script>
+  <script src="script.js?v=640"></script>
 </body>
 </html>

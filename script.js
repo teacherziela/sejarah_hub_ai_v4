@@ -63,8 +63,20 @@ async function init(){
   document.getElementById('rumusTingkatan')?.addEventListener('change', onRumusTingkatan);
   document.getElementById('rumusKelas')?.addEventListener('change', renderPbdSummary);
   document.getElementById('rumusRefreshBtn')?.addEventListener('click', renderPbdSummary);
+
+  document.getElementById('examTingkatan')?.addEventListener('change', onExamTingkatan);
+  document.getElementById('examKelas')?.addEventListener('change', onExamContextChanged);
+  document.getElementById('examUjian')?.addEventListener('change', onExamContextChanged);
+  document.getElementById('examAnalyseBtn')?.addEventListener('click', renderExamAnalysis);
+  document.getElementById('examStudent')?.addEventListener('change', loadExamStudent);
+  document.getElementById('examLoadStudentBtn')?.addEventListener('click', loadExamStudent);
+  document.getElementById('examSaveBtn')?.addEventListener('click', saveExamRecord);
+  document.getElementById('examTH')?.addEventListener('change', updateExamPreview);
+  document.getElementById('examMapSaveBtn')?.addEventListener('click', saveExamItemMap);
+
   await loadYear();
   await initPbd();
+  await initExam();
 }
 async function loadYear(){
   const year=getYear();
@@ -77,7 +89,7 @@ function renderStats(year){
   document.getElementById('statStrip').innerHTML = stats.map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join('');
 }
 function renderMenu(year){
-  const fixed=[{icon:'📊',title:'PBD / Rumusan',target:'pbdPanel'},{icon:'👥',title:'Ahli Panitia',target:'guruPanel'}];
+  const fixed=[{icon:'📊',title:'PBD / Rumusan',target:'pbdPanel'},{icon:'🧩',title:'Analisis Peperiksaan',target:'examPanel'},{icon:'👥',title:'Ahli Panitia',target:'guruPanel'}];
   const quick=byYear(hub.linkPantas,year).map(x=>isBiodataGuruLink(x)
     ? {icon:x.Icon||'👩‍🏫',title:x.Nama,target:'guruPanel'}
     : {icon:x.Icon||'🔗',title:x.Nama,url:x.Link});
@@ -408,4 +420,477 @@ function renderStudentTable(list, headers, emptyText){
     </tr>`;
   }).join('');
   return `<div class="table-scroll"><table class="pbd-table"><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>${list.length>80?`<p class="note">Dipaparkan 80 daripada ${list.length} rekod.</p>`:''}</div>`;
+}
+
+
+// ================= ANALISIS PEPERIKSAAN + PBD v6.4 =================
+let examData={ ujian:['UPSA'], items:[], itemMap:[] };
+
+function examApiUrl(params){
+  return pbdApiUrl(params);
+}
+
+function examNorm(v){
+  return String(v||'').toUpperCase().replace(/\s+/g,' ').trim();
+}
+
+function examClassNorm(v){
+  return examNorm(v).replace(/\s+/g,'').replace('PROGESIF','PROGRESIF');
+}
+
+function examGrade(percent){
+  const p=Number(percent||0);
+  if(p>=82) return 'A';
+  if(p>=66) return 'B';
+  if(p>=50) return 'C';
+  if(p>=35) return 'D';
+  if(p>=20) return 'E';
+  return 'F';
+}
+
+function examItemsFallback(){
+  const out=[];
+  for(let i=1;i<=20;i++) out.push({key:`O${i}`,section:'Objektif',max:1});
+  for(let i=1;i<=4;i++){
+    out.push({key:`S${i}a`,section:'Struktur',max:3});
+    out.push({key:`S${i}b`,section:'Struktur',max:3});
+    out.push({key:`S${i}c`,section:'Struktur',max:4});
+  }
+  for(let i=1;i<=2;i++){
+    out.push({key:`E${i}a`,section:'Esei',max:6});
+    out.push({key:`E${i}b`,section:'Esei',max:6});
+    out.push({key:`E${i}c`,section:'Esei',max:8});
+  }
+  return out;
+}
+
+async function initExam(){
+  const status=document.getElementById('examStatus');
+  if(!status) return;
+
+  try{
+    status.textContent='Menghubungkan Analisis Item Sejarah 2026...';
+    const res=await fetch(examApiUrl({action:'examInit'}));
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message||'Gagal baca fail markah');
+
+    examData={
+      ujian:(data.ujian||['UPSA']).map(examNorm).filter(Boolean),
+      items:(data.items||examItemsFallback()),
+      itemMap:data.itemMap||[]
+    };
+
+    const list=document.getElementById('examUjianList');
+    list.innerHTML=[...new Set([...examData.ujian,'UPSA','UASA','PPT'])].map(x=>`<option value="${esc(x)}"></option>`).join('');
+
+    initExamControls();
+    renderExamMarksGrid({});
+    renderExamMapGrid();
+
+    status.textContent='Sedia. Pilih tingkatan, kelas dan ujian untuk membandingkan markah peperiksaan dengan TP.';
+  }catch(e){
+    status.textContent='Gagal sambung data markah: '+e.message;
+  }
+}
+
+function initExamControls(){
+  const tingSel=document.getElementById('examTingkatan');
+  if(!tingSel) return;
+
+  const tings=[...new Set((pbdData.murid||[])
+    .filter(m=>muridStatus(m)!=='PINDAH')
+    .map(m=>muridTing(m))
+    .filter(Boolean))]
+    .sort((a,b)=>Number(a)-Number(b));
+
+  tingSel.innerHTML='<option value="">Pilih Tingkatan</option>'+tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
+
+  if(tings.length){
+    tingSel.value=tings[0];
+    onExamTingkatan();
+  }
+}
+
+function onExamTingkatan(){
+  const ting=document.getElementById('examTingkatan').value;
+  const kelas=[...new Set((pbdData.murid||[])
+    .filter(m=>muridStatus(m)!=='PINDAH' && String(muridTing(m))===String(ting))
+    .map(m=>muridKelas(m))
+    .filter(Boolean))]
+    .sort();
+
+  const kelasSel=document.getElementById('examKelas');
+  kelasSel.innerHTML='<option value="">Pilih Kelas</option>'+kelas.map(k=>`<option value="${esc(k)}">${esc(ting+' '+k)}</option>`).join('');
+
+  if(kelas.length) kelasSel.value=kelas[0];
+  onExamContextChanged();
+}
+
+function onExamContextChanged(){
+  populateExamStudents();
+  renderExamMapGrid();
+  clearExamAnalysis();
+}
+
+function currentExamContext(){
+  return {
+    tingkatan:document.getElementById('examTingkatan')?.value||'',
+    kelas:document.getElementById('examKelas')?.value||'',
+    ujian:examNorm(document.getElementById('examUjian')?.value||'UPSA')
+  };
+}
+
+function populateExamStudents(){
+  const {tingkatan,kelas}=currentExamContext();
+  const students=(pbdData.murid||[])
+    .filter(m=>muridStatus(m)!=='PINDAH' &&
+      String(muridTing(m))===String(tingkatan) &&
+      examClassNorm(muridKelas(m))===examClassNorm(kelas))
+    .sort((a,b)=>muridNama(a).localeCompare(muridNama(b)));
+
+  const sel=document.getElementById('examStudent');
+  sel.innerHTML='<option value="">Pilih murid</option>'+students.map(m=>{
+    const id=muridIdOf(m);
+    return `<option value="${esc(id)}" data-name="${esc(muridNama(m))}">${esc(muridNama(m))}</option>`;
+  }).join('');
+
+  renderExamMarksGrid({});
+  document.getElementById('examSaveStatus').textContent=students.length
+    ? `${students.length} murid aktif tersedia untuk key in.`
+    : 'Tiada murid aktif untuk kelas ini.';
+}
+
+function clearExamAnalysis(){
+  document.getElementById('examSummaryCards').innerHTML='';
+  document.getElementById('examStudentTable').innerHTML='<p class="note">Tekan Papar Analisis.</p>';
+  document.getElementById('examWeakTopics').innerHTML='<p class="note">Tekan Papar Analisis.</p>';
+  document.getElementById('examItemTable').innerHTML='<p class="note">Tekan Papar Analisis.</p>';
+}
+
+function summaryCard(title,value,desc,cls=''){
+  return `<article class="summary-card ${cls}"><h3>${title}</h3><strong>${esc(value)}</strong><p>${esc(desc)}</p></article>`;
+}
+
+async function renderExamAnalysis(){
+  const ctx=currentExamContext();
+  const status=document.getElementById('examStatus');
+
+  if(!ctx.tingkatan||!ctx.kelas||!ctx.ujian){
+    status.textContent='Pilih tingkatan, kelas dan ujian dahulu.';
+    return;
+  }
+
+  status.textContent='Mengira markah peperiksaan, TP dan kelemahan topik...';
+
+  try{
+    const res=await fetch(examApiUrl({action:'examAnalysis',...ctx}));
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message||'Gagal analisis');
+
+    const s=data.summary||{};
+
+    document.getElementById('examSummaryCards').innerHTML=[
+      summaryCard('👩‍🎓 Murid Aktif',s.totalActive||0,'Jumlah murid semasa'),
+      summaryCard('✅ Ada Markah',s.adaMarkah||0,'Sudah key in peperiksaan'),
+      summaryCard('❌ Tiada Markah',s.tiadaMarkah||0,'Belum key in'),
+      summaryCard('📈 Purata Peperiksaan',`${s.avgExam||0}%`,'Purata kelas'),
+      summaryCard('🏅 Purata TP',s.avgTp||0,'TP tertinggi murid'),
+      summaryCard('🚨 Kedua-dua Lemah',s.bothLow||0,'Peperiksaan <35% dan TP1–TP2','danger-card'),
+      summaryCard('🔄 Tidak Selaras',(s.highExamLowTp||0)+(s.lowExamHighTp||0),'Markah dan TP berbeza ketara','warn-card'),
+      summaryCard('🌟 Konsisten Baik',s.consistentGood||0,'Peperiksaan ≥50% dan TP4–TP6','good-card')
+    ].join('');
+
+    renderExamStudentTable(data.students||[]);
+    renderExamItemTable(data.itemAnalysis||[]);
+    renderExamWeakTopics(data.topicAnalysis||[]);
+
+    status.innerHTML=`✅ Analisis <b>Tingkatan ${esc(ctx.tingkatan)} ${esc(ctx.kelas)}</b> bagi <b>${esc(ctx.ujian)}</b> sudah siap.`;
+  }catch(e){
+    status.textContent='Gagal analisis: '+e.message;
+  }
+}
+
+function renderExamStudentTable(rows){
+  const box=document.getElementById('examStudentTable');
+  if(!rows.length){
+    box.innerHTML='<p class="note">Tiada data murid.</p>';
+    return;
+  }
+
+  box.innerHTML=`<table class="exam-table">
+    <thead><tr><th>Nama Murid</th><th>Obj</th><th>Struktur</th><th>Esei</th><th>Exam</th><th>Gred</th><th>TP</th><th>Rumusan</th></tr></thead>
+    <tbody>${rows.map(r=>{
+      const pc=r.peratus===''?'-':`${r.peratus}%`;
+      const tp=r.tp===''?'-':`TP${r.tp}`;
+      return `<tr class="${/intervensi|rendah|Tiada/i.test(r.status)?'row-alert':''}">
+        <td><b>${esc(r.nama)}</b><small>${esc(r.id||'')}</small></td>
+        <td>${r.jumlahObj===''?'-':esc(r.jumlahObj)}</td>
+        <td>${r.jumlahStruktur===''?'-':esc(r.jumlahStruktur)}</td>
+        <td>${r.jumlahEsei===''?'-':esc(r.jumlahEsei)}</td>
+        <td><b>${esc(pc)}</b></td>
+        <td>${esc(r.gred||'-')}</td>
+        <td><b>${esc(tp)}</b></td>
+        <td><span class="status-chip">${esc(r.status)}</span>${r.match==='NAMA HAMPIR'?'<small>Padanan nama hampir</small>':''}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function renderExamItemTable(rows){
+  const box=document.getElementById('examItemTable');
+  if(!rows.length){
+    box.innerHTML='<p class="note">Tiada markah item untuk dianalisis.</p>';
+    return;
+  }
+
+  box.innerHTML=`<table class="exam-table item-table">
+    <thead><tr><th>Soalan</th><th>Bahagian</th><th>Topik</th><th>Markah Penuh</th><th>Dijawab</th><th>Murid Lemah</th><th>Penguasaan</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr class="${Number(r.peratus)<50?'row-alert':''}">
+      <td><b>${esc(r.soalan)}</b></td>
+      <td>${esc(r.bahagian)}</td>
+      <td>${esc(r.topik||'Belum dipetakan')}<small>${esc(r.sksp||'')}</small></td>
+      <td>${esc(r.markahPenuh)}</td>
+      <td>${esc(r.dijawab)}</td>
+      <td>${esc(r.lemah)}</td>
+      <td><div class="mini-bar"><span style="width:${Math.max(0,Math.min(100,Number(r.peratus||0)))}%"></span></div><b>${esc(r.peratus)}%</b></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderExamWeakTopics(rows){
+  const box=document.getElementById('examWeakTopics');
+  if(!rows.length){
+    box.innerHTML='<p class="note">Isi pemetaan item untuk melihat kelemahan mengikut topik.</p>';
+    return;
+  }
+
+  box.innerHTML=`<table class="exam-table">
+    <thead><tr><th>Topik</th><th>Penguasaan</th><th>Murid Lemah</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr class="${Number(r.peratus)<50?'row-alert':''}">
+      <td><b>${esc(r.topik)}</b></td>
+      <td>${esc(r.peratus)}%</td>
+      <td>${esc(r.muridLemah)} / ${esc(r.murid)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function itemMapForContext(){
+  const ctx=currentExamContext();
+  const map={};
+
+  (examData.itemMap||[]).forEach(r=>{
+    if(String(r.Tingkatan||r.tingkatan||'')===String(ctx.tingkatan) &&
+      examNorm(r.Ujian||r.ujian||'')===ctx.ujian){
+      const key=String(r.Soalan||r.soalan||'').trim();
+      if(key) map[key]=r;
+    }
+  });
+
+  return map;
+}
+
+function renderExamMapGrid(){
+  const box=document.getElementById('examMapGrid');
+  if(!box) return;
+
+  const ctx=currentExamContext();
+  const map=itemMapForContext();
+  const items=examData.items.length?examData.items:examItemsFallback();
+
+  box.innerHTML=`<div class="map-header"><b>Soalan</b><b>Markah</b><b>Topik / Bab</b><b>SK / SP atau Catatan</b></div>`+
+    items.map(it=>{
+      const r=map[it.key]||{};
+      const topic=r.Topik||r.topik||'';
+      const sksp=r['SK/SP']||r.sksp||'';
+      const max=r['Markah Penuh']||r.markahPenuh||it.max;
+      return `<div class="map-row" data-question="${esc(it.key)}">
+        <b>${esc(it.key)}</b>
+        <input class="map-max" type="number" min="0" step="0.5" value="${esc(max)}" />
+        <input class="map-topic" placeholder="Contoh: Bab 4 Tamadun Awal" value="${esc(topic)}" />
+        <input class="map-sksp" placeholder="SK/SP atau fokus soalan" value="${esc(sksp)}" />
+      </div>`;
+    }).join('');
+
+  document.getElementById('examMapStatus').textContent=ctx.tingkatan&&ctx.ujian
+    ? `Pemetaan untuk Tingkatan ${ctx.tingkatan} • ${ctx.ujian}`
+    : 'Pilih tingkatan dan ujian.';
+}
+
+async function saveExamItemMap(){
+  const ctx=currentExamContext();
+  const status=document.getElementById('examMapStatus');
+
+  if(!ctx.tingkatan||!ctx.ujian){
+    status.textContent='Pilih tingkatan dan ujian dahulu.';
+    return;
+  }
+
+  const items=[...document.querySelectorAll('.map-row')].map(row=>({
+    soalan:row.dataset.question,
+    markahPenuh:row.querySelector('.map-max').value,
+    topik:row.querySelector('.map-topic').value.trim(),
+    sksp:row.querySelector('.map-sksp').value.trim()
+  }));
+
+  status.textContent='Menyimpan pemetaan item...';
+
+  try{
+    const res=await fetch(CONFIG.SHEET_API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'saveItemMapBatch',tingkatan:ctx.tingkatan,ujian:ctx.ujian,items})
+    });
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Gagal simpan');
+
+    const reload=await fetch(examApiUrl({action:'itemMap',tingkatan:ctx.tingkatan,ujian:ctx.ujian}));
+    const mapped=await reload.json();
+
+    examData.itemMap=(examData.itemMap||[]).filter(r=>!(
+      String(r.Tingkatan||r.tingkatan||'')===String(ctx.tingkatan) &&
+      examNorm(r.Ujian||r.ujian||'')===ctx.ujian
+    )).concat(mapped.rows||[]);
+
+    status.innerHTML=`✅ ${esc(out.count||items.length)} item disimpan untuk <b>Tingkatan ${esc(ctx.tingkatan)} • ${esc(ctx.ujian)}</b>.`;
+  }catch(e){
+    status.textContent='Gagal simpan pemetaan: '+e.message;
+  }
+}
+
+function renderExamMarksGrid(scores){
+  const box=document.getElementById('examMarksGrid');
+  if(!box) return;
+
+  const items=examData.items.length?examData.items:examItemsFallback();
+  let lastSection='';
+
+  box.innerHTML=items.map(it=>{
+    const head=it.section!==lastSection?`<h4 class="marks-section-title">${esc(it.section)}</h4>`:'';
+    lastSection=it.section;
+    const value=scores&&scores[it.key]!==undefined&&scores[it.key]!==''?scores[it.key]:'';
+    return `${head}<label class="mark-cell"><span>${esc(it.key)} <small>/ ${esc(it.max)}</small></span>
+      <input class="exam-mark" data-key="${esc(it.key)}" data-max="${esc(it.max)}" type="number" min="0" max="${esc(it.max)}" step="0.5" value="${esc(value)}" />
+    </label>`;
+  }).join('');
+
+  box.querySelectorAll('.exam-mark').forEach(input=>input.addEventListener('input',updateExamPreview));
+  updateExamPreview();
+}
+
+function collectExamScores(){
+  const out={};
+  document.querySelectorAll('.exam-mark').forEach(input=>{
+    out[input.dataset.key]=input.value;
+  });
+  return out;
+}
+
+function calculateExamPreview(){
+  const scores=collectExamScores();
+  const items=examData.items.length?examData.items:examItemsFallback();
+  const maxByKey=Object.fromEntries(items.map(i=>[i.key,Number(i.max)]));
+
+  const n=key=>{
+    const raw=scores[key];
+    if(raw===''||raw===undefined) return 0;
+    return Math.max(0,Math.min(maxByKey[key]||999,Number(raw)||0));
+  };
+
+  let obj=0,structure=0;
+  for(let i=1;i<=20;i++) obj+=n(`O${i}`);
+  for(let i=1;i<=4;i++) structure+=n(`S${i}a`)+n(`S${i}b`)+n(`S${i}c`);
+
+  const e1=n('E1a')+n('E1b')+n('E1c');
+  const e2=n('E2a')+n('E2b')+n('E2c');
+  const essay=Math.max(e1,e2);
+  const total=obj+structure+essay;
+  const percent=Math.round(total/80*100);
+
+  return {obj,structure,essay,total,percent,grade:examGrade(percent)};
+}
+
+function updateExamPreview(){
+  const th=document.getElementById('examTH')?.checked;
+  document.querySelectorAll('.exam-mark').forEach(input=>input.disabled=!!th);
+
+  const p=calculateExamPreview();
+  document.getElementById('examMarkPreview').textContent=th
+    ? 'Status: TIDAK HADIR (TH)'
+    : `Obj ${p.obj}/20 • Struktur ${p.structure}/40 • Esei ${p.essay}/20 • Jumlah ${p.total}/80 • ${p.percent}% • Gred ${p.grade}`;
+}
+
+async function loadExamStudent(){
+  const sel=document.getElementById('examStudent');
+  const id=sel.value;
+  const opt=sel.selectedOptions[0];
+  const nama=opt?.dataset.name||opt?.textContent||'';
+  const ctx=currentExamContext();
+  const status=document.getElementById('examSaveStatus');
+
+  if(!id){
+    renderExamMarksGrid({});
+    status.textContent='Pilih murid dahulu.';
+    return;
+  }
+
+  status.textContent='Membaca markah sedia ada...';
+
+  try{
+    const res=await fetch(examApiUrl({action:'examStudent',idMurid:id,nama, ...ctx}));
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Gagal baca');
+
+    document.getElementById('examTH').checked=String(out.record?.gred||'').toUpperCase()==='TH';
+    renderExamMarksGrid(out.record?.itemScores||{});
+    status.textContent=out.found
+      ? `Markah sedia ada dimuat. Simpan akan mengemas kini rekod ${ctx.ujian}.`
+      : 'Belum ada markah. Isi dan simpan sebagai rekod baharu.';
+  }catch(e){
+    status.textContent='Gagal muat markah: '+e.message;
+  }
+}
+
+async function saveExamRecord(){
+  const sel=document.getElementById('examStudent');
+  const id=sel.value;
+  const opt=sel.selectedOptions[0];
+  const nama=opt?.dataset.name||opt?.textContent||'';
+  const ctx=currentExamContext();
+  const status=document.getElementById('examSaveStatus');
+  const btn=document.getElementById('examSaveBtn');
+
+  if(!id||!ctx.tingkatan||!ctx.kelas||!ctx.ujian){
+    status.textContent='Pilih tingkatan, kelas, ujian dan murid.';
+    return;
+  }
+
+  btn.disabled=true;
+  status.textContent='Menyimpan markah ke Master Markah...';
+
+  try{
+    const res=await fetch(CONFIG.SHEET_API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({
+        action:'saveExamRecord',
+        idMurid:id,
+        namaMurid:nama,
+        tingkatan:ctx.tingkatan,
+        kelas:ctx.kelas,
+        ujian:ctx.ujian,
+        tidakHadir:document.getElementById('examTH').checked,
+        scores:collectExamScores()
+      })
+    });
+
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Gagal simpan');
+
+    status.innerHTML=`✅ ${esc(out.message)} • Jumlah <b>${out.total===''?'TH':out.total+'/80'}</b> • ${out.peratus===''?'':esc(out.peratus)+'% • '}Gred <b>${esc(out.gred)}</b>.`;
+    await renderExamAnalysis();
+  }catch(e){
+    status.textContent='Gagal simpan markah: '+e.message;
+  }finally{
+    btn.disabled=false;
+  }
 }
