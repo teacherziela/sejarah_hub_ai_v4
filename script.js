@@ -549,6 +549,7 @@ function setupQuestionPaperUpload(){
   const input=document.getElementById('questionFileInput');
   const choose=document.getElementById('questionChooseBtn');
   const open=document.getElementById('questionOpenBtn');
+  const ai=document.getElementById('questionAiBtn');
   const copy=document.getElementById('questionCopyBtn');
   if(!zone||!input) return;
 
@@ -580,6 +581,7 @@ function setupQuestionPaperUpload(){
   open?.addEventListener('click',()=>{
     if(currentQuestionPaper.url) window.open(currentQuestionPaper.url,'_blank');
   });
+  ai?.addEventListener('click',analyzeQuestionPaperAi);
   copy?.addEventListener('click',copyQuestionPaperLink);
 }
 
@@ -640,7 +642,8 @@ async function uploadQuestionPaper(file){
 
     currentQuestionPaper={url:out.url||'',name:out.name||file.name,id:out.id||''};
     renderQuestionPaperInfo();
-    status.innerHTML=`✅ <b>${esc(currentQuestionPaper.name)}</b> sudah dimuat naik untuk Tingkatan ${esc(ctx.tingkatan)} • ${esc(ctx.ujian)}. Fail belum dianalisis secara automatik. Tekan <b>Salin Pautan untuk Abah</b>.`;
+    status.innerHTML=`✅ <b>${esc(currentQuestionPaper.name)}</b> sudah dimuat naik. AI akan mula membaca soalan...`;
+    await analyzeQuestionPaperAi(true);
   }catch(e){
     status.textContent='Gagal muat naik: '+e.message;
   }finally{
@@ -673,7 +676,7 @@ async function loadQuestionPaperInfo(){
     if(out.success&&out.url){
       currentQuestionPaper={url:out.url,name:out.name||'Kertas soalan',id:out.id||''};
       renderQuestionPaperInfo();
-      status.innerHTML=`📄 Kertas semasa: <b>${esc(currentQuestionPaper.name)}</b>. Pemetaan belum diisi secara automatik.`;
+      status.innerHTML=`📄 Kertas semasa: <b>${esc(currentQuestionPaper.name)}</b>. Tekan <b>Analisis AI & Isi Automatik</b> jika pemetaan belum lengkap.`;
     }else{
       status.textContent='Belum ada kertas soalan untuk tingkatan dan ujian ini.';
     }
@@ -684,10 +687,64 @@ async function loadQuestionPaperInfo(){
 
 function renderQuestionPaperInfo(){
   const open=document.getElementById('questionOpenBtn');
+  const ai=document.getElementById('questionAiBtn');
   const copy=document.getElementById('questionCopyBtn');
   const has=Boolean(currentQuestionPaper.url);
   if(open) open.hidden=!has;
+  if(ai) ai.hidden=!has;
   if(copy) copy.hidden=!has;
+}
+
+
+async function analyzeQuestionPaperAi(autoRun=false){
+  const ctx=currentExamContext();
+  const status=document.getElementById('questionUploadStatus');
+  const aiBtn=document.getElementById('questionAiBtn');
+
+  if(!ctx.tingkatan||!ctx.ujian){
+    status.textContent='Pilih tingkatan dan ujian dahulu.';
+    return;
+  }
+  if(!currentQuestionPaper.id){
+    status.textContent='Muat naik kertas soalan dahulu.';
+    return;
+  }
+
+  if(aiBtn){
+    aiBtn.disabled=true;
+    aiBtn.textContent='⏳ AI sedang membaca...';
+  }
+  status.innerHTML='🤖 AI sedang membaca kertas soalan dan menentukan <b>Topik/Bab</b> serta <b>Aras</b>. Proses ini mungkin mengambil sedikit masa...';
+
+  try{
+    const res=await fetch(CONFIG.SHEET_API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({
+        action:'analyzeQuestionPaperAi',
+        tingkatan:ctx.tingkatan,
+        ujian:ctx.ujian
+      })
+    });
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Analisis AI gagal');
+
+    examData.itemMap=(examData.itemMap||[]).filter(r=>!(
+      String(r.Tingkatan||r.tingkatan||'')===String(ctx.tingkatan) &&
+      examNorm(r.Ujian||r.ujian||'')===ctx.ujian
+    )).concat(out.rows||[]);
+
+    renderExamMapGrid();
+    status.innerHTML=`✅ AI selesai memetakan <b>${esc(out.count||0)} item</b> menggunakan <b>${esc(out.model||'OpenAI')}</b>. Semak pemetaan di bawah dan ubah secara manual jika perlu.`;
+    document.getElementById('examMapStatus').innerHTML=`✅ Pemetaan AI telah disimpan untuk <b>Tingkatan ${esc(ctx.tingkatan)} • ${esc(ctx.ujian)}</b>.`;
+  }catch(e){
+    status.innerHTML=`❌ Analisis AI gagal: ${esc(e.message)}<br><small>Fail masih selamat dalam Google Drive. Semak API key, baki API dan deployment Apps Script.</small>`;
+  }finally{
+    if(aiBtn){
+      aiBtn.disabled=false;
+      aiBtn.textContent='🤖 Analisis AI & Isi Automatik';
+    }
+  }
 }
 
 async function copyQuestionPaperLink(){

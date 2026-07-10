@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sejarah Hub AI | SMK Taman Jasmin 2</title>
-  <link rel="stylesheet" href="style.css?v=643" />
+  <link rel="stylesheet" href="style.css?v=650" />
 </head>
 <body class="portal-body">
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
@@ -168,7 +168,7 @@
 
       <details class="exam-details">
         <summary>🗺️ Pemetaan Soalan kepada Topik dan Aras</summary>
-        <p class="note">Seret kertas soalan ke kotak di bawah. Fail akan disimpan dalam Google Drive. Muat naik sahaja tidak mengisi pemetaan secara automatik kerana enjin AI belum disambungkan. Selepas berjaya, salin pautan dan hantarkan kepada Abah untuk pemetaan Topik/Bab dan Aras.</p>
+        <p class="note">Seret kertas soalan ke kotak di bawah. Selepas fail berjaya dimuat naik, AI akan membaca soalan, menentukan Topik/Bab dan Aras, kemudian mengisi pemetaan secara automatik.</p>
 
         <div id="questionDropZone" class="question-drop-zone" tabindex="0" role="button" aria-label="Muat naik kertas soalan">
           <input id="questionFileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" hidden />
@@ -181,7 +181,8 @@
         <div class="question-upload-actions">
           <button type="button" class="pill" id="questionChooseBtn">📎 Pilih Fail</button>
           <button type="button" class="pill" id="questionOpenBtn" hidden>👁️ Buka Fail</button>
-          <button type="button" class="pill primary" id="questionCopyBtn" hidden>📋 Salin Pautan untuk Abah</button>
+          <button type="button" class="pill primary" id="questionAiBtn" hidden>🤖 Analisis AI & Isi Automatik</button>
+          <button type="button" class="pill" id="questionCopyBtn" hidden>📋 Salin Pautan (Pilihan Kedua)</button>
         </div>
         <div id="questionUploadStatus" class="note pbd-status-box">Belum ada kertas soalan untuk tingkatan dan ujian ini.</div>
 
@@ -232,8 +233,8 @@
     <div id="profileBody"></div>
   </dialog>
 
-  <footer>Versi 6.4.3 Buka Fail Fix Drag & Drop Kertas Soalan • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <footer>Versi 6.5 AI Auto Pemetaan Drag & Drop Kertas Soalan • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
   <script src="config.js"></script>
-  <script src="script.js?v=643"></script>
+  <script src="script.js?v=650"></script>
 </body>
 </html>

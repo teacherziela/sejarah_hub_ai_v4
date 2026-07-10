@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v6.4.3 - BUKA FAIL DRIVE VIEWER FIX - DRAG & DROP KERTAS SOALAN
+// SEJARAH HUB AI v6.5 - OPENAI AUTO PEMETAAN TOPIK DAN ARAS
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -55,6 +55,7 @@ function doPost(e) {
   if (data.action === 'saveExamRecord') return jsonResponse(saveExamRecord(data));
   if (data.action === 'saveItemMapBatch') return jsonResponse(saveItemMapBatch(data));
   if (data.action === 'uploadQuestionPaper') return jsonResponse(uploadQuestionPaper(data));
+  if (data.action === 'analyzeQuestionPaperAi') return jsonResponse(analyzeQuestionPaperAi(data));
 
   return jsonResponse({ success:false, message:'Action tidak sah' });
 }
@@ -124,6 +125,254 @@ function readQuestionPaperInfo(tingkatan, ujian){
   }catch(err){}
   return {success:true,url:'',name:'',id:''};
 }
+
+
+function analyzeQuestionPaperAi(data){
+  try{
+    var tingkatan=String(data.tingkatan||'').trim();
+    var ujian=String(data.ujian||'').trim().toUpperCase();
+
+    if(!tingkatan || !ujian){
+      return {success:false,message:'Tingkatan dan ujian diperlukan.'};
+    }
+
+    var props=PropertiesService.getScriptProperties();
+    var apiKey=String(props.getProperty('OPENAI_API_KEY')||'').trim();
+    if(!apiKey){
+      return {success:false,message:'OPENAI_API_KEY belum disimpan dalam Script Properties.'};
+    }
+
+    var paperRaw=props.getProperty(questionPaperKey_(tingkatan,ujian));
+    if(!paperRaw){
+      return {success:false,message:'Kertas soalan belum dimuat naik.'};
+    }
+
+    var paperInfo=JSON.parse(paperRaw);
+    if(!paperInfo.id){
+      return {success:false,message:'ID kertas soalan tidak dijumpai.'};
+    }
+
+    var file=DriveApp.getFileById(paperInfo.id);
+    if(file.isTrashed()){
+      return {success:false,message:'Kertas soalan sudah dipadam daripada Google Drive.'};
+    }
+
+    var blob=file.getBlob();
+    var bytes=blob.getBytes();
+    if(bytes.length > 8*1024*1024){
+      return {success:false,message:'Fail melebihi had portal 8 MB.'};
+    }
+
+    var defs=examItemDefs_();
+    var expectedKeys=defs.map(function(d){ return d.key; });
+    var model=String(props.getProperty('OPENAI_MODEL')||'gpt-5.6-luna').trim();
+
+    var prompt=[
+      'Anda ialah pakar kurikulum KSSM Sejarah Malaysia dan analisis item peperiksaan.',
+      'Baca keseluruhan kertas soalan Sejarah Tingkatan '+tingkatan+' bagi ujian '+ujian+'.',
+      '',
+      'Tugas:',
+      '1. Padankan setiap item kepada Topik/Bab Sejarah yang paling tepat.',
+      '2. Tentukan Aras setiap item sebagai salah satu sahaja: Rendah, Sederhana, atau Tinggi.',
+      '3. Gunakan tuntutan kognitif sebenar soalan, bukan panjang ayat.',
+      '',
+      'Panduan aras:',
+      '- Rendah: mengingat, mengenal pasti, menyatakan, menamakan, memilih fakta langsung.',
+      '- Sederhana: menerangkan, membandingkan, menyusun urutan, sebab-akibat, mengaplikasi maklumat.',
+      '- Tinggi: menganalisis, membuat inferens, menilai, memberi justifikasi, mencipta atau KBAT.',
+      '',
+      'Format Topik/Bab: ringkas dan seragam, contoh "Bab 4: Tamadun Awal Dunia".',
+      'Untuk objektif, 20 soalan pertama ialah O1 hingga O20.',
+      'Struktur dipadankan sebagai S1a,S1b,S1c hingga S4c.',
+      'Esei dipadankan sebagai E1a,E1b,E1c,E2a,E2b,E2c.',
+      'Pulangkan tepat satu rekod bagi SETIAP kod berikut dan ikut urutan ini:',
+      expectedKeys.join(', '),
+      '',
+      'Jika teks sesuatu item benar-benar tidak dapat dibaca, gunakan Topik "Semakan diperlukan" dan pilih aras paling munasabah berdasarkan kata tugas.'
+    ].join('\n');
+
+    var schema={
+      type:'object',
+      properties:{
+        items:{
+          type:'array',
+          minItems:expectedKeys.length,
+          maxItems:expectedKeys.length,
+          items:{
+            type:'object',
+            properties:{
+              soalan:{type:'string',enum:expectedKeys},
+              topik:{type:'string',minLength:1},
+              aras:{type:'string',enum:['Rendah','Sederhana','Tinggi']}
+            },
+            required:['soalan','topik','aras'],
+            additionalProperties:false
+          }
+        }
+      },
+      required:['items'],
+      additionalProperties:false
+    };
+
+    var mime=String(blob.getContentType()||file.getMimeType()||'application/octet-stream');
+    var base64=Utilities.base64Encode(bytes);
+    var fileData='data:'+mime+';base64,'+base64;
+
+    var payload={
+      model:model,
+      store:false,
+      input:[{
+        role:'user',
+        content:[
+          {
+            type:'input_file',
+            filename:file.getName(),
+            file_data:fileData
+          },
+          {
+            type:'input_text',
+            text:prompt
+          }
+        ]
+      }],
+      text:{
+        format:{
+          type:'json_schema',
+          name:'sejarah_item_mapping',
+          strict:true,
+          schema:schema
+        }
+      }
+    };
+
+    var response=UrlFetchApp.fetch('https://api.openai.com/v1/responses',{
+      method:'post',
+      contentType:'application/json',
+      headers:{Authorization:'Bearer '+apiKey},
+      payload:JSON.stringify(payload),
+      muteHttpExceptions:true
+    });
+
+    var status=response.getResponseCode();
+    var raw=response.getContentText();
+    var apiResult;
+
+    try{
+      apiResult=JSON.parse(raw);
+    }catch(parseErr){
+      return {success:false,message:'Jawapan OpenAI tidak dapat dibaca. HTTP '+status};
+    }
+
+    if(status < 200 || status >= 300){
+      var apiMessage=apiResult && apiResult.error && apiResult.error.message
+        ? apiResult.error.message
+        : 'HTTP '+status;
+      return {success:false,message:'OpenAI API: '+apiMessage};
+    }
+
+    var outputText=extractOpenAiOutputText_(apiResult);
+    if(!outputText){
+      return {success:false,message:'OpenAI tidak memulangkan pemetaan.'};
+    }
+
+    var parsed;
+    try{
+      parsed=JSON.parse(outputText);
+    }catch(jsonErr){
+      return {success:false,message:'Format pemetaan AI tidak sah.'};
+    }
+
+    var returned=parsed.items || [];
+    var byKey={};
+
+    for(var i=0;i<returned.length;i++){
+      var key=String(returned[i].soalan||'').trim();
+      if(expectedKeys.indexOf(key) === -1) continue;
+      if(!byKey[key]) byKey[key]=returned[i];
+    }
+
+    var finalItems=defs.map(function(def){
+      var item=byKey[def.key] || {};
+      var aras=String(item.aras||'').trim();
+      if(['Rendah','Sederhana','Tinggi'].indexOf(aras) === -1) aras='Sederhana';
+
+      return {
+        soalan:def.key,
+        topik:String(item.topik||'Semakan diperlukan').trim(),
+        aras:aras
+      };
+    });
+
+    var saved=saveItemMapBatch({
+      tingkatan:tingkatan,
+      ujian:ujian,
+      items:finalItems
+    });
+
+    if(!saved.success) return saved;
+
+    var mapped=readItemMap(tingkatan,ujian);
+
+    props.setProperty(
+      'QUESTION_AI_'+String(tingkatan).replace(/[^0-9A-Za-z]/g,'')+'_'+String(ujian).replace(/[^0-9A-Za-z]/g,''),
+      JSON.stringify({
+        model:model,
+        fileId:file.getId(),
+        analyzedAt:new Date().toISOString(),
+        count:finalItems.length
+      })
+    );
+
+    return {
+      success:true,
+      count:finalItems.length,
+      model:model,
+      rows:mapped.rows||[],
+      message:'Pemetaan AI berjaya disimpan.'
+    };
+  }catch(err){
+    return {success:false,message:String(err && err.message ? err.message : err)};
+  }
+}
+
+function extractOpenAiOutputText_(result){
+  if(result && typeof result.output_text === 'string' && result.output_text){
+    return result.output_text;
+  }
+
+  var texts=[];
+  var output=(result && result.output) || [];
+
+  for(var i=0;i<output.length;i++){
+    var content=output[i].content || [];
+
+    for(var j=0;j<content.length;j++){
+      var part=content[j];
+
+      if(part.type === 'output_text' && part.text){
+        texts.push(part.text);
+      }
+
+      if(part.type === 'refusal' && part.refusal){
+        throw new Error('OpenAI menolak permintaan: '+part.refusal);
+      }
+    }
+  }
+
+  return texts.join('');
+}
+
+function testOpenAiKeyAndPaper(){
+  var props=PropertiesService.getScriptProperties();
+  var hasKey=Boolean(String(props.getProperty('OPENAI_API_KEY')||'').trim());
+  var paper=readQuestionPaperInfo('1','UPSA');
+
+  Logger.log(JSON.stringify({
+    openAiKeyDisimpan:hasKey,
+    kertasSoalanT1UPSA:paper
+  },null,2));
+}
+
 
 function getHubSs(){ return SpreadsheetApp.openById(HUB_SPREADSHEET_ID); }
 function getPbdSs(){ return SpreadsheetApp.openById(PBD_SPREADSHEET_ID); }

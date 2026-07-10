@@ -380,3 +380,9 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:inve
 @media(max-width:700px){
   .question-drop-zone{flex-direction:column;text-align:center;min-height:170px}
 }
+
+/* v6.5: status AI */
+#questionAiBtn:disabled{
+  opacity:.7;
+  cursor:wait;
+}
