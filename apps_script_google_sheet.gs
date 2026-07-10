@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v6.4 - PBD + ANALISIS PEPERIKSAAN + PEMETAAN ITEM
+// SEJARAH HUB AI v6.4.1 - OBJEKTIF 0/1 + PEMETAAN TOPIK DAN ARAS
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -15,7 +15,7 @@ var SHEETS = {
   linkPantas: { name:'LINK_PANTAS', prefix:'L', headers:['ID','Tahun','Nama','Kategori','Link','Icon','Status'] },
   galeri: { name:'GALERI', prefix:'GA', headers:['ID','Tahun','Tajuk','Tarikh','Kelas','Penerangan','Photo','Status'] },
   bbm: { name:'BBM', prefix:'B', headers:['ID','Tahun','Tajuk','Tingkatan','Bab','Jenis','Link','Status'] },
-  itemMap: { name:'PEMETAAN ITEM', prefix:'IM', source:'exam', headers:['ID','Tingkatan','Ujian','Soalan','Topik','SK/SP','Markah Penuh','Status'] }
+  itemMap: { name:'PEMETAAN ITEM', prefix:'IM', source:'exam', headers:['ID','Tingkatan','Ujian','Soalan','Topik','Aras','Markah Penuh','Status'] }
 };
 
 function doGet(e) {
@@ -597,6 +597,13 @@ function clampScore_(v,max){
   return Math.round(n*100)/100;
 }
 
+function objectiveBinary_(v){
+  if(v===null || v===undefined || v==='') return '';
+  var n=Number(v);
+  if(isNaN(n)) return '';
+  return n>=0.5 ? 1 : 0;
+}
+
 function readExamRows_(){
   var ss=getExamSs();
   var sh=ss.getSheetByName('Master Markah');
@@ -767,7 +774,11 @@ function saveExamRecord(data){
     var cleanScores={};
 
     for(var i=0;i<defs.length;i++){
-      cleanScores[defs[i].key]=th ? '' : clampScore_(scores[defs[i].key],defs[i].max);
+      cleanScores[defs[i].key]=th
+        ? ''
+        : (defs[i].section==='Objektif'
+          ? objectiveBinary_(scores[defs[i].key])
+          : clampScore_(scores[defs[i].key],defs[i].max));
     }
 
     var jumlahObj=0;
@@ -892,7 +903,10 @@ function saveItemMapBatch(data){
       var key=String(it.soalan||'').trim();
       if(!key) continue;
 
-      var max=Number(it.markahPenuh || (defByKey[key] ? defByKey[key].max : 1));
+      var max=defByKey[key] ? defByKey[key].max : 1;
+      var aras=String(it.aras||'').trim();
+      var allowed={Rendah:true,Sederhana:true,Tinggi:true};
+      if(!allowed[aras]) aras='';
 
       keep.push([
         'IM-'+new Date().getTime()+'-'+i,
@@ -900,8 +914,8 @@ function saveItemMapBatch(data){
         ujian,
         key,
         String(it.topik||'').trim(),
-        String(it.sksp||'').trim(),
-        isNaN(max)?'':max,
+        aras,
+        max,
         'AKTIF'
       ]);
     }
@@ -1126,8 +1140,8 @@ function readExamAnalysis(tingkatan, kelas, ujian){
     for(var d=0;d<defs.length;d++){
       var def=defs[d];
       var map=mapByQuestion[def.key] || {};
-      var max=Number(pick_(map,['Markah Penuh']) || def.max);
-      if(!max || isNaN(max)) max=def.max;
+      // Markah penuh datang daripada format peperiksaan, bukan input pemetaan.
+      var max=def.max;
 
       var sum=0, answered=0, weakCount=0;
 
@@ -1155,7 +1169,7 @@ function readExamAnalysis(tingkatan, kelas, ujian){
         soalan:def.key,
         bahagian:def.section,
         topik:String(pick_(map,['Topik'])||'Belum dipetakan').trim(),
-        sksp:String(pick_(map,['SK/SP'])||'').trim(),
+        aras:String(pick_(map,['Aras'])||'').trim(),
         markahPenuh:max,
         dijawab:answered,
         lemah:weakCount,

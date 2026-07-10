@@ -1,47 +1,42 @@
-SEJARAH HUB AI v6.4 — ANALISIS PEPERIKSAAN + PBD
+SEJARAH HUB AI v6.4.1 — OBJEKTIF 0/1 + PEMETAAN TOPIK DAN ARAS
 
-SAMBUNGAN DATA
-1. PBD Sejarah:
-   1NE4UcW7K4G_nVcxL0vU0_CVtAubzu6yOkKAWRLiVooU
-2. Analisis Item Sejarah 2026:
-   1cqU40Yn90G1pDf9PklITndmXiMqD5Nq06uyML7Mjk6Q
+PEMBETULAN UTAMA
+1. Markah Objektif hanya boleh dipilih:
+   - 1 • Betul
+   - 0 • Salah
+   - kosong jika belum diisi
+2. Nilai 0.5 tidak lagi boleh dimasukkan melalui portal.
+3. Apps Script turut memaksa nilai Objektif menjadi 0 atau 1.
+4. Pemetaan item hanya memerlukan:
+   - Topik / Bab
+   - Aras: Rendah, Sederhana atau Tinggi
+5. Markah penuh tidak perlu diisi dalam pemetaan kerana sistem sudah tahu:
+   - Objektif: 1 markah setiap soalan
+   - Struktur: 3, 3, 4
+   - Esei: 6, 6, 8
+6. Ruangan SK/SP dibuang daripada paparan pemetaan.
+7. Jadual analisis item kini memaparkan Aras.
 
-FUNGSI BARU
-- Bandingkan peratus peperiksaan setiap murid dengan TP tertinggi.
-- Papar murid kedua-dua lemah, TP baik tetapi peperiksaan rendah, atau sebaliknya.
-- Key in / edit markah terus ke tab Master Markah.
-- Kiraan automatik Objektif 20, Struktur 40, Esei 20, Jumlah 80, Peratus dan Gred.
-- Pilihan Tidak Hadir (TH).
-- Analisis setiap item O1–O20, S1a–S4c dan E1a–E2c.
-- Pemetaan nombor soalan kepada topik dan SK/SP.
-- Papar topik paling lemah dan bilangan murid lemah.
-- Sistem menggunakan IDMurid/TEMP untuk rekod baharu supaya nama tersalah eja tidak memutuskan padanan.
-- Rekod lama masih boleh dipadankan menggunakan nama dan padanan nama hampir yang selamat.
-- Rekod duplicate Master Markah diambil baris paling akhir supaya tidak dikira dua kali.
-- Fungsi auto daftar murid dan bersih duplicate yang dibuat sebelum ini turut dikekalkan dalam Code.gs v6.4.
+ALIRAN KERJA PEMETAAN
+- Seorang guru sahaja muat naik kertas soalan kepada Abah.
+- Abah bantu sediakan Topik/Bab dan Aras setiap soalan.
+- Pemetaan disimpan sekali mengikut Tingkatan + Ujian.
+- Guru lain terus guna pemetaan yang sama.
 
-TAB BARU YANG DISENGAJAKAN
-- Pemetaan soalan memerlukan satu tab bernama PEMETAAN ITEM dalam fail Analisis Item Sejarah 2026.
-- Tab ini dicipta automatik apabila sistem v6.4 mula digunakan.
-- Tiada fail Google Sheet baharu diwujudkan.
-
-GITHUB — GANTI FAIL
+GITHUB — GANTI
 - index.html
 - script.js
 - style.css
 - admin.html
 - admin.js
-- config.js hanya jika URL Web App berubah.
 
 APPS SCRIPT PANITIA AI
-1. Ganti Code.gs dengan kandungan apps_script_google_sheet.gs.
-2. Save.
-3. Deploy > Manage deployments > Edit > New version > Deploy.
-4. Buka portal dan tekan Ctrl+F5.
+- Ganti Code.gs menggunakan apps_script_google_sheet.gs.
+- Save.
+- Deploy > Manage deployments > Edit > New version > Deploy.
+- Buka portal dan tekan Ctrl+F5.
 
-UJIAN PANTAS
-- Pilih Tingkatan 1 > ADIL > UPSA.
-- Tekan Papar Analisis.
-- Pilih murid dalam bahagian Key In / Edit Markah.
-- Isi beberapa item dan tekan Simpan.
-- Isi topik dalam Pemetaan Item dan tekan Simpan Pemetaan Item.
+NOTA
+- config.js tidak perlu diganti jika URL Web App masih sama.
+- Tiada fail Google Sheet baharu diwujudkan.
+- Tab PEMETAAN ITEM kekal dalam fail Analisis Item Sejarah 2026.

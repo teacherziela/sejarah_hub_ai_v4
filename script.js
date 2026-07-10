@@ -644,11 +644,12 @@ function renderExamItemTable(rows){
   }
 
   box.innerHTML=`<table class="exam-table item-table">
-    <thead><tr><th>Soalan</th><th>Bahagian</th><th>Topik</th><th>Markah Penuh</th><th>Dijawab</th><th>Murid Lemah</th><th>Penguasaan</th></tr></thead>
+    <thead><tr><th>Soalan</th><th>Bahagian</th><th>Topik</th><th>Aras</th><th>Markah Penuh</th><th>Dijawab</th><th>Murid Lemah</th><th>Penguasaan</th></tr></thead>
     <tbody>${rows.map(r=>`<tr class="${Number(r.peratus)<50?'row-alert':''}">
       <td><b>${esc(r.soalan)}</b></td>
       <td>${esc(r.bahagian)}</td>
-      <td>${esc(r.topik||'Belum dipetakan')}<small>${esc(r.sksp||'')}</small></td>
+      <td>${esc(r.topik||'Belum dipetakan')}</td>
+      <td><span class="level-chip level-${examNorm(r.aras||'').toLowerCase()}">${esc(r.aras||'-')}</span></td>
       <td>${esc(r.markahPenuh)}</td>
       <td>${esc(r.dijawab)}</td>
       <td>${esc(r.lemah)}</td>
@@ -697,17 +698,20 @@ function renderExamMapGrid(){
   const map=itemMapForContext();
   const items=examData.items.length?examData.items:examItemsFallback();
 
-  box.innerHTML=`<div class="map-header"><b>Soalan</b><b>Markah</b><b>Topik / Bab</b><b>SK / SP atau Catatan</b></div>`+
+  box.innerHTML=`<div class="map-header"><b>Soalan</b><b>Topik / Bab</b><b>Aras</b></div>`+
     items.map(it=>{
       const r=map[it.key]||{};
       const topic=r.Topik||r.topik||'';
-      const sksp=r['SK/SP']||r.sksp||'';
-      const max=r['Markah Penuh']||r.markahPenuh||it.max;
+      const aras=examNorm(r.Aras||r.aras||'');
       return `<div class="map-row" data-question="${esc(it.key)}">
         <b>${esc(it.key)}</b>
-        <input class="map-max" type="number" min="0" step="0.5" value="${esc(max)}" />
         <input class="map-topic" placeholder="Contoh: Bab 4 Tamadun Awal" value="${esc(topic)}" />
-        <input class="map-sksp" placeholder="SK/SP atau fokus soalan" value="${esc(sksp)}" />
+        <select class="map-level">
+          <option value="">Pilih aras</option>
+          <option value="Rendah" ${aras==='RENDAH'?'selected':''}>Rendah</option>
+          <option value="Sederhana" ${aras==='SEDERHANA'?'selected':''}>Sederhana</option>
+          <option value="Tinggi" ${aras==='TINGGI'?'selected':''}>Tinggi</option>
+        </select>
       </div>`;
     }).join('');
 
@@ -727,9 +731,8 @@ async function saveExamItemMap(){
 
   const items=[...document.querySelectorAll('.map-row')].map(row=>({
     soalan:row.dataset.question,
-    markahPenuh:row.querySelector('.map-max').value,
     topik:row.querySelector('.map-topic').value.trim(),
-    sksp:row.querySelector('.map-sksp').value.trim()
+    aras:row.querySelector('.map-level').value
   }));
 
   status.textContent='Menyimpan pemetaan item...';
@@ -768,12 +771,26 @@ function renderExamMarksGrid(scores){
     const head=it.section!==lastSection?`<h4 class="marks-section-title">${esc(it.section)}</h4>`:'';
     lastSection=it.section;
     const value=scores&&scores[it.key]!==undefined&&scores[it.key]!==''?scores[it.key]:'';
+
+    if(it.section==='Objektif'){
+      const binaryValue=String(value)==='1'?'1':String(value)==='0'?'0':'';
+      return `${head}<label class="mark-cell objective-cell"><span>${esc(it.key)} <small>/ 1</small></span>
+        <select class="exam-mark objective-mark" data-key="${esc(it.key)}" data-max="1">
+          <option value="" ${binaryValue===''?'selected':''}>—</option>
+          <option value="1" ${binaryValue==='1'?'selected':''}>1 • Betul</option>
+          <option value="0" ${binaryValue==='0'?'selected':''}>0 • Salah</option>
+        </select>
+      </label>`;
+    }
+
     return `${head}<label class="mark-cell"><span>${esc(it.key)} <small>/ ${esc(it.max)}</small></span>
-      <input class="exam-mark" data-key="${esc(it.key)}" data-max="${esc(it.max)}" type="number" min="0" max="${esc(it.max)}" step="0.5" value="${esc(value)}" />
+      <input class="exam-mark" data-key="${esc(it.key)}" data-max="${esc(it.max)}" type="number" min="0" max="${esc(it.max)}" step="1" value="${esc(value)}" />
     </label>`;
   }).join('');
 
-  box.querySelectorAll('.exam-mark').forEach(input=>input.addEventListener('input',updateExamPreview));
+  box.querySelectorAll('.exam-mark').forEach(input=>{
+    input.addEventListener(input.tagName==='SELECT'?'change':'input',updateExamPreview);
+  });
   updateExamPreview();
 }
 
