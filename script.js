@@ -449,7 +449,7 @@ function examGrade(percent){
   return 'F';
 }
 
-function examItemsFallback(){
+function examItemsFallback(tingkatan){
   const out=[];
   for(let i=1;i<=20;i++) out.push({key:`O${i}`,section:'Objektif',max:1});
   for(let i=1;i<=4;i++){
@@ -457,11 +457,21 @@ function examItemsFallback(){
     out.push({key:`S${i}b`,section:'Struktur',max:3});
     out.push({key:`S${i}c`,section:'Struktur',max:4});
   }
-  for(let i=1;i<=2;i++){
-    out.push({key:`E${i}a`,section:'Esei',max:6});
-    out.push({key:`E${i}b`,section:'Esei',max:6});
-    out.push({key:`E${i}c`,section:'Esei',max:8});
-  }
+
+  // Pecahan esei berbeza mengikut tingkatan.
+  // T1: E1 = 6/6/8, E2 = 4/8/8
+  // T2: E1 = 4/8/8, E2 = 6/6/8
+  const t=String(tingkatan||'1');
+  const scheme=t==='2'
+    ? {E1:[4,8,8],E2:[6,6,8]}
+    : {E1:[6,6,8],E2:[4,8,8]};
+
+  ['E1','E2'].forEach(key=>{
+    const marks=scheme[key];
+    out.push({key:`${key}a`,section:'Esei',max:marks[0]});
+    out.push({key:`${key}b`,section:'Esei',max:marks[1]});
+    out.push({key:`${key}c`,section:'Esei',max:marks[2]});
+  });
   return out;
 }
 
@@ -529,6 +539,7 @@ function onExamTingkatan(){
 
 function onExamContextChanged(){
   populateExamStudents();
+  renderExamMarksGrid({});
   renderExamMapGrid();
   loadQuestionPaperInfo();
   clearExamAnalysis();
@@ -730,7 +741,7 @@ function downloadExamMappingTemplate(){
     return;
   }
 
-  const items=examData.items.length?examData.items:examItemsFallback();
+  const items=examItemsFallback(ctx.tingkatan);
   const rows=[['Soalan','Topik','Aras'],...items.map(it=>[it.key,'',''])];
   const csvText=rows.map(row=>row.map(mappingCsvEscape).join(',')).join('\r\n');
   const blob=new Blob(['\ufeff'+csvText],{type:'text/csv;charset=utf-8'});
@@ -1021,7 +1032,7 @@ function renderExamMapGrid(){
 
   const ctx=currentExamContext();
   const map=itemMapForContext();
-  const items=examData.items.length?examData.items:examItemsFallback();
+  const items=examItemsFallback(currentExamContext().tingkatan);
 
   box.innerHTML=`<div class="map-header"><b>Soalan</b><b>Topik / Bab</b><b>Aras</b></div>`+
     items.map(it=>{
@@ -1089,7 +1100,7 @@ function renderExamMarksGrid(scores){
   const box=document.getElementById('examMarksGrid');
   if(!box) return;
 
-  const items=examData.items.length?examData.items:examItemsFallback();
+  const items=examItemsFallback(currentExamContext().tingkatan);
   let lastSection='';
 
   box.innerHTML=items.map(it=>{
@@ -1129,7 +1140,7 @@ function collectExamScores(){
 
 function calculateExamPreview(){
   const scores=collectExamScores();
-  const items=examData.items.length?examData.items:examItemsFallback();
+  const items=examItemsFallback(currentExamContext().tingkatan);
   const maxByKey=Object.fromEntries(items.map(i=>[i.key,Number(i.max)]));
 
   const n=key=>{
