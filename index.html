@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sejarah Hub AI | SMK Taman Jasmin 2</title>
-  <link rel="stylesheet" href="style.css?v=660" />
+  <link rel="stylesheet" href="style.css?v=680" />
 </head>
 <body class="portal-body">
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
@@ -53,11 +53,30 @@
           <label>Kelas
             <select id="rumusKelas"><option value="">Pilih Kelas</option></select>
           </label>
+          <label>Peperiksaan Fame
+            <select id="rumusUjian">
+              <option value="UPSA">UPSA</option>
+            </select>
+          </label>
           <button class="pill primary" id="rumusRefreshBtn">Papar Rumusan Kelas</button>
         </div>
         <div id="pbdSummaryMeta" class="note pbd-status-box">Pilih tingkatan dan kelas untuk lihat rumusan.</div>
         <div id="pbdSummaryCards" class="summary-cards"></div>
         <div id="pbdTpChart" class="pbd-chart"></div>
+
+        <section class="fame-section" aria-labelledby="fameHeading">
+          <div class="section-head compact-head">
+            <div>
+              <h3 id="fameHeading">🌟 Fame of Sejarah</h3>
+              <p class="note fame-note">Murid dengan pencapaian PBD dan peperiksaan yang baik. Avatar dijana automatik — gambar sebenar tidak wajib.</p>
+            </div>
+            <span class="fame-rule">TP4–TP6 + Gred A/B</span>
+          </div>
+          <div id="pbdFameGrid" class="fame-grid">
+            <p class="note">Pilih kelas untuk melihat Fame of Sejarah.</p>
+          </div>
+        </section>
+
         <div id="pbdGuruSummary" class="teacher-summary"></div>
         <div class="pbd-list-grid">
           <div class="pbd-list-card">
@@ -235,8 +254,13 @@
     <div id="profileBody"></div>
   </dialog>
 
-  <footer>Versi 6.6 Import Pemetaan Tanpa API Drag & Drop Kertas Soalan • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <dialog id="studentExplorerDialog" class="profile-dialog student-explorer-dialog">
+    <button class="close" onclick="closeStudentExplorer()">×</button>
+    <div id="studentExplorerBody"></div>
+  </dialog>
+
+  <footer>Versi 6.8 Profil Murid + Fame of Sejarah • Avatar automatik • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
   <script src="config.js"></script>
-  <script src="script.js?v=660"></script>
+  <script src="script.js?v=680"></script>
 </body>
 </html>

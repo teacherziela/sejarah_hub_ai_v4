@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v6.6 - IMPORT PEMETAAN TANPA OPENAI API
+// SEJARAH HUB AI v6.8 - PROFIL MURID + FAME OF SEJARAH + AVATAR AUTOMATIK
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -29,7 +29,7 @@ function doGet(e) {
 
   // Portal PBD
   if (action === 'pbdInitLite' || action === 'pbdInit') return jsonResponse(readPbdInitLite());
-  if (action === 'pbdClassSummary') return jsonResponse(readPbdClassSummary(e.parameter.tingkatan || '', e.parameter.kelas || ''));
+  if (action === 'pbdClassSummary') return jsonResponse(readPbdClassSummary(e.parameter.tingkatan || '', e.parameter.kelas || '', e.parameter.ujian || 'UPSA'));
 
   // Analisis peperiksaan + PBD
   if (action === 'examInit') return jsonResponse(readExamInit());
@@ -330,6 +330,7 @@ function muridObj_(o){
   var tingkatan = String(pick_(o,['Tingkatan','Tingkat','Tingka'])).trim();
   var kelas = String(pick_(o,['Kelas'])).trim();
   var status = String(pick_(o,['Status']) || 'AKTIF').trim();
+  var foto = String(pick_(o,['Foto','Photo','Gambar','Pautan Foto']) || '').trim();
 
   // Hantar kedua-dua format supaya modul Rumusan dan Isi PBD sama-sama boleh baca.
   return {
@@ -338,6 +339,7 @@ function muridObj_(o){
     tingkatan: tingkatan,
     kelas: kelas,
     status: status,
+    foto: foto,
     IDMurid: id,
     'Nama Murid': nama,
     Tingkatan: tingkatan,
@@ -379,15 +381,17 @@ function readPbdInitLite(){
 
   return {
     success:true,
-    murid: muridSh ? rowsToObjects_(safeRangeValues_(muridSh, 10)).map(muridObj_) : [],
+    murid: muridSh ? rowsToObjects_(safeRangeValues_(muridSh, 20)).map(muridObj_) : [],
     topik: topikSh ? rowsToObjects_(safeRangeValues_(topikSh, 20)) : [],
     rekod: []
   };
 }
 
-function readPbdClassSummary(tingkatan, kelas){
+function readPbdClassSummary(tingkatan, kelas, ujian){
   try{
     if(!tingkatan || !kelas) return { success:false, message:'Pilih tingkatan dan kelas.' };
+
+    ujian=String(ujian||'UPSA').trim().toUpperCase();
 
     var ss=getPbdSs();
     var muridSh=ss.getSheetByName('MURID');
@@ -396,15 +400,15 @@ function readPbdClassSummary(tingkatan, kelas){
 
     if(!muridSh || !rekodSh) return { success:false, message:'Sheet MURID atau REKOD TP tidak dijumpai.' };
 
-    var muridAll=rowsToObjects_(safeRangeValues_(muridSh, 10)).map(muridObj_);
+    var muridAll=rowsToObjects_(safeRangeValues_(muridSh, 20)).map(muridObj_);
     var murid=muridAll.filter(function(m){
       var st=String(m.status||'AKTIF').toUpperCase();
       return st !== 'PINDAH' && st !== 'TIDAK AKTIF' &&
         String(m.tingkatan)===String(tingkatan) &&
-        String(m.kelas)===String(kelas);
+        normalizeClass_(m.kelas)===normalizeClass_(kelas);
     });
 
-    var rekodAll=rowsToObjects_(safeRangeValues_(rekodSh, 15)).map(rekodObj_);
+    var rekodAll=rowsToObjects_(safeRangeValues_(rekodSh, 20)).map(rekodObj_);
 
     var muridById={}, muridByName={};
     for(var i=0;i<murid.length;i++){
@@ -413,19 +417,39 @@ function readPbdClassSummary(tingkatan, kelas){
     }
 
     var bestByKey={};
+    var recordsByKey={};
     var totalRecords=0;
+    var recordList=[];
 
     for(var r=0;r<rekodAll.length;r++){
       var rec=rekodAll[r];
       if(rec.tp <= 0) continue;
 
-      var m = rec.idMurid ? muridById[rec.idMurid] : null;
-      if(!m && rec.nama) m = muridByName[normalize_(rec.nama)];
-
-      if(!m) continue;
+      var matched = rec.idMurid ? muridById[rec.idMurid] : null;
+      if(!matched && rec.nama) matched = muridByName[normalize_(rec.nama)];
+      if(!matched) continue;
 
       totalRecords++;
-      var key=m.id || normalize_(m.nama);
+      var key=matched.id || normalize_(matched.nama);
+      if(!recordsByKey[key]) recordsByKey[key]=[];
+
+      var recordItem={
+        studentKey:key,
+        id:matched.id,
+        nama:matched.nama,
+        tingkatan:matched.tingkatan,
+        kelas:matched.kelas,
+        foto:matched.foto||'',
+        tp:rec.tp,
+        tarikh:fmtDate_(rec.tarikh),
+        dateNum:rec.dateNum,
+        guru:rec.guru,
+        topik:rec.topik,
+        row:rec.row
+      };
+
+      recordsByKey[key].push(recordItem);
+      recordList.push(recordItem);
 
       if(!bestByKey[key] ||
         rec.tp > bestByKey[key].tp ||
@@ -435,30 +459,112 @@ function readPbdClassSummary(tingkatan, kelas){
       }
     }
 
+    Object.keys(recordsByKey).forEach(function(key){
+      recordsByKey[key].sort(function(a,b){
+        return Number(b.dateNum||0)-Number(a.dateNum||0) || Number(b.row||0)-Number(a.row||0);
+      });
+      recordsByKey[key]=recordsByKey[key].slice(0,20);
+    });
+
+    recordList.sort(function(a,b){
+      return Number(b.dateNum||0)-Number(a.dateNum||0) || a.nama.localeCompare(b.nama);
+    });
+    recordList=recordList.slice(0,300);
+
+    // Ambil rekod peperiksaan terkini untuk ujian yang dipilih.
+    var examData=readExamRows_();
+    var filteredExam=examData.rows.filter(function(row){
+      return String(row.tingkatan)===String(tingkatan) &&
+        normalizeClass_(row.kelas)===normalizeClass_(kelas) &&
+        normalize_(row.ujian)===normalize_(ujian);
+    });
+
+    var uniqueExam={};
+    for(var ux=0;ux<filteredExam.length;ux++){
+      var ur=filteredExam[ux];
+      var ukey=ur.idMurid || normalize_(ur.nama);
+      if(!uniqueExam[ukey] || ur._row>uniqueExam[ukey]._row) uniqueExam[ukey]=ur;
+    }
+    filteredExam=Object.keys(uniqueExam).map(function(k){ return uniqueExam[k]; });
+
     var tpCounts={1:0,2:0,3:0,4:0,5:0,6:0};
     var noRecord=[], weak=[], allList=[];
-    var adaTp=0, sumTp=0;
+    var adaTp=0, sumTp=0, examCount=0;
 
     for(var j=0;j<murid.length;j++){
       var student=murid[j];
       var key2=student.id || normalize_(student.nama);
-      var lr=bestByKey[key2];
+      var best=bestByKey[key2];
+      var exam=chooseExamForStudent_(student,filteredExam);
+      var percent=exam && exam.peratus!=='' ? Number(exam.peratus) : '';
+      if(percent!=='') examCount++;
 
-      if(!lr){
-        noRecord.push({ id:student.id, nama:student.nama, status:'Tiada rekod' });
-        allList.push({ id:student.id, nama:student.nama, tp:'', tarikh:'', guru:'', status:'Tiada rekod' });
+      var base={
+        studentKey:key2,
+        id:student.id,
+        nama:student.nama,
+        tingkatan:student.tingkatan,
+        kelas:student.kelas,
+        foto:student.foto||'',
+        ujian:ujian,
+        peratus:percent,
+        gred:exam ? (exam.gred || examGrade_(percent)) : '',
+        jumlahObj:exam ? exam.jumlahObj : '',
+        jumlahStruktur:exam ? exam.jumlahStruktur : '',
+        jumlahEsei:exam ? exam.jumlahEsei : '',
+        recordCount:(recordsByKey[key2]||[]).length,
+        records:recordsByKey[key2]||[]
+      };
+
+      if(!best){
+        base.tp='';
+        base.tarikh='';
+        base.guru='';
+        base.topik='';
+        base.status=percent!=='' ? 'Ada markah peperiksaan, belum ada TP' : 'Tiada rekod TP';
+        noRecord.push(base);
+        allList.push(base);
         continue;
       }
 
       adaTp++;
-      sumTp += lr.tp;
+      sumTp += best.tp;
+      if(tpCounts[best.tp] !== undefined) tpCounts[best.tp]++;
 
-      if(tpCounts[lr.tp] !== undefined) tpCounts[lr.tp]++;
+      base.tp=best.tp;
+      base.tarikh=fmtDate_(best.tarikh);
+      base.guru=best.guru;
+      base.topik=best.topik;
 
-      var item={ id:student.id, nama:student.nama, tp:lr.tp, tarikh:fmtDate_(lr.tarikh), guru:lr.guru, topik:lr.topik };
-      if(lr.tp <= 2) weak.push(item);
-      allList.push(item);
+      if(percent==='' && best.tp) base.status='Ada TP, belum ada markah peperiksaan';
+      else if(percent>=82 && best.tp>=5) base.status='Cemerlang PBD dan peperiksaan';
+      else if(percent>=66 && best.tp>=4) base.status='Konsisten baik';
+      else if(percent<35 && best.tp<=2) base.status='Perlu intervensi segera';
+      else if(best.tp<=2) base.status='Perlu bimbingan PBD';
+      else base.status='Prestasi sedang dipantau';
+
+      if(best.tp <= 2) weak.push(base);
+      allList.push(base);
     }
+
+    // Fame: mesti ada kedua-dua PBD dan peperiksaan yang baik.
+    var fameList=allList.filter(function(s){
+      return Number(s.tp)>=4 && s.peratus!=='' && Number(s.peratus)>=66;
+    }).map(function(s){
+      var copy={};
+      for(var key in s) copy[key]=s[key];
+
+      if(Number(s.tp)>=6 && Number(s.peratus)>=82) copy.fameTitle='👑 Ikon Sejarah';
+      else if(Number(s.tp)>=5 && Number(s.peratus)>=82) copy.fameTitle='🏆 All-Star Sejarah';
+      else if(Number(s.tp)>=5) copy.fameTitle='🌟 Bintang Sejarah';
+      else copy.fameTitle='🚀 Harapan Sejarah';
+
+      return copy;
+    }).sort(function(a,b){
+      return Number(b.peratus||0)-Number(a.peratus||0) ||
+        Number(b.tp||0)-Number(a.tp||0) ||
+        a.nama.localeCompare(b.nama);
+    }).slice(0,8);
 
     weak.sort(function(a,b){ return Number(a.tp)-Number(b.tp) || a.nama.localeCompare(b.nama); });
     noRecord.sort(function(a,b){ return a.nama.localeCompare(b.nama); });
@@ -470,6 +576,7 @@ function readPbdClassSummary(tingkatan, kelas){
       success:true,
       tingkatan:tingkatan,
       kelas:kelas,
+      ujian:ujian,
       guruKelas:guruKelas,
       summary:{
         totalActive:murid.length,
@@ -478,15 +585,19 @@ function readPbdClassSummary(tingkatan, kelas){
         weakCount:weak.length,
         tpCounts:tpCounts,
         avgTp:adaTp ? Math.round((sumTp/adaTp)*100)/100 : 0,
-        totalRecords:totalRecords
+        totalRecords:totalRecords,
+        examCount:examCount,
+        fameCount:fameList.length
       },
       weakList:weak,
       noRecordList:noRecord,
-      allList:allList
+      allList:allList,
+      fameList:fameList,
+      recordList:recordList
     };
 
   }catch(err){
-    return { success:false, message:String(err) };
+    return { success:false, message:String(err && err.message ? err.message : err) };
   }
 }
 

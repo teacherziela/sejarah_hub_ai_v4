@@ -62,6 +62,7 @@ async function init(){
   document.getElementById('pbdSaveBtn').addEventListener('click', savePbdBatch);
   document.getElementById('rumusTingkatan')?.addEventListener('change', onRumusTingkatan);
   document.getElementById('rumusKelas')?.addEventListener('change', renderPbdSummary);
+  document.getElementById('rumusUjian')?.addEventListener('change', renderPbdSummary);
   document.getElementById('rumusRefreshBtn')?.addEventListener('click', renderPbdSummary);
 
   document.getElementById('examTingkatan')?.addEventListener('change', onExamTingkatan);
@@ -159,6 +160,8 @@ init();
 
 // ================= MODUL ISI PBD DALAM HUB =================
 let pbdData = { murid:[], topik:[], rekod:[] };
+let currentPbdSummaryData = null;
+let currentPbdListContext = {type:'active', value:''};
 function pbdApiUrl(params){
   const qs = new URLSearchParams(params);
   qs.set('v', Date.now());
@@ -320,8 +323,13 @@ function onRumusTingkatan(){
   if(kelas.length) kelasSel.value = kelas[0];
   renderPbdSummary();
 }
-async function fetchClassSummary(ting, kelas){
-  const url = pbdApiUrl({action:'pbdClassSummary', tingkatan:ting, kelas:kelas});
+async function fetchClassSummary(ting, kelas, ujian){
+  const url = pbdApiUrl({
+    action:'pbdClassSummary',
+    tingkatan:ting,
+    kelas:kelas,
+    ujian:ujian||'UPSA'
+  });
   const res = await fetch(url);
   const data = await res.json();
   if(!data.success) throw new Error(data.message || 'Gagal baca rumusan kelas');
@@ -332,6 +340,7 @@ function renderEmptySummary(msg){
   const cards = document.getElementById('pbdSummaryCards');
   const chart = document.getElementById('pbdTpChart');
   const teacherBox = document.getElementById('pbdGuruSummary');
+  const fame = document.getElementById('pbdFameGrid');
   const weak = document.getElementById('pbdWeakList');
   const noRec = document.getElementById('pbdNoRecordList');
   const all = document.getElementById('pbdAllTpList');
@@ -339,6 +348,8 @@ function renderEmptySummary(msg){
   if(cards) cards.innerHTML = '';
   if(chart) chart.innerHTML = '';
   if(teacherBox) teacherBox.innerHTML = '';
+  if(fame) fame.innerHTML = '<p class="note">Belum dipaparkan.</p>';
+  currentPbdSummaryData = null;
   if(weak) weak.innerHTML = '<p class="note">Belum dipaparkan.</p>';
   if(noRec) noRec.innerHTML = '<p class="note">Belum dipaparkan.</p>';
   if(all) all.innerHTML = '<p class="note">Belum dipaparkan.</p>';
@@ -348,79 +359,290 @@ async function renderPbdSummary(){
   const cards = document.getElementById('pbdSummaryCards');
   const chart = document.getElementById('pbdTpChart');
   const teacherBox = document.getElementById('pbdGuruSummary');
-  if(!meta || !cards || !chart || !teacherBox) return;
+  const fameBox = document.getElementById('pbdFameGrid');
+  if(!meta || !cards || !chart || !teacherBox || !fameBox) return;
 
   const ting = document.getElementById('rumusTingkatan')?.value || '';
   const kelas = document.getElementById('rumusKelas')?.value || '';
+  const ujian = examNorm(document.getElementById('rumusUjian')?.value || 'UPSA');
   if(!ting || !kelas){ renderEmptySummary('Pilih tingkatan dan kelas dahulu.'); return; }
 
-  meta.innerHTML = '⏳ Memuat rumusan kelas...';
+  meta.innerHTML = '⏳ Memuat rumusan kelas, profil murid dan Fame of Sejarah...';
   cards.innerHTML = '';
   chart.innerHTML = '';
   teacherBox.innerHTML = '';
+  fameBox.innerHTML = '<p class="note">Sedang menyusun pencapaian murid...</p>';
+
   try{
-    const data = await fetchClassSummary(ting, kelas);
+    const data = await fetchClassSummary(ting, kelas, ujian);
+    currentPbdSummaryData = data;
+
     const s = data.summary || {};
     const tp = s.tpCounts || {1:0,2:0,3:0,4:0,5:0,6:0};
     const percent = s.totalActive ? Math.round((s.adaTp/s.totalActive)*100) : 0;
     const guruText = (data.guruKelas && data.guruKelas.length) ? data.guruKelas.join(', ') : 'Belum dipadankan';
 
-    meta.innerHTML = `📌 <b>Tingkatan ${esc(ting)} ${esc(kelas)}</b><br>👩‍🏫 Guru kelas / guru sejarah: <b>${esc(guruText)}</b><br><span class="note">Kiraan ini guna <b>TP tertinggi setiap murid</b>. Kalau seorang murid ada banyak rekod, sistem ambil TP paling tinggi. Jika TP sama, sistem ambil rekod paling baru.</span>`;
+    meta.innerHTML = `📌 <b>Tingkatan ${esc(ting)} ${esc(kelas)}</b> • Peperiksaan Fame: <b>${esc(ujian)}</b><br>👩‍🏫 Guru kelas / guru sejarah: <b>${esc(guruText)}</b><br><span class="note">Klik mana-mana kotak KPI, bar TP atau nama murid untuk melihat senarai dan profil terperinci.</span>`;
 
     const summary = [
-      ['👨‍🎓 Murid Aktif', s.totalActive||0, 'Bilangan murid aktif dalam kelas'],
-      ['✅ Ada TP', s.adaTp||0, `${percent}% murid sudah ada TP`],
-      ['❌ Tiada Rekod', s.tiadaTp||0, 'Murid langsung belum ada rekod TP'],
-      ['🚨 TP1–TP2', s.weakCount||0, 'Murid lemah / perlu bimbingan'],
-      ['⭐ TP5', tp[5]||0, 'Murid cemerlang'],
-      ['🏆 TP6', tp[6]||0, 'Murid tahap tertinggi'],
-      ['📊 Purata TP', s.avgTp || '-', 'Purata TP tertinggi kelas'],
-      ['🗂️ Jumlah Rekod', s.totalRecords||0, 'Semua rekod asal kelas ini']
+      {title:'👨‍🎓 Murid Aktif',num:s.totalActive||0,desc:'Klik untuk lihat semua murid',type:'active'},
+      {title:'✅ Ada TP',num:s.adaTp||0,desc:`${percent}% murid sudah ada TP`,type:'hasTp'},
+      {title:'❌ Tiada Rekod',num:s.tiadaTp||0,desc:'Klik untuk tindakan susulan',type:'noRecord'},
+      {title:'🚨 TP1–TP2',num:s.weakCount||0,desc:'Murid perlu bimbingan',type:'weak'},
+      {title:'⭐ TP5',num:tp[5]||0,desc:'Klik senarai murid TP5',type:'tp',value:5},
+      {title:'🏆 TP6',num:tp[6]||0,desc:'Klik senarai murid TP6',type:'tp',value:6},
+      {title:'📊 Purata TP',num:s.avgTp || '-',desc:'Klik semua murid yang ada TP',type:'hasTp'},
+      {title:'🗂️ Jumlah Rekod',num:s.totalRecords||0,desc:'Klik untuk sejarah rekod PBD',type:'records'}
     ];
 
-    cards.innerHTML = summary.map(([title,num,desc])=>`
-      <div class="summary-card">
-        <span>${esc(title)}</span>
-        <b>${esc(num)}</b>
-        <small>${esc(desc)}</small>
-      </div>`).join('');
+    cards.innerHTML = summary.map(x=>`
+      <button type="button" class="summary-card clickable-summary"
+        onclick="openPbdStudentList('${x.type}',${x.value===undefined?"''":JSON.stringify(x.value)})">
+        <span>${esc(x.title)}</span>
+        <b>${esc(x.num)}</b>
+        <small>${esc(x.desc)}</small>
+        <em>Tekan untuk buka ↗</em>
+      </button>`).join('');
 
     const max = Math.max(1, ...[1,2,3,4,5,6].map(n=>tp[n]||0));
     chart.innerHTML = `
-      <h3>Graf Taburan TP Tertinggi Kelas</h3>
+      <h3>Graf Taburan TP Tertinggi Kelas <small>• setiap bar boleh diklik</small></h3>
       ${[1,2,3,4,5,6].map(n=>`
-        <div class="tp-bar-row">
+        <button type="button" class="tp-bar-row clickable-bar" onclick="openPbdStudentList('tp',${n})">
           <span>TP${n}</span>
           <div class="tp-bar-shell"><div class="tp-bar fill-tp${n}" style="width:${Math.round(((tp[n]||0)/max)*100)}%"></div></div>
           <b>${tp[n]||0}</b>
-        </div>`).join('')}`;
+        </button>`).join('')}`;
+
+    renderPbdFame(data.fameList||[], ujian);
 
     teacherBox.innerHTML = `
       <h3>Nota Rumusan</h3>
-      <div class="teacher-row"><span>Kaedah kiraan</span><b>1 murid = 1 TP tertinggi</b></div>
-      <div class="teacher-row"><span>TP1–TP2</span><b>${s.weakCount||0} murid perlu bimbingan</b></div>
-      <div class="teacher-row"><span>Belum direkod</span><b>${s.tiadaTp||0} murid</b></div>`;
+      <div class="teacher-row"><span>Kaedah kiraan PBD</span><b>1 murid = 1 TP tertinggi</b></div>
+      <div class="teacher-row"><span>Markah ${esc(ujian)}</span><b>${s.examCount||0} daripada ${s.totalActive||0} murid</b></div>
+      <div class="teacher-row"><span>Syarat Fame</span><b>TP4–TP6 dan Gred A/B</b></div>
+      <div class="teacher-row"><span>Gambar murid</span><b>Tak wajib — avatar huruf dijana automatik</b></div>`;
 
-    document.getElementById('pbdWeakList').innerHTML = renderStudentTable(data.weakList||[], ['Bil','Nama Murid','TP','Tarikh','Guru'], 'Tiada murid TP1–TP2. Alhamdulillah, kelas nampak steady.');
-    document.getElementById('pbdNoRecordList').innerHTML = renderStudentTable(data.noRecordList||[], ['Bil','Nama Murid','Status'], 'Semua murid aktif sudah ada rekod TP.');
-    document.getElementById('pbdAllTpList').innerHTML = renderStudentTable(data.allList||[], ['Bil','Nama Murid','TP Tertinggi','Tarikh','Guru'], 'Belum ada senarai murid.');
+    document.getElementById('pbdWeakList').innerHTML = renderStudentTable(data.weakList||[], 'Tiada murid TP1–TP2. Alhamdulillah, kelas nampak steady.');
+    document.getElementById('pbdNoRecordList').innerHTML = renderStudentTable(data.noRecordList||[], 'Semua murid aktif sudah ada rekod TP.');
+    document.getElementById('pbdAllTpList').innerHTML = renderStudentTable(data.allList||[], 'Belum ada senarai murid.');
   }catch(e){
     renderEmptySummary('Gagal muat rumusan: '+esc(e.message));
   }
 }
-function renderStudentTable(list, headers, emptyText){
+
+function studentKeyOf(x){
+  return String(x?.studentKey || x?.id || x?.nama || '').trim();
+}
+
+function studentInitials(name){
+  const parts=String(name||'Murid').trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return 'M';
+  const first=parts[0]?.[0]||'M';
+  const last=parts.length>1 ? parts[parts.length-1][0] : (parts[0]?.[1]||'');
+  return (first+last).toUpperCase();
+}
+
+function studentAvatarTone(name){
+  let hash=0;
+  for(const ch of String(name||'')) hash=((hash<<5)-hash)+ch.charCodeAt(0);
+  return Math.abs(hash)%8;
+}
+
+function studentAvatarHtml(student, size=''){
+  const photo=driveImg(student?.foto||student?.photo||'');
+  if(photo){
+    return `<img class="student-avatar ${size}" src="${esc(photo)}" alt="" onerror="this.outerHTML='<span class=&quot;student-avatar ${size} tone-${studentAvatarTone(student?.nama)}&quot;>${studentInitials(student?.nama)}</span>'">`;
+  }
+  return `<span class="student-avatar ${size} tone-${studentAvatarTone(student?.nama)}">${esc(studentInitials(student?.nama))}</span>`;
+}
+
+function examBadge(student){
+  if(student?.peratus==='' || student?.peratus===null || student?.peratus===undefined) return '<span class="mini-badge muted-badge">Belum ada markah</span>';
+  return `<span class="mini-badge grade-${esc(String(student.gred||'').toLowerCase())}">${esc(student.gred||'-')} • ${esc(student.peratus)}%</span>`;
+}
+
+function renderPbdFame(list, ujian){
+  const box=document.getElementById('pbdFameGrid');
+  if(!box) return;
+
+  if(!list.length){
+    box.innerHTML=`<div class="fame-empty">
+      <div class="fame-empty-icon">🌱</div>
+      <b>Belum ada murid memenuhi syarat Fame</b>
+      <p>Fame akan muncul apabila murid mendapat TP4–TP6 dan Gred A/B bagi ${esc(ujian)}.</p>
+    </div>`;
+    return;
+  }
+
+  box.innerHTML=list.map((s,i)=>`
+    <button type="button" class="fame-card rank-${i+1}" onclick="openPbdStudentProfile('${encodeURIComponent(studentKeyOf(s))}')">
+      <span class="fame-rank">${i<3?['🥇','🥈','🥉'][i]:'#'+(i+1)}</span>
+      ${studentAvatarHtml(s,'fame-avatar')}
+      <span class="fame-title">${esc(s.fameTitle||'Bintang Sejarah')}</span>
+      <strong>${esc(s.nama||'-')}</strong>
+      <small>Tingkatan ${esc(s.tingkatan||'')} ${esc(s.kelas||'')}</small>
+      <div class="fame-scores">
+        <span>TP${esc(s.tp||'-')}</span>
+        <span>${esc(s.ujian||ujian)} ${esc(s.peratus)}%</span>
+        <span>Gred ${esc(s.gred||'-')}</span>
+      </div>
+      <em>Tekan untuk profil</em>
+    </button>`).join('');
+}
+
+function renderStudentTable(list, emptyText){
   if(!list || !list.length) return `<p class="note">${esc(emptyText)}</p>`;
   const rows = list.slice(0,80).map((x,i)=>{
     const tpText = x.tp ? `TP${x.tp}` : (x.status || 'Tiada rekod');
+    const examText = x.peratus!=='' && x.peratus!==undefined ? `${x.peratus}% (${x.gred||'-'})` : '-';
     return `<tr>
       <td>${i+1}</td>
-      <td>${esc(x.nama||'-')}<br><small>${esc(x.id||'')}</small></td>
+      <td>
+        <button type="button" class="student-name-link" onclick="openPbdStudentProfile('${encodeURIComponent(studentKeyOf(x))}')">
+          ${studentAvatarHtml(x,'mini-avatar')}
+          <span><b>${esc(x.nama||'-')}</b><small>${esc(x.id||'')}</small></span>
+        </button>
+      </td>
       <td>${esc(tpText)}</td>
+      <td>${esc(examText)}</td>
       <td>${esc(x.tarikh||'-')}</td>
       <td>${esc(cleanName(x.guru||'-'))}</td>
     </tr>`;
   }).join('');
-  return `<div class="table-scroll"><table class="pbd-table"><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>${list.length>80?`<p class="note">Dipaparkan 80 daripada ${list.length} rekod.</p>`:''}</div>`;
+
+  return `<div class="table-scroll"><table class="pbd-table">
+    <thead><tr><th>Bil</th><th>Nama Murid</th><th>TP</th><th>Peperiksaan</th><th>Tarikh</th><th>Guru</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>${list.length>80?`<p class="note">Dipaparkan 80 daripada ${list.length} murid.</p>`:''}</div>`;
+}
+
+function filterPbdStudents(type,value){
+  const data=currentPbdSummaryData;
+  if(!data) return [];
+  const all=data.allList||[];
+  if(type==='hasTp') return all.filter(x=>Number(x.tp)>0);
+  if(type==='noRecord') return all.filter(x=>!Number(x.tp));
+  if(type==='weak') return all.filter(x=>Number(x.tp)>0&&Number(x.tp)<=2);
+  if(type==='tp') return all.filter(x=>Number(x.tp)===Number(value));
+  if(type==='fame') return data.fameList||[];
+  return all;
+}
+
+function pbdListTitle(type,value){
+  if(type==='hasTp') return '✅ Murid yang Sudah Ada TP';
+  if(type==='noRecord') return '❌ Murid Tiada Rekod TP';
+  if(type==='weak') return '🚨 Murid TP1–TP2';
+  if(type==='tp') return `📊 Senarai Murid TP${value}`;
+  if(type==='fame') return '🌟 Fame of Sejarah';
+  if(type==='records') return '🗂️ Semua Rekod PBD Kelas';
+  return '👨‍🎓 Semua Murid Aktif';
+}
+
+function openPbdStudentList(type='active',value=''){
+  const data=currentPbdSummaryData;
+  if(!data) return;
+
+  currentPbdListContext={type,value};
+  const dialog=document.getElementById('studentExplorerDialog');
+  const body=document.getElementById('studentExplorerBody');
+  if(!dialog||!body) return;
+
+  if(type==='records'){
+    const records=data.recordList||[];
+    body.innerHTML=`<div class="student-dialog-head">
+      <div><p class="eyebrow">TINGKATAN ${esc(data.tingkatan)} ${esc(data.kelas)}</p><h2>${pbdListTitle(type,value)}</h2></div>
+      <span class="count-pill">${records.length} rekod</span>
+    </div>
+    ${records.length?`<div class="record-timeline">${records.map(r=>`
+      <button type="button" class="record-item" onclick="openPbdStudentProfile('${encodeURIComponent(studentKeyOf(r))}')">
+        ${studentAvatarHtml(r,'mini-avatar')}
+        <span><b>${esc(r.nama)}</b><small>${esc(r.tarikh||'-')} • ${esc(r.topik||'Topik tidak dinyatakan')} • ${esc(cleanName(r.guru||'-'))}</small></span>
+        <strong>TP${esc(r.tp)}</strong>
+      </button>`).join('')}</div>`:'<p class="note">Belum ada rekod PBD.</p>'}`;
+  }else{
+    const students=filterPbdStudents(type,value);
+    body.innerHTML=`<div class="student-dialog-head">
+      <div><p class="eyebrow">TINGKATAN ${esc(data.tingkatan)} ${esc(data.kelas)}</p><h2>${pbdListTitle(type,value)}</h2></div>
+      <span class="count-pill">${students.length} murid</span>
+    </div>
+    <div class="student-card-list">${students.map(s=>`
+      <button type="button" class="student-list-card" onclick="openPbdStudentProfile('${encodeURIComponent(studentKeyOf(s))}')">
+        ${studentAvatarHtml(s,'list-avatar')}
+        <span class="student-list-main">
+          <strong>${esc(s.nama||'-')}</strong>
+          <small>${esc(s.status||'Klik untuk lihat rekod PBD dan peperiksaan')}</small>
+        </span>
+        <span class="student-list-score">${s.tp?`<b>TP${esc(s.tp)}</b>`:'<b>Tiada TP</b>'}${examBadge(s)}</span>
+      </button>`).join('')}</div>`;
+  }
+
+  if(!dialog.open) dialog.showModal();
+}
+
+function findPbdStudent(key){
+  const decoded=decodeURIComponent(String(key||''));
+  return (currentPbdSummaryData?.allList||[]).find(x=>studentKeyOf(x)===decoded);
+}
+
+function openPbdStudentProfile(encodedKey){
+  const s=findPbdStudent(encodedKey);
+  if(!s) return;
+
+  const dialog=document.getElementById('studentExplorerDialog');
+  const body=document.getElementById('studentExplorerBody');
+  const records=s.records||[];
+  const hasBack=currentPbdListContext?.type;
+
+  body.innerHTML=`
+    <div class="student-profile-top">
+      ${studentAvatarHtml(s,'profile-avatar')}
+      <div>
+        <p class="eyebrow">PROFIL MURID SEJARAH</p>
+        <h2>${esc(s.nama||'-')}</h2>
+        <p>Tingkatan ${esc(s.tingkatan||currentPbdSummaryData?.tingkatan||'')} ${esc(s.kelas||currentPbdSummaryData?.kelas||'')}</p>
+        <div class="profile-badges">
+          <span class="mini-badge tp-badge">${s.tp?`TP${esc(s.tp)}`:'Tiada TP'}</span>
+          ${examBadge(s)}
+          ${s.fameTitle?`<span class="mini-badge fame-badge">${esc(s.fameTitle)}</span>`:''}
+        </div>
+      </div>
+    </div>
+
+    <div class="student-kpi-grid">
+      <div><span>TP Tertinggi</span><b>${s.tp?`TP${esc(s.tp)}`:'-'}</b></div>
+      <div><span>${esc(s.ujian||currentPbdSummaryData?.ujian||'Peperiksaan')}</span><b>${s.peratus!==''&&s.peratus!==undefined?`${esc(s.peratus)}%`:'-'}</b></div>
+      <div><span>Gred</span><b>${esc(s.gred||'-')}</b></div>
+      <div><span>Jumlah Rekod PBD</span><b>${esc(s.recordCount||0)}</b></div>
+    </div>
+
+    <section class="profile-section">
+      <h3>📝 Ringkasan Peperiksaan</h3>
+      <div class="exam-mini-grid">
+        <div><span>Objektif</span><b>${s.jumlahObj!==''&&s.jumlahObj!==undefined?esc(s.jumlahObj):'-'}</b></div>
+        <div><span>Struktur</span><b>${s.jumlahStruktur!==''&&s.jumlahStruktur!==undefined?esc(s.jumlahStruktur):'-'}</b></div>
+        <div><span>Esei</span><b>${s.jumlahEsei!==''&&s.jumlahEsei!==undefined?esc(s.jumlahEsei):'-'}</b></div>
+      </div>
+    </section>
+
+    <section class="profile-section">
+      <h3>📚 Rekod PBD</h3>
+      ${records.length?`<div class="profile-records">${records.map((r,i)=>`
+        <article>
+          <span class="record-number">${i+1}</span>
+          <div><b>${esc(r.topik||'Topik tidak dinyatakan')}</b><small>${esc(r.tarikh||'-')} • ${esc(cleanName(r.guru||'-'))}</small></div>
+          <strong>TP${esc(r.tp)}</strong>
+        </article>`).join('')}</div>`:'<p class="note">Murid ini belum mempunyai rekod TP.</p>'}
+    </section>
+
+    ${hasBack?`<button type="button" class="pill student-back-btn" onclick="openPbdStudentList('${currentPbdListContext.type}',${JSON.stringify(currentPbdListContext.value)})">← Kembali ke senarai</button>`:''}`;
+
+  if(!dialog.open) dialog.showModal();
+}
+
+function closeStudentExplorer(){
+  const dialog=document.getElementById('studentExplorerDialog');
+  if(dialog?.open) dialog.close();
 }
 
 
@@ -491,10 +713,19 @@ async function initExam(){
       itemMap:data.itemMap||[]
     };
 
+    const allExamNames=[...new Set([...examData.ujian,'UPSA','UASA','PPT'])];
     const list=document.getElementById('examUjianList');
-    list.innerHTML=[...new Set([...examData.ujian,'UPSA','UASA','PPT'])].map(x=>`<option value="${esc(x)}"></option>`).join('');
+    list.innerHTML=allExamNames.map(x=>`<option value="${esc(x)}"></option>`).join('');
+
+    const fameExam=document.getElementById('rumusUjian');
+    if(fameExam){
+      const previous=fameExam.value||'UPSA';
+      fameExam.innerHTML=allExamNames.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+      fameExam.value=allExamNames.includes(previous)?previous:(allExamNames[0]||'UPSA');
+    }
 
     initExamControls();
+    renderPbdSummary();
     renderExamMarksGrid({});
     renderExamMapGrid();
 
@@ -841,12 +1072,24 @@ async function importExamMappingFile(file){
 
     if(!imported.length) throw new Error('Fail tidak mempunyai rekod pemetaan.');
 
+    const validImported=imported
+      .map(r=>({
+        soalan:r.soalan,
+        topik:String(r.topik||'').trim(),
+        aras:normalizeMappingLevel(r.aras)
+      }))
+      .filter(r=>r.soalan&&r.topik&&r.aras);
+
+    if(!validImported.length){
+      throw new Error('Fail ini ialah template kosong atau tiada pemetaan lengkap. Tiada data pada skrin diubah.');
+    }
+
     const mapRows=[...document.querySelectorAll('.map-row')];
     const byKey={};
-    imported.forEach(r=>{ byKey[examNorm(r.soalan)]=r; });
+    validImported.forEach(r=>{ byKey[examNorm(r.soalan)]=r; });
 
     let filled=0;
-    const missing=[];
+    const notFound=[];
 
     mapRows.forEach(row=>{
       const key=examNorm(row.dataset.question);
@@ -855,19 +1098,21 @@ async function importExamMappingFile(file){
 
       const topicInput=row.querySelector('.map-topic');
       const levelInput=row.querySelector('.map-level');
-      const level=normalizeMappingLevel(item.aras);
 
       if(topicInput) topicInput.value=item.topik;
-      if(levelInput) levelInput.value=level;
+      if(levelInput) levelInput.value=item.aras;
+      filled++;
+    });
 
-      if(item.topik&&level) filled++;
-      else missing.push(row.dataset.question);
+    validImported.forEach(item=>{
+      const found=mapRows.some(row=>examNorm(row.dataset.question)===examNorm(item.soalan));
+      if(!found) notFound.push(item.soalan);
     });
 
     status.innerHTML=`✅ Fail <b>${esc(file.name)}</b> berjaya diimport. <b>${filled}</b> item lengkap. Semak paparan di bawah, kemudian tekan <b>Simpan Pemetaan Item</b>.`;
-    document.getElementById('examMapStatus').innerHTML=missing.length
-      ? `⚠️ Import selesai tetapi item ini belum lengkap: ${esc(missing.join(', '))}`
-      : `✅ Semua item yang ditemui dalam fail telah dimasukkan. Tekan Simpan Pemetaan Item.`;
+    document.getElementById('examMapStatus').innerHTML=notFound.length
+      ? `⚠️ Item ini tiada dalam borang semasa: ${esc(notFound.join(', '))}`
+      : `✅ Semua item dalam fail telah dimasukkan. Tekan Simpan Pemetaan Item.`;
 
     document.getElementById('examMapGrid')?.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
