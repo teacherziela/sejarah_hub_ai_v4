@@ -64,6 +64,7 @@ async function init(){
   document.getElementById('rumusKelas')?.addEventListener('change', renderPbdSummary);
   document.getElementById('rumusUjian')?.addEventListener('change', renderPbdSummary);
   document.getElementById('rumusRefreshBtn')?.addEventListener('click', renderPbdSummary);
+  document.getElementById('pbdPrintReportBtn')?.addEventListener('click', openPbdPrintReport);
 
   document.getElementById('examTingkatan')?.addEventListener('change', onExamTingkatan);
   document.getElementById('examKelas')?.addEventListener('change', onExamContextChanged);
@@ -643,6 +644,206 @@ function openPbdStudentProfile(encodedKey){
 function closeStudentExplorer(){
   const dialog=document.getElementById('studentExplorerDialog');
   if(dialog?.open) dialog.close();
+}
+
+
+// ================= LAPORAN PBD UNTUK CETAK v6.9 =================
+async function openPbdPrintReport(){
+  const ting=document.getElementById('rumusTingkatan')?.value||'';
+  const kelas=document.getElementById('rumusKelas')?.value||'';
+  const status=document.getElementById('pbdSummaryMeta');
+
+  if(!ting||!kelas){
+    if(status) status.textContent='Pilih Tingkatan dan Kelas dahulu sebelum mencetak laporan.';
+    return;
+  }
+
+  // Buka tab segera supaya pelayar tidak menyekat popup selepas proses fetch.
+  const printWin=window.open('','_blank');
+  if(!printWin){
+    if(status) status.textContent='Popup disekat. Benarkan popup untuk portal ini, kemudian cuba lagi.';
+    return;
+  }
+
+  printWin.document.open();
+  printWin.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Memuat Laporan PBD</title>
+    <style>body{font-family:Arial,sans-serif;padding:40px;text-align:center;color:#24314d} .spin{font-size:42px;animation:p 1s infinite alternate}@keyframes p{to{transform:scale(1.15)}}</style>
+    </head><body><div class="spin">📚</div><h2>Memuat laporan PBD...</h2><p>Tingkatan ${esc(ting)} ${esc(kelas)}</p></body></html>`);
+  printWin.document.close();
+
+  try{
+    const url=pbdApiUrl({
+      action:'pbdPrintReport',
+      tingkatan:ting,
+      kelas:kelas,
+      v:Date.now()
+    });
+    const res=await fetch(url);
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message||'Gagal menjana laporan PBD');
+
+    printWin.document.open();
+    printWin.document.write(buildPbdPrintHtml(data));
+    printWin.document.close();
+  }catch(e){
+    printWin.document.open();
+    printWin.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Ralat Laporan</title></head>
+      <body style="font-family:Arial,sans-serif;padding:40px"><h2>❌ Laporan gagal dijana</h2><p>${esc(e.message)}</p>
+      <button onclick="window.close()">Tutup</button></body></html>`);
+    printWin.document.close();
+  }
+}
+
+function chunkArray(items,size){
+  const out=[];
+  for(let i=0;i<items.length;i+=size) out.push(items.slice(i,i+size));
+  return out;
+}
+
+function buildPbdPrintHtml(data){
+  const logoUrl=new URL('logo-smktj2.jpg',location.href).href;
+  const topics=Array.isArray(data.topics)?data.topics:[];
+  const students=Array.isArray(data.students)?data.students:[];
+  const chunks=topics.length?chunkArray(topics,6):[[]];
+  const totalChunks=chunks.length;
+
+  const pages=chunks.map((topicChunk,pageIndex)=>{
+    const topicHeaders=topicChunk.map(t=>`
+      <th class="topic-col">
+        <span class="topic-code">${esc(t.code||'')}</span>
+        <span>${esc(t.title||'Topik')}</span>
+      </th>`).join('');
+
+    const bodyRows=students.map((s,i)=>{
+      const cells=topicChunk.map(t=>{
+        const rec=(s.values||{})[t.key];
+        const detail=rec
+          ? `TP${esc(rec.tp)} • ${esc(rec.tarikh||'')} • ${esc(rec.guru||'')}`
+          : 'Belum ada rekod';
+        return `<td class="tp-cell" title="${detail}">${rec?esc(rec.tp):''}</td>`;
+      }).join('');
+
+      return `<tr>
+        <td class="bil">${i+1}</td>
+        <td class="student-name">${esc(s.nama||'-')}</td>
+        ${cells}
+      </tr>`;
+    }).join('');
+
+    const emptyMessage=!topics.length
+      ? `<tr><td colspan="3" class="empty-report">Belum ada rekod TP bagi kelas ini.</td></tr>`
+      : '';
+
+    return `<section class="report-page ${pageIndex<totalChunks-1?'page-break':''}">
+      <header class="report-header">
+        <img src="${logoUrl}" alt="Logo sekolah">
+        <div>
+          <h1>LAPORAN REKOD TP PBD SEJARAH</h1>
+          <h2>SMK TAMAN JASMIN 2</h2>
+        </div>
+      </header>
+
+      <div class="report-meta">
+        <div><b>Kelas:</b> Tingkatan ${esc(data.tingkatan)} ${esc(data.kelas)}</div>
+        <div><b>Tarikh Cetakan:</b> ${esc(data.printDate||'')}</div>
+        <div><b>Guru:</b> ${esc((data.guruKelas||[]).join(', ')||'Guru Sejarah')}</div>
+        <div><b>Bahagian Topik:</b> ${pageIndex+1} / ${totalChunks}</div>
+      </div>
+
+      <table>
+        <colgroup>
+          <col class="bil-col">
+          <col class="name-col">
+          ${topicChunk.map(()=>'<col class="tp-col">').join('')}
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Bil</th>
+            <th>Nama Murid</th>
+            ${topicHeaders}
+          </tr>
+        </thead>
+        <tbody>${bodyRows||emptyMessage}</tbody>
+      </table>
+
+      <footer class="report-foot">
+        <span>Setiap sel memaparkan TP tertinggi murid bagi topik tersebut. Jika TP sama, rekod paling baharu digunakan.</span>
+        <span>${students.length} murid aktif • ${topics.length} topik mempunyai rekod</span>
+      </footer>
+    </section>`;
+  }).join('');
+
+  return `<!doctype html>
+  <html lang="ms">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Laporan PBD - Tingkatan ${esc(data.tingkatan)} ${esc(data.kelas)}</title>
+    <style>
+      :root{--ink:#172033;--line:#263246;--soft:#eef3f8;--accent:#274c77}
+      *{box-sizing:border-box}
+      body{margin:0;background:#e9eef5;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+      .toolbar{
+        position:sticky;top:0;z-index:20;
+        display:flex;justify-content:center;gap:10px;align-items:center;
+        padding:12px;background:#172033;color:#fff;
+        box-shadow:0 6px 18px rgba(0,0,0,.2)
+      }
+      .toolbar button{
+        border:0;border-radius:999px;padding:11px 18px;font-weight:800;cursor:pointer
+      }
+      .print-btn{background:#32c5ff;color:#092033}
+      .close-btn{background:#fff;color:#172033}
+      .toolbar small{opacity:.8;margin-left:8px}
+      .report-page{
+        width:277mm;min-height:190mm;
+        margin:10mm auto;padding:8mm;
+        background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.13)
+      }
+      .report-header{display:flex;justify-content:center;align-items:center;gap:15px;text-align:center;margin-bottom:5mm}
+      .report-header img{width:18mm;height:18mm;object-fit:contain}
+      .report-header h1{margin:0;font-size:18pt;letter-spacing:.3px}
+      .report-header h2{margin:2mm 0 0;font-size:13pt}
+      .report-meta{
+        display:grid;grid-template-columns:1fr 1fr;gap:2mm 8mm;
+        margin:0 0 4mm;font-size:9pt
+      }
+      table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.2pt}
+      thead{display:table-header-group}
+      tr{break-inside:avoid}
+      th,td{border:1.2px solid var(--line);padding:2.2mm 1.4mm;vertical-align:middle}
+      th{background:var(--soft);text-align:center;font-weight:800;line-height:1.15}
+      .bil-col{width:10mm}.name-col{width:72mm}.tp-col{width:auto}
+      .bil{text-align:center}
+      .student-name{text-align:left;font-weight:700}
+      .tp-cell{text-align:center;font-size:11pt;font-weight:800}
+      .topic-col{font-size:7.7pt;overflow-wrap:anywhere}
+      .topic-code{display:block;color:var(--accent);font-size:7pt;margin-bottom:1mm}
+      .report-foot{
+        display:flex;justify-content:space-between;gap:10mm;
+        margin-top:3mm;font-size:7.5pt;color:#45556d
+      }
+      .empty-report{text-align:center;padding:15mm}
+      @media print{
+        @page{size:A4 landscape;margin:7mm}
+        body{background:#fff}
+        .toolbar{display:none!important}
+        .report-page{
+          width:auto;min-height:auto;margin:0;padding:0;box-shadow:none
+        }
+        .page-break{break-after:page;page-break-after:always}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <button class="print-btn" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+      <button class="close-btn" onclick="window.close()">Tutup</button>
+      <small>Pilih “Save as PDF” dalam tetingkap cetak jika mahu fail PDF.</small>
+    </div>
+    ${pages}
+  </body>
+  </html>`;
 }
 
 
