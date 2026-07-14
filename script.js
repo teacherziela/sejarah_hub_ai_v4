@@ -79,6 +79,7 @@ async function init(){
 
   await loadYear();
   await initPbd();
+  initPbdEvidenceGallery();
   await initExam();
 }
 async function loadYear(){
@@ -92,7 +93,12 @@ function renderStats(year){
   document.getElementById('statStrip').innerHTML = stats.map(([a,b])=>`<div class="stat"><b>${b}</b><span>${a}</span></div>`).join('');
 }
 function renderMenu(year){
-  const fixed=[{icon:'📊',title:'PBD / Rumusan',target:'pbdPanel'},{icon:'🧩',title:'Analisis Peperiksaan',target:'examPanel'},{icon:'👥',title:'Ahli Panitia',target:'guruPanel'}];
+  const fixed=[
+    {icon:'📊',title:'PBD / Rumusan',target:'pbdPanel'},
+    {icon:'🖼️',title:'Hasil Murid',target:'pbdEvidenceGalleryPanel'},
+    {icon:'🧩',title:'Analisis Peperiksaan',target:'examPanel'},
+    {icon:'👥',title:'Ahli Panitia',target:'guruPanel'}
+  ];
   const quick=byYear(hub.linkPantas,year).map(x=>isBiodataGuruLink(x)
     ? {icon:x.Icon||'👩‍🏫',title:x.Nama,target:'guruPanel'}
     : {icon:x.Icon||'🔗',title:x.Nama,url:x.Link});
@@ -1034,6 +1040,192 @@ function buildPbdPrintHtml(data){
     ${pages}
   </body>
   </html>`;
+}
+
+
+// ================= GALERI HASIL MURID / BUKTI PBD v7.2 =================
+function initPbdEvidenceGallery(){
+  if(document.getElementById('pbdEvidenceGalleryPanel')) return;
+
+  const anchor=document.getElementById('pbdPanel');
+  if(!anchor) return;
+
+  const section=document.createElement('section');
+  section.id='pbdEvidenceGalleryPanel';
+  section.className='panel evidence-gallery-panel';
+  section.innerHTML=`
+    <div class="section-head evidence-gallery-head">
+      <div>
+        <p class="eyebrow">BUKTI PENTAKSIRAN BILIK DARJAH</p>
+        <h2>🖼️ Galeri Hasil Murid</h2>
+        <p class="note">Gambar lama daripada AppSheet dan bukti baharu daripada portal dipaparkan terus di sini.</p>
+      </div>
+      <span class="evidence-gallery-badge">Klik gambar untuk buka penuh</span>
+    </div>
+
+    <div class="controls evidence-gallery-controls">
+      <label>Tingkatan
+        <select id="galleryPbdTingkatan"><option value="">Semua Tingkatan</option></select>
+      </label>
+      <label>Kelas
+        <select id="galleryPbdKelas"><option value="">Semua Kelas</option></select>
+      </label>
+      <label>Topik
+        <select id="galleryPbdTopik"><option value="">Semua Topik</option></select>
+      </label>
+      <label>TP
+        <select id="galleryPbdTp">
+          <option value="">Semua TP</option>
+          <option value="1">TP1</option>
+          <option value="2">TP2</option>
+          <option value="3">TP3</option>
+          <option value="4">TP4</option>
+          <option value="5">TP5</option>
+          <option value="6">TP6</option>
+        </select>
+      </label>
+      <button type="button" class="pill primary" id="galleryPbdLoadBtn">Papar Galeri</button>
+    </div>
+
+    <div id="galleryPbdStatus" class="note pbd-status-box">
+      Pilih kelas atau tekan Papar Galeri untuk melihat bukti hasil kerja.
+    </div>
+    <div id="galleryPbdGrid" class="student-work-gallery">
+      <div class="gallery-empty-state">
+        <span>🖼️</span>
+        <b>Galeri sedia digunakan</b>
+        <p>Gambar akan dipadankan dengan rekod murid, kelas, topik dan TP.</p>
+      </div>
+    </div>`;
+
+  anchor.insertAdjacentElement('afterend',section);
+
+  const tingSel=document.getElementById('galleryPbdTingkatan');
+  const tings=[...new Set((pbdData.murid||[]).map(m=>String(muridTing(m)||'')).filter(Boolean))]
+    .sort((a,b)=>Number(a)-Number(b));
+  tingSel.innerHTML='<option value="">Semua Tingkatan</option>'+
+    tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
+
+  tingSel.addEventListener('change',onEvidenceGalleryTingkatan);
+  document.getElementById('galleryPbdKelas').addEventListener('change',syncEvidenceGalleryTopik);
+  document.getElementById('galleryPbdLoadBtn').addEventListener('click',loadPbdEvidenceGallery);
+
+  // Ikut pilihan semasa Isi PBD jika ada.
+  const currentTing=document.getElementById('pbdTingkatan')?.value||'';
+  const currentClass=document.getElementById('pbdKelas')?.value||'';
+  if(currentTing){
+    tingSel.value=currentTing;
+    onEvidenceGalleryTingkatan();
+    document.getElementById('galleryPbdKelas').value=currentClass;
+  }
+  syncEvidenceGalleryTopik();
+}
+
+function onEvidenceGalleryTingkatan(){
+  const ting=document.getElementById('galleryPbdTingkatan')?.value||'';
+  const classes=[...new Set((pbdData.murid||[])
+    .filter(m=>(!ting||String(muridTing(m))===String(ting))&&muridStatus(m)!=='PINDAH')
+    .map(m=>String(muridKelas(m)||'').trim())
+    .filter(Boolean))].sort();
+
+  const classSel=document.getElementById('galleryPbdKelas');
+  classSel.innerHTML='<option value="">Semua Kelas</option>'+
+    classes.map(k=>`<option value="${esc(k)}">${ting?`Tingkatan ${esc(ting)} `:''}${esc(k)}</option>`).join('');
+  syncEvidenceGalleryTopik();
+}
+
+function syncEvidenceGalleryTopik(){
+  const ting=document.getElementById('galleryPbdTingkatan')?.value||'';
+  const topics=(pbdData.topik||[])
+    .filter(t=>!ting||String(t.Tingkatan||'')===String(ting))
+    .map(t=>({
+      value:String(t.IDTopik||t.Topik||'').trim(),
+      label:String(t.Topik||t['SK (Standard Kandungan)']||'Topik').trim()
+    }))
+    .filter(t=>t.value&&t.label);
+
+  const unique=[];
+  const seen=new Set();
+  topics.forEach(t=>{
+    const key=examNorm(t.label);
+    if(!seen.has(key)){seen.add(key);unique.push(t);}
+  });
+
+  const sel=document.getElementById('galleryPbdTopik');
+  const previous=sel?.value||'';
+  if(sel){
+    sel.innerHTML='<option value="">Semua Topik</option>'+
+      unique.map(t=>`<option value="${esc(t.label)}">${esc(t.label)}</option>`).join('');
+    if([...sel.options].some(o=>o.value===previous)) sel.value=previous;
+  }
+}
+
+function evidenceGalleryImageUrl(item){
+  return item.thumbnailUrl||driveImg(item.url)||item.url||'';
+}
+
+async function loadPbdEvidenceGallery(){
+  const grid=document.getElementById('galleryPbdGrid');
+  const status=document.getElementById('galleryPbdStatus');
+  if(!grid||!status) return;
+
+  const ting=document.getElementById('galleryPbdTingkatan')?.value||'';
+  const kelas=document.getElementById('galleryPbdKelas')?.value||'';
+  const topik=document.getElementById('galleryPbdTopik')?.value||'';
+  const tp=document.getElementById('galleryPbdTp')?.value||'';
+
+  status.innerHTML='⏳ Sedang memadankan rekod PBD dengan gambar dalam Google Drive...';
+  grid.innerHTML=Array.from({length:6},()=>'<div class="work-gallery-skeleton"></div>').join('');
+
+  try{
+    const res=await fetch(pbdApiUrl({
+      action:'pbdEvidenceGallery',
+      tingkatan:ting,
+      kelas:kelas,
+      topik:topik,
+      tp:tp,
+      limit:80
+    }));
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Galeri gagal dibaca');
+
+    const rows=out.rows||[];
+    status.innerHTML=`✅ <b>${rows.length}</b> bukti hasil kerja dipaparkan`+
+      `${out.unresolved?` • ${out.unresolved} fail lama belum dapat dipadankan`:''}.`;
+
+    if(!rows.length){
+      grid.innerHTML=`<div class="gallery-empty-state">
+        <span>🔎</span>
+        <b>Tiada gambar untuk pilihan ini</b>
+        <p>Cuba pilih kelas, topik atau TP yang lain.</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML=rows.map((item,i)=>{
+      const img=evidenceGalleryImageUrl(item);
+      return `<article class="student-work-card">
+        <button type="button" class="student-work-image" onclick="openUrl('${String(item.viewUrl||item.url||img).replace(/'/g,"\\'")}')">
+          <img src="${esc(img)}" alt="Hasil kerja ${esc(item.nama||'murid')}"
+            loading="lazy"
+            onerror="this.closest('.student-work-image').classList.add('image-error');this.style.display='none'">
+          <span class="image-error-label">🖼️<small>Buka gambar</small></span>
+          <span class="work-tp-badge">TP${esc(item.tp||'-')}</span>
+        </button>
+        <div class="student-work-info">
+          <p class="work-number">BUKTI #${i+1}</p>
+          <h3>${esc(item.nama||'-')}</h3>
+          <p><b>${esc(item.tingkatan||'')} ${esc(item.kelas||'')}</b> • ${esc(item.tarikh||'-')}</p>
+          <p class="work-topic">${esc(item.topik||item.sk||'Topik tidak dinyatakan')}</p>
+          <small>Ditafsir oleh ${esc(cleanName(item.guru||'-'))}</small>
+          ${item.catatan?`<p class="work-note">“${esc(item.catatan)}”</p>`:''}
+        </div>
+      </article>`;
+    }).join('');
+  }catch(e){
+    status.innerHTML='❌ Galeri gagal dimuatkan: '+esc(e.message);
+    grid.innerHTML=`<div class="gallery-empty-state"><span>⚠️</span><b>Galeri tidak dapat dibuka</b><p>${esc(e.message)}</p></div>`;
+  }
 }
 
 

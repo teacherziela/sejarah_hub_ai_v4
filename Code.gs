@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v7.1 - BUKTI HASIL KERJA PBD + PROFIL + FAME
+// SEJARAH HUB AI v7.2 - GALERI HASIL MURID + BUKTI PBD LAMA/BAHARU
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -31,6 +31,13 @@ function doGet(e) {
   if (action === 'pbdInitLite' || action === 'pbdInit') return jsonResponse(readPbdInitLite());
   if (action === 'pbdClassSummary') return jsonResponse(readPbdClassSummary(e.parameter.tingkatan || '', e.parameter.kelas || '', e.parameter.ujian || 'UPSA'));
   if (action === 'pbdPrintReport') return jsonResponse(readPbdPrintReport(e.parameter.tingkatan || '', e.parameter.kelas || ''));
+  if (action === 'pbdEvidenceGallery') return jsonResponse(readPbdEvidenceGallery(
+    e.parameter.tingkatan || '',
+    e.parameter.kelas || '',
+    e.parameter.topik || '',
+    e.parameter.tp || '',
+    e.parameter.limit || '80'
+  ));
 
   // Analisis peperiksaan + PBD
   if (action === 'examInit') return jsonResponse(readExamInit());
@@ -871,6 +878,132 @@ function uploadPbdEvidence(data){
       thumbnailUrl:'https://drive.google.com/thumbnail?id='+file.getId()+'&sz=w1200',
       sharingOk:sharingOk,
       message:'Bukti hasil kerja berjaya disimpan.'
+    };
+  }catch(err){
+    return {success:false,message:String(err&&err.message?err.message:err)};
+  }
+}
+
+
+var LEGACY_PBD_IMAGE_FOLDER_ID='1iNinTVUr5DLYU7agis8_hC1G1f9CkMTE';
+
+function driveFileIdFromText_(value){
+  var text=String(value||'').trim();
+  if(!text) return '';
+
+  var match=text.match(/\/d\/([^/?#]+)|[?&]id=([^&#]+)/);
+  return match ? (match[1]||match[2]||'') : '';
+}
+
+function evidenceBaseName_(value){
+  var text=String(value||'').trim().replace(/\\/g,'/');
+  if(!text) return '';
+  var pieces=text.split('/');
+  return pieces[pieces.length-1]||'';
+}
+
+function legacyPbdImageMap_(){
+  var cache=CacheService.getScriptCache();
+  var cached=cache.get('LEGACY_PBD_IMAGE_MAP_V1');
+  if(cached){
+    try{return JSON.parse(cached);}catch(ignoreCache){}
+  }
+
+  var map={};
+  var folder=DriveApp.getFolderById(LEGACY_PBD_IMAGE_FOLDER_ID);
+  var files=folder.getFiles();
+
+  while(files.hasNext()){
+    var file=files.next();
+    map[file.getName()]=file.getId();
+  }
+
+  try{
+    var json=JSON.stringify(map);
+    if(json.length<90000) cache.put('LEGACY_PBD_IMAGE_MAP_V1',json,21600);
+  }catch(ignorePut){}
+
+  return map;
+}
+
+function resolvePbdEvidence_(foto, legacyMap){
+  var raw=String(foto||'').trim();
+  if(!raw) return null;
+
+  var fileId=driveFileIdFromText_(raw);
+  if(!fileId){
+    var base=evidenceBaseName_(raw);
+    fileId=legacyMap[base]||'';
+  }
+  if(!fileId) return null;
+
+  return {
+    fileId:fileId,
+    viewUrl:'https://drive.google.com/file/d/'+fileId+'/view',
+    thumbnailUrl:'https://drive.google.com/thumbnail?id='+fileId+'&sz=w1200'
+  };
+}
+
+function readPbdEvidenceGallery(tingkatan,kelas,topik,tp,limit){
+  try{
+    limit=Math.max(1,Math.min(120,Number(limit||80)));
+    var sh=getPbdSs().getSheetByName('REKOD TP');
+    if(!sh) return {success:false,message:'Sheet REKOD TP tidak dijumpai.'};
+
+    var rows=rowsToObjects_(safeRangeValues_(sh,20)).map(rekodObj_);
+    var filtered=rows.filter(function(rec){
+      if(!rec.foto) return false;
+      if(tingkatan && String(rec.tingkatan)!==String(tingkatan)) return false;
+      if(kelas && normalizeClass_(rec.kelas)!==normalizeClass_(kelas)) return false;
+      if(topik){
+        var target=normalize_(topik);
+        var hay=normalize_([rec.topik,rec.sk,rec.sp,rec.idTopik].join(' '));
+        if(hay.indexOf(target)===-1) return false;
+      }
+      if(tp && Number(rec.tp)!==Number(tp)) return false;
+      return true;
+    });
+
+    filtered.sort(function(a,b){
+      return Number(b.dateNum||0)-Number(a.dateNum||0) ||
+        Number(b.row||0)-Number(a.row||0);
+    });
+
+    // Resolve only the filtered records to keep loading fast.
+    var legacyMap=legacyPbdImageMap_();
+    var output=[];
+    var unresolved=0;
+
+    for(var i=0;i<filtered.length && output.length<limit;i++){
+      var rec=filtered[i];
+      var image=resolvePbdEvidence_(rec.foto,legacyMap);
+      if(!image){unresolved++;continue;}
+
+      output.push({
+        idRekod:rec.idRekod||'',
+        idMurid:rec.idMurid||'',
+        nama:rec.nama||'',
+        tingkatan:rec.tingkatan||'',
+        kelas:rec.kelas||'',
+        topik:rec.topik||'',
+        sk:rec.sk||'',
+        sp:rec.sp||'',
+        tp:rec.tp||'',
+        catatan:rec.catatan||'',
+        guru:rec.guru||'',
+        tarikh:fmtDate_(rec.tarikh),
+        viewUrl:image.viewUrl,
+        thumbnailUrl:image.thumbnailUrl,
+        source:/^https?:\/\//i.test(String(rec.foto||''))?'PORTAL':'APPSHEET'
+      });
+    }
+
+    return {
+      success:true,
+      rows:output,
+      totalMatched:filtered.length,
+      unresolved:unresolved,
+      limit:limit
     };
   }catch(err){
     return {success:false,message:String(err&&err.message?err.message:err)};
