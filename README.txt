@@ -1,22 +1,41 @@
-PATCH v6.7 — MARKAH ESEI DINAMIK TINGKATAN 1 DAN 2
+PATCH v7.1 — GAMBAR BUKTI HASIL KERJA PBD
 
-Pecahan markah:
-Tingkatan 1
-- E1a /6, E1b /6, E1c /8
-- E2a /4, E2b /8, E2c /8
+INI MENGGANTIKAN PATCH v7.0.
 
-Tingkatan 2
-- E1a /4, E1b /8, E1c /8
-- E2a /6, E2b /6, E2c /8
+PERBEZAAN PENTING
+- Kamera bukan lagi untuk mengambil gambar muka murid.
+- Kamera digunakan untuk mengambil gambar HASIL KERJA murid sebagai bukti TP.
+- Bukti boleh diambil untuk TP1 hingga TP6.
+- Gambar bukti disimpan bersama rekod PBD dalam kolum Foto pada tab REKOD TP.
+- Gambar tidak dimasukkan ke kolum Foto tab MURID dan tidak menggantikan avatar Fame.
+- Fame of Sejarah masih menggunakan avatar automatik atau foto murid yang dimasukkan secara berasingan dalam tab MURID.
+
+CARA GUNA
+1. Pilih Tingkatan, Kelas, Topik dan Tarikh.
+2. Tekan TP murid.
+3. Ruangan "Ambil Bukti Kerja" muncul.
+4. Guna telefon untuk ambil gambar hasil kerja, buku latihan, poster, model atau projek.
+5. Tunggu mesej "Bukti disimpan".
+6. Tekan Simpan Rekod TP.
+7. Bukti boleh dilihat semula apabila membuka profil murid dan rekod PBD.
+
+SIMPANAN GOOGLE DRIVE
+- Folder utama: BUKTI PBD SEJARAH
+- Subfolder mengikut Tingkatan dan Kelas.
+- Foto bukti tidak memadam bukti lama.
 
 CARA PASANG
-1. GitHub: ganti script.js sahaja.
-2. Apps Script: ganti keseluruhan Code.gs dengan fail Code.gs dalam patch ini.
-3. Save.
-4. Deploy > Manage deployments > Edit > New version > Deploy.
-5. Buka portal dan tekan Ctrl + Shift + R.
-6. Pilih Tingkatan 2. Kotak esei akan terus berubah kepada 4/8/8 dan 6/6/8.
-7. Pilih Tingkatan 1. Kotak esei akan kembali kepada 6/6/8 dan 4/8/8.
 
-Fail index.html, style.css, admin.html dan admin.js tidak perlu diubah.
-Data markah dan pemetaan sedia ada tidak dipadam.
+GITHUB
+1. Ganti script.js
+2. Ganti style.css
+3. Commit changes
+
+APPS SCRIPT
+1. Ganti keseluruhan Code.gs
+2. Save
+3. Deploy > Manage deployments > Edit > New version > Deploy
+
+SELEPAS PASANG
+- Buka portal dan tekan Ctrl + Shift + R.
+- Data lama tidak dipadam.

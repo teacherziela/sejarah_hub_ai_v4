@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v6.8 - PROFIL MURID + FAME OF SEJARAH + AVATAR AUTOMATIK
+// SEJARAH HUB AI v7.1 - BUKTI HASIL KERJA PBD + PROFIL + FAME
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -30,6 +30,7 @@ function doGet(e) {
   // Portal PBD
   if (action === 'pbdInitLite' || action === 'pbdInit') return jsonResponse(readPbdInitLite());
   if (action === 'pbdClassSummary') return jsonResponse(readPbdClassSummary(e.parameter.tingkatan || '', e.parameter.kelas || '', e.parameter.ujian || 'UPSA'));
+  if (action === 'pbdPrintReport') return jsonResponse(readPbdPrintReport(e.parameter.tingkatan || '', e.parameter.kelas || ''));
 
   // Analisis peperiksaan + PBD
   if (action === 'examInit') return jsonResponse(readExamInit());
@@ -52,6 +53,7 @@ function doPost(e) {
   if (data.action === 'update') return jsonResponse(updateRecord(module, data));
   if (data.action === 'delete') return jsonResponse(deleteRecord(module, data.id));
   if (data.action === 'savePbdBatch') return jsonResponse(savePbdBatch(data.records || []));
+  if (data.action === 'uploadPbdEvidence') return jsonResponse(uploadPbdEvidence(data));
   if (data.action === 'saveExamRecord') return jsonResponse(saveExamRecord(data));
   if (data.action === 'saveItemMapBatch') return jsonResponse(saveItemMapBatch(data));
   if (data.action === 'uploadQuestionPaper') return jsonResponse(uploadQuestionPaper(data));
@@ -367,7 +369,12 @@ function rekodObj_(o){
     nama:String(pick_(o,['Nama Murid','Nama'])).trim(),
     tingkatan:ting,
     kelas:kelas,
+    idTopik:String(pick_(o,['ID Topik','IDTopik'])).trim(),
     topik:String(pick_(o,['Topik'])).trim(),
+    sk:String(pick_(o,['SK','Standard Kandungan'])).trim(),
+    sp:String(pick_(o,['SP','Standard Pembelajaran'])).trim(),
+    catatan:String(pick_(o,['Catatan'])).trim(),
+    foto:String(pick_(o,['Foto','Photo','Gambar','Pautan Foto'])).trim(),
     tp:tpNum_(pick_(o,['TP'])),
     guru:cleanName_(pick_(o,['Ditafsir_Oleh','Ditafsir Oleh','Guru','Guru Penilai'])),
     row:o._row || 0
@@ -644,6 +651,232 @@ function unique_(arr){
   return out;
 }
 
+
+function readPbdPrintReport(tingkatan, kelas){
+  try{
+    if(!tingkatan || !kelas){
+      return { success:false, message:'Pilih tingkatan dan kelas dahulu.' };
+    }
+
+    var ss=getPbdSs();
+    var muridSh=ss.getSheetByName('MURID');
+    var rekodSh=ss.getSheetByName('REKOD TP');
+    var topikSh=ss.getSheetByName('TOPIK');
+    var guruSh=ss.getSheetByName('GURU');
+
+    if(!muridSh || !rekodSh){
+      return { success:false, message:'Sheet MURID atau REKOD TP tidak dijumpai.' };
+    }
+
+    var murid=rowsToObjects_(safeRangeValues_(muridSh,20)).map(muridObj_).filter(function(m){
+      var st=String(m.status||'AKTIF').toUpperCase();
+      return st!=='PINDAH' && st!=='TIDAK AKTIF' &&
+        String(m.tingkatan)===String(tingkatan) &&
+        normalizeClass_(m.kelas)===normalizeClass_(kelas);
+    });
+
+    murid.sort(function(a,b){ return a.nama.localeCompare(b.nama); });
+
+    var byId={}, byName={};
+    for(var i=0;i<murid.length;i++){
+      if(murid[i].id) byId[murid[i].id]=murid[i];
+      byName[normalize_(murid[i].nama)]=murid[i];
+    }
+
+    // Susunan topik diambil daripada tab TOPIK jika ada.
+    var topicOrder={};
+    var topicInfo={};
+    var topicRows=topikSh ? rowsToObjects_(safeRangeValues_(topikSh,20)) : [];
+
+    for(var t=0;t<topicRows.length;t++){
+      var obj=topicRows[t];
+      var tTing=String(pick_(obj,['Tingkatan','Tingkat','Tingka'])).trim();
+      if(tTing && String(tTing)!==String(tingkatan)) continue;
+
+      var id=String(pick_(obj,['IDTopik','ID Topik','ID'])).trim();
+      var title=String(pick_(obj,['Topik','Tajuk','SK (Standard Kandungan)','SK'])).trim();
+      var sk=String(pick_(obj,['SK (Standard Kandungan)','SK'])).trim();
+      var sp=String(pick_(obj,['SP (Standard Pembelajaran)','SP'])).trim();
+      var key=id || normalize_(title);
+
+      if(!key || !title) continue;
+      topicOrder[key]=t;
+      topicInfo[key]={
+        key:key,
+        id:id,
+        title:title,
+        code:sk && sk!==title ? sk : '',
+        sp:sp
+      };
+    }
+
+    var matrix={};
+    var usedTopics={};
+    var firstSeen={};
+    var seenCounter=0;
+    var rekod=rowsToObjects_(safeRangeValues_(rekodSh,20)).map(rekodObj_);
+
+    for(var r=0;r<rekod.length;r++){
+      var rec=rekod[r];
+      if(rec.tp<=0) continue;
+
+      var student=rec.idMurid ? byId[rec.idMurid] : null;
+      if(!student && rec.nama) student=byName[normalize_(rec.nama)];
+      if(!student) continue;
+
+      var studentKey=student.id || normalize_(student.nama);
+      var topicKey=rec.idTopik || normalize_(rec.topik);
+      if(!topicKey) continue;
+
+      if(!topicInfo[topicKey]){
+        topicInfo[topicKey]={
+          key:topicKey,
+          id:rec.idTopik||'',
+          title:rec.topik || rec.sk || 'Topik',
+          code:rec.sk && rec.sk!==rec.topik ? rec.sk : '',
+          sp:rec.sp||''
+        };
+      }
+
+      usedTopics[topicKey]=true;
+      if(firstSeen[topicKey]===undefined) firstSeen[topicKey]=seenCounter++;
+
+      if(!matrix[studentKey]) matrix[studentKey]={};
+      var prev=matrix[studentKey][topicKey];
+
+      // Satu sel memaparkan TP tertinggi. Jika TP sama, ambil rekod paling baharu.
+      if(!prev ||
+        rec.tp>prev.tp ||
+        (rec.tp===prev.tp && rec.dateNum>prev.dateNum) ||
+        (rec.tp===prev.tp && rec.dateNum===prev.dateNum && rec.row>prev.row)){
+        matrix[studentKey][topicKey]={
+          tp:rec.tp,
+          tarikh:fmtDate_(rec.tarikh),
+          dateNum:rec.dateNum,
+          guru:rec.guru,
+          catatan:rec.catatan||''
+        };
+      }
+    }
+
+    var topics=Object.keys(usedTopics).map(function(key){
+      return topicInfo[key];
+    });
+
+    topics.sort(function(a,b){
+      var ao=topicOrder[a.key];
+      var bo=topicOrder[b.key];
+      if(ao!==undefined && bo!==undefined) return ao-bo;
+      if(ao!==undefined) return -1;
+      if(bo!==undefined) return 1;
+      return Number(firstSeen[a.key]||0)-Number(firstSeen[b.key]||0);
+    });
+
+    var students=murid.map(function(m){
+      var key=m.id || normalize_(m.nama);
+      var values={};
+      var source=matrix[key]||{};
+
+      Object.keys(source).forEach(function(topicKey){
+        values[topicKey]=source[topicKey];
+      });
+
+      return {
+        id:m.id,
+        nama:m.nama,
+        values:values
+      };
+    });
+
+    var guruKelas=findGuruForClass_(guruSh,tingkatan,kelas,rekod);
+
+    return {
+      success:true,
+      tingkatan:String(tingkatan),
+      kelas:String(kelas),
+      printDate:Utilities.formatDate(new Date(),Session.getScriptTimeZone(),'dd/MM/yyyy'),
+      guruKelas:guruKelas,
+      topics:topics,
+      students:students,
+      summary:{
+        totalStudents:students.length,
+        totalTopics:topics.length
+      }
+    };
+  }catch(err){
+    return { success:false, message:String(err && err.message ? err.message : err) };
+  }
+}
+
+var PBD_EVIDENCE_FOLDER_NAME='BUKTI PBD SEJARAH';
+
+function pbdEvidenceFolder_(tingkatan,kelas){
+  var roots=DriveApp.getFoldersByName(PBD_EVIDENCE_FOLDER_NAME);
+  var root=roots.hasNext() ? roots.next() : DriveApp.createFolder(PBD_EVIDENCE_FOLDER_NAME);
+
+  var subName=('T'+String(tingkatan||'')+'_'+String(kelas||''))
+    .replace(/[\\/:*?"<>|]/g,'_')
+    .replace(/\s+/g,'_');
+
+  var subs=root.getFoldersByName(subName);
+  return subs.hasNext() ? subs.next() : root.createFolder(subName);
+}
+
+function uploadPbdEvidence(data){
+  try{
+    var nama=String(data.namaMurid||'').trim();
+    var tingkatan=String(data.tingkatan||'').trim();
+    var kelas=String(data.kelas||'').trim();
+    var tp=Number(data.tp||0);
+    var topik=String(data.topik||'').trim();
+    var fileName=String(data.fileName||'bukti-pbd.jpg').replace(/[\\/:*?"<>|]/g,'_');
+    var mimeType=String(data.mimeType||'image/jpeg').trim();
+    var base64=String(data.base64||'').trim();
+
+    if(!nama || !tingkatan || !kelas || !tp){
+      return {success:false,message:'Maklumat murid atau TP tidak lengkap.'};
+    }
+    if(!base64) return {success:false,message:'Gambar bukti kosong.'};
+    if(!/^image\//i.test(mimeType)){
+      return {success:false,message:'Fail bukti mestilah gambar.'};
+    }
+
+    var bytes=Utilities.base64Decode(base64);
+    if(bytes.length>3*1024*1024){
+      return {success:false,message:'Gambar bukti melebihi 3 MB selepas diproses.'};
+    }
+
+    var folder=pbdEvidenceFolder_(tingkatan,kelas);
+    var blob=Utilities.newBlob(bytes,mimeType,fileName);
+    var file=folder.createFile(blob);
+    file.setDescription([
+      'Bukti PBD Sejarah',
+      'Murid: '+nama,
+      'Kelas: Tingkatan '+tingkatan+' '+kelas,
+      'TP: '+tp,
+      'Topik: '+topik
+    ].join('\n'));
+
+    var sharingOk=true;
+    try{
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);
+    }catch(shareErr){
+      sharingOk=false;
+    }
+
+    return {
+      success:true,
+      id:file.getId(),
+      url:'https://drive.google.com/file/d/'+file.getId()+'/view',
+      thumbnailUrl:'https://drive.google.com/thumbnail?id='+file.getId()+'&sz=w1200',
+      sharingOk:sharingOk,
+      message:'Bukti hasil kerja berjaya disimpan.'
+    };
+  }catch(err){
+    return {success:false,message:String(err&&err.message?err.message:err)};
+  }
+}
+
 function savePbdBatch(records){
   if(!records || !records.length) return { success:false, message:'Tiada rekod untuk disimpan' };
 
@@ -670,7 +903,7 @@ function savePbdBatch(records){
       r.tp||'',
       r.catatan||'',
       r.ditafsirOleh||'',
-      '',
+      (r.foto||''),
       ((r.tingkatan||'')+' '+(r.kelas||'')).trim()
     ]);
   }

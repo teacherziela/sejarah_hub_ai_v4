@@ -201,6 +201,7 @@ function renderPbdTopik(){
 function selectedTopik(){ const id=document.getElementById('pbdTopik').value; return (pbdData.topik||[]).find(t=>String(t.IDTopik)===String(id)); }
 function muridIdOf(m){ return m.IDMurid || m['IDMurid '] || m['ID Murid'] || m.idMurid || m.id || ''; }
 function muridNama(m){ return String(val(m,['Nama Murid','Nama','nama'])).trim(); }
+function muridFoto(m){ return String(val(m,['Foto','foto','Photo','photo','Gambar'])||'').trim(); }
 function muridStatus(m){ return String(val(m,['Status','status'])||'AKTIF').trim().toUpperCase(); }
 function updatePbdProgress(){
   const rows=[...document.querySelectorAll('.pbd-row')];
@@ -220,10 +221,37 @@ function loadPbdStudents(){
   document.getElementById('pbdStatus').innerHTML=`✅ ${students.length} murid dipaparkan untuk <b>Tingkatan ${esc(ting)} ${esc(kelas)}</b>. Pilih TP murid, kemudian tekan Simpan.`;
   document.getElementById('pbdStudents').innerHTML = students.map((m,i)=>{
     const muridId = muridIdOf(m);
+    const nama = muridNama(m);
     const current=rekodMap[String(muridId)]||'';
-    return `<article class="pbd-row" data-id="${esc(muridId)}" data-name="${esc(muridNama(m))}">
-      <div class="pbd-name"><b>${i+1}. ${esc(muridNama(m))}</b><span>${esc(ting+' '+kelas)} • ID: ${esc(muridId||'-')}</span><small class="save-state"></small></div>
+    const showEvidence=Number(current)>0;
+    return `<article class="pbd-row"
+      data-id="${esc(muridId)}"
+      data-name="${esc(nama)}"
+      data-current-tp="${esc(current)}"
+      data-evidence="">
+      <div class="pbd-name">
+        <b>${i+1}. ${esc(nama)}</b>
+        <span>${esc(ting+' '+kelas)} • ID: ${esc(muridId||'-')}</span>
+        <small class="save-state"></small>
+      </div>
+
       <div class="tp-buttons">${[1,2,3,4,5,6].map(tp=>`<button type="button" class="tp tp${tp} ${String(current)===String(tp)?'active':''}" onclick="pickTp(this,${tp})">TP${tp}</button>`).join('')}</div>
+
+      <div class="pbd-photo-tools evidence-tools ${showEvidence?'show':''}">
+        <div class="pbd-photo-preview evidence-preview">
+          <span class="evidence-placeholder">🖼️</span>
+        </div>
+        <label class="pbd-camera-btn" title="Ambil gambar hasil kerja murid sebagai bukti pentaksiran.">
+          <span>📸</span>
+          <span class="camera-label">Ambil Bukti Kerja</span>
+          <input type="file"
+            accept="image/jpeg,image/png,image/webp,image/*"
+            capture="environment"
+            onchange="handlePbdEvidence(this)">
+        </label>
+        <small class="photo-state">Pilihan — gambar ini disimpan bersama rekod TP, bukan sebagai gambar muka.</small>
+      </div>
+
       <input class="catatan" placeholder="Catatan jika perlu" />
     </article>`;
   }).join('');
@@ -237,8 +265,160 @@ function pickTp(btn,tp){
   row.querySelector('.save-state').textContent='Belum disimpan';
   row.querySelectorAll('.tp').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
+
+  const evidenceTools=row.querySelector('.pbd-photo-tools');
+  if(evidenceTools) evidenceTools.classList.add('show');
+
+  const state=row.querySelector('.photo-state');
+  if(state && !row.dataset.evidence){
+    state.textContent=`📸 Boleh ambil gambar hasil kerja sebagai bukti TP${tp}. Tidak wajib.`;
+  }
   updatePbdProgress();
 }
+function readFileAsDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(new Error('Gambar tidak dapat dibaca.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function compressPbdEvidencePhoto(file){
+  if(!file || !String(file.type||'').startsWith('image/')){
+    throw new Error('Pilih fail gambar JPG, PNG atau WebP.');
+  }
+
+  const source=await readFileAsDataUrl(file);
+  const img=await new Promise((resolve,reject)=>{
+    const image=new Image();
+    image.onload=()=>resolve(image);
+    image.onerror=()=>reject(new Error('Format gambar tidak dapat dibuka. Guna kamera atau fail JPG/PNG.'));
+    image.src=source;
+  });
+
+  const maxSide=900;
+  let width=img.naturalWidth||img.width;
+  let height=img.naturalHeight||img.height;
+  const scale=Math.min(1,maxSide/Math.max(width,height));
+  width=Math.max(1,Math.round(width*scale));
+  height=Math.max(1,Math.round(height*scale));
+
+  const canvas=document.createElement('canvas');
+  canvas.width=width;
+  canvas.height=height;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,width,height);
+  ctx.drawImage(img,0,0,width,height);
+
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.82));
+  if(!blob) throw new Error('Gambar gagal diproses.');
+
+  const dataUrl=await readFileAsDataUrl(blob);
+  return {
+    base64:dataUrl.split(',')[1]||'',
+    mimeType:'image/jpeg',
+    extension:'jpg',
+    preview:dataUrl,
+    bytes:blob.size
+  };
+}
+
+function updatePbdEvidencePreview(row,url){
+  const preview=row.querySelector('.pbd-photo-preview');
+  if(!preview) return;
+
+  if(url){
+    const src=driveImg(url)||url;
+    preview.innerHTML=`<a href="${esc(src)}" target="_blank" rel="noopener" title="Buka bukti gambar">
+      <img class="pbd-evidence-thumb" src="${esc(src)}" alt="Bukti hasil kerja ${esc(row.dataset.name||'murid')}">
+    </a>`;
+  }else{
+    preview.innerHTML='<span class="evidence-placeholder">🖼️</span>';
+  }
+}
+
+async function handlePbdEvidence(input){
+  const row=input.closest('.pbd-row');
+  const file=input.files?.[0];
+  if(!row || !file) return;
+
+  const state=row.querySelector('.photo-state');
+  const label=row.querySelector('.camera-label');
+  let selectedTp=Number(row.dataset.tp||row.dataset.currentTp||0);
+
+  if(!selectedTp){
+    if(state) state.textContent='Pilih TP dahulu sebelum mengambil bukti kerja.';
+    input.value='';
+    return;
+  }
+
+  // Jika bukti ditambah pada TP lama, tandakan baris untuk disimpan semula.
+  if(!row.dataset.tp){
+    row.dataset.tp=String(selectedTp);
+    row.classList.remove('pbd-saved');
+    row.querySelector('.save-state').textContent='Belum disimpan';
+  }
+
+  if(state) state.textContent='⏳ Memproses gambar hasil kerja...';
+
+  try{
+    const photo=await compressPbdEvidencePhoto(file);
+    if(photo.bytes>2.5*1024*1024){
+      throw new Error('Gambar masih terlalu besar. Cuba ambil gambar semula.');
+    }
+
+    updatePbdEvidencePreview(row,photo.preview);
+    if(state) state.textContent='⏳ Menyimpan bukti ke Google Drive...';
+
+    const ting=document.getElementById('pbdTingkatan').value;
+    const kelas=document.getElementById('pbdKelas').value;
+    const tarikh=document.getElementById('pbdTarikh')?.value||'';
+    const topik=selectedTopik()||{};
+    const safeName=String(row.dataset.name||'murid')
+      .replace(/[^a-z0-9]+/gi,'_')
+      .replace(/^_+|_+$/g,'');
+
+    const res=await fetch(CONFIG.SHEET_API_URL,{
+      method:'POST',
+      body:JSON.stringify({
+        action:'uploadPbdEvidence',
+        idMurid:row.dataset.id||'',
+        namaMurid:row.dataset.name||'',
+        tingkatan:ting,
+        kelas:kelas,
+        idTopik:topik.IDTopik||'',
+        topik:topik.Topik||'',
+        tp:selectedTp,
+        tarikh:tarikh,
+        fileName:`BUKTI_TP${selectedTp}_${safeName||'murid'}_${Date.now()}.jpg`,
+        mimeType:photo.mimeType,
+        base64:photo.base64
+      })
+    });
+
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Gagal simpan bukti kerja');
+
+    row.dataset.evidence=out.url||'';
+    updatePbdEvidencePreview(row,out.thumbnailUrl||out.url||photo.preview);
+    if(label) label.textContent='Tukar Bukti Kerja';
+    if(state){
+      state.textContent=out.sharingOk===false
+        ? '⚠️ Bukti disimpan, tetapi paparan umum mungkin disekat oleh akaun sekolah.'
+        : `✅ Bukti TP${selectedTp} disimpan. Tekan Simpan untuk merekod TP.`;
+    }
+  }catch(e){
+    updatePbdEvidencePreview(row,row.dataset.evidence||'');
+    if(state) state.textContent='❌ '+e.message;
+  }finally{
+    input.value='';
+    updatePbdProgress();
+  }
+}
+
+
 async function savePbdBatch(){
   const saveBtn=document.getElementById('pbdSaveBtn');
   if(saveBtn.dataset.busy==='1') return;
@@ -252,7 +432,11 @@ async function savePbdBatch(){
   const rows=activeRows.map(r=>({
     idMurid:r.dataset.id, namaMurid:r.dataset.name, tingkatan:ting, kelas:kelas, idTopik:topik.IDTopik,
     topik:topik.Topik, sk:topik['SK (Standard Kandungan)'], sp:topik['SP (Standard Pembelajaran)'],
-    tarikh:tarikh, tp:r.dataset.tp, catatan:r.querySelector('.catatan').value, ditafsirOleh:guru
+    tarikh:tarikh,
+    tp:r.dataset.tp,
+    catatan:r.querySelector('.catatan').value,
+    ditafsirOleh:guru,
+    foto:r.dataset.evidence||''
   }));
   if(!rows.length){ document.getElementById('pbdStatus').textContent='Pilih TP sekurang-kurangnya seorang murid.'; return; }
   saveBtn.dataset.busy='1';
@@ -266,7 +450,10 @@ async function savePbdBatch(){
     if(!out.success) throw new Error(out.message||'Gagal simpan');
     activeRows.forEach(r=>{
       r.classList.add('pbd-saved');
-      r.querySelector('.save-state').textContent='✅ Sudah disimpan';
+      r.querySelector('.save-state').textContent=r.dataset.evidence
+        ? '✅ TP dan bukti sudah disimpan'
+        : '✅ Sudah disimpan';
+      r.dataset.currentTp=r.dataset.tp||r.dataset.currentTp||'';
       delete r.dataset.tp;
     });
     document.getElementById('pbdStatus').innerHTML=`✅ Berjaya simpan <b>${out.count||rows.length}</b> rekod TP bertarikh <b>${esc(fmtDate(tarikh))}</b>. Data sudah masuk ke Google Sheet.`;
@@ -629,9 +816,12 @@ function openPbdStudentProfile(encodedKey){
     <section class="profile-section">
       <h3>📚 Rekod PBD</h3>
       ${records.length?`<div class="profile-records">${records.map((r,i)=>`
-        <article>
+        <article class="${r.bukti?'has-evidence':''}">
           <span class="record-number">${i+1}</span>
-          <div><b>${esc(r.topik||'Topik tidak dinyatakan')}</b><small>${esc(r.tarikh||'-')} • ${esc(cleanName(r.guru||'-'))}</small></div>
+          ${r.bukti?`<a class="profile-evidence-link" href="${esc(driveImg(r.bukti)||r.bukti)}" target="_blank" rel="noopener">
+            <img src="${esc(driveImg(r.bukti)||r.bukti)}" alt="Bukti PBD">
+          </a>`:''}
+          <div><b>${esc(r.topik||'Topik tidak dinyatakan')}</b><small>${esc(r.tarikh||'-')} • ${esc(cleanName(r.guru||'-'))}${r.bukti?' • 📸 Ada bukti kerja':''}</small></div>
           <strong>TP${esc(r.tp)}</strong>
         </article>`).join('')}</div>`:'<p class="note">Murid ini belum mempunyai rekod TP.</p>'}
     </section>
