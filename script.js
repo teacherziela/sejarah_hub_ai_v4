@@ -80,6 +80,7 @@ async function init(){
   await loadYear();
   await initPbd();
   initPbdEvidenceGallery();
+  initHipActivityGallery();
   await initExam();
 }
 async function loadYear(){
@@ -96,6 +97,7 @@ function renderMenu(year){
   const fixed=[
     {icon:'📊',title:'PBD / Rumusan',target:'pbdPanel'},
     {icon:'🖼️',title:'Hasil Murid',target:'pbdEvidenceGalleryPanel'},
+    {icon:'🎬',title:'Aktiviti HIP',target:'hipActivityPanel'},
     {icon:'🧩',title:'Analisis Peperiksaan',target:'examPanel'},
     {icon:'👥',title:'Ahli Panitia',target:'guruPanel'}
   ];
@@ -1226,6 +1228,388 @@ async function loadPbdEvidenceGallery(){
     status.innerHTML='❌ Galeri gagal dimuatkan: '+esc(e.message);
     grid.innerHTML=`<div class="gallery-empty-state"><span>⚠️</span><b>Galeri tidak dapat dibuka</b><p>${esc(e.message)}</p></div>`;
   }
+}
+
+
+// ================= GALERI AKTIVITI MURID / BUKTI HIP v7.3 =================
+let hipSelectedVideoFile=null;
+let hipSelectedVideoObjectUrl='';
+
+function initHipActivityGallery(){
+  if(document.getElementById('hipActivityPanel')) return;
+
+  const anchor=document.getElementById('pbdEvidenceGalleryPanel') || document.getElementById('pbdPanel');
+  if(!anchor) return;
+
+  const section=document.createElement('section');
+  section.id='hipActivityPanel';
+  section.className='panel hip-activity-panel';
+  section.innerHTML=`
+    <div class="section-head hip-section-head">
+      <div>
+        <p class="eyebrow">HIGHLY IMMERSIVE PROGRAMME</p>
+        <h2>🎬 Galeri Aktiviti Murid & Bukti HIP</h2>
+        <p class="note">Rakam video pendek melalui telefon atau masukkan pautan video Google Drive / YouTube.</p>
+      </div>
+      <span class="hip-limit-badge">Video terus: maksimum 15 MB</span>
+    </div>
+
+    <div class="hip-upload-card">
+      <div class="controls hip-controls">
+        <label>Tingkatan
+          <select id="hipTingkatan"><option value="">Pilih Tingkatan</option></select>
+        </label>
+        <label>Kelas
+          <select id="hipKelas"><option value="">Pilih Kelas</option></select>
+        </label>
+        <label>Tarikh Aktiviti
+          <input id="hipTarikh" type="date">
+        </label>
+        <label>Guru
+          <select id="hipGuru"><option value="">Pilih Guru</option></select>
+        </label>
+        <label class="hip-title-field">Tajuk Aktiviti HIP
+          <input id="hipTajuk" type="text" placeholder="Contoh: Greek Leisure Speaking Challenge">
+        </label>
+        <label>Nama Murid / Kumpulan
+          <input id="hipPeserta" type="text" placeholder="Contoh: Kumpulan Athena / Seluruh kelas">
+        </label>
+        <label class="hip-note-field">Penerangan ringkas
+          <textarea id="hipCatatan" rows="2" placeholder="Aktiviti, kemahiran bahasa atau hasil pembelajaran"></textarea>
+        </label>
+      </div>
+
+      <div class="hip-video-source">
+        <div class="hip-record-box">
+          <label class="hip-record-btn">
+            <span class="hip-record-icon">📹</span>
+            <span><b>Rakam / Pilih Video</b><small>Telefon akan menawarkan kamera atau galeri</small></span>
+            <input id="hipVideoFile" type="file" accept="video/*" capture="environment">
+          </label>
+          <p class="hip-or">ATAU</p>
+          <label class="hip-link-field">Pautan video besar
+            <input id="hipVideoLink" type="url" placeholder="Google Drive atau YouTube">
+            <small>Gunakan pautan jika video melebihi 15 MB.</small>
+          </label>
+        </div>
+
+        <div id="hipVideoPreview" class="hip-video-preview">
+          <span>🎞️</span>
+          <b>Belum ada video dipilih</b>
+          <small>Video pendek 20–60 saat paling sesuai sebagai bukti HIP.</small>
+        </div>
+      </div>
+
+      <div class="hip-actions">
+        <button type="button" class="pill primary" id="hipSaveBtn">💾 Simpan Bukti HIP</button>
+        <button type="button" class="pill" id="hipResetBtn">Kosongkan</button>
+      </div>
+      <div id="hipUploadStatus" class="note pbd-status-box">Belum ada video disimpan.</div>
+    </div>
+
+    <div class="hip-gallery-header">
+      <div>
+        <h3>🎥 Video Aktiviti yang Disimpan</h3>
+        <p class="note">Gunakan pilihan Tingkatan dan Kelas di atas, kemudian tekan Muat Semula Galeri.</p>
+      </div>
+      <button type="button" class="pill" id="hipLoadGalleryBtn">🔄 Muat Semula Galeri</button>
+    </div>
+
+    <div id="hipGalleryStatus" class="note pbd-status-box">Galeri belum dimuatkan.</div>
+    <div id="hipVideoGallery" class="hip-video-gallery">
+      <div class="gallery-empty-state">
+        <span>🎬</span>
+        <b>Galeri HIP sedia digunakan</b>
+        <p>Video akan dipaparkan mengikut kelas dan tarikh aktiviti.</p>
+      </div>
+    </div>
+
+    <dialog id="hipVideoDialog" class="profile-dialog hip-video-dialog">
+      <button class="close" type="button" onclick="closeHipVideo()">×</button>
+      <div id="hipVideoDialogBody"></div>
+    </dialog>`;
+
+  anchor.insertAdjacentElement('afterend',section);
+
+  const tingSel=document.getElementById('hipTingkatan');
+  const tings=[...new Set((pbdData.murid||[]).map(m=>String(muridTing(m)||'')).filter(Boolean))]
+    .sort((a,b)=>Number(a)-Number(b));
+  tingSel.innerHTML='<option value="">Pilih Tingkatan</option>'+
+    tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
+
+  const guruSel=document.getElementById('hipGuru');
+  const guruNames=[...new Set([
+    ...(guruData||[]).map(g=>cleanName(val(g,['Nama Guru','Nama','nama']))),
+    ...[...document.querySelectorAll('#pbdGuru option')].map(o=>cleanName(o.value))
+  ].filter(Boolean))].sort();
+  guruSel.innerHTML='<option value="">Pilih Guru</option>'+
+    guruNames.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+
+  const currentGuru=document.getElementById('pbdGuru')?.value||'';
+  if(currentGuru && guruNames.includes(cleanName(currentGuru))) guruSel.value=cleanName(currentGuru);
+
+  document.getElementById('hipTarikh').value=new Date().toISOString().slice(0,10);
+  tingSel.addEventListener('change',syncHipClasses);
+  document.getElementById('hipVideoFile').addEventListener('change',handleHipVideoFile);
+  document.getElementById('hipSaveBtn').addEventListener('click',saveHipActivityVideo);
+  document.getElementById('hipResetBtn').addEventListener('click',resetHipForm);
+  document.getElementById('hipLoadGalleryBtn').addEventListener('click',loadHipActivityGallery);
+
+  const currentTing=document.getElementById('pbdTingkatan')?.value||'';
+  const currentClass=document.getElementById('pbdKelas')?.value||'';
+  if(currentTing){
+    tingSel.value=currentTing;
+    syncHipClasses();
+    document.getElementById('hipKelas').value=currentClass;
+  }
+}
+
+function syncHipClasses(){
+  const ting=document.getElementById('hipTingkatan')?.value||'';
+  const classes=[...new Set((pbdData.murid||[])
+    .filter(m=>String(muridTing(m)||'')===String(ting)&&muridStatus(m)!=='PINDAH')
+    .map(m=>String(muridKelas(m)||'').trim())
+    .filter(Boolean))].sort();
+
+  const sel=document.getElementById('hipKelas');
+  const previous=sel.value||'';
+  sel.innerHTML='<option value="">Pilih Kelas</option>'+
+    classes.map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join('');
+  if(classes.includes(previous)) sel.value=previous;
+}
+
+function formatBytes(bytes){
+  const n=Number(bytes||0);
+  if(n<1024) return `${n} B`;
+  if(n<1024*1024) return `${(n/1024).toFixed(1)} KB`;
+  return `${(n/(1024*1024)).toFixed(1)} MB`;
+}
+
+function handleHipVideoFile(input){
+  const file=input.files?.[0];
+  const preview=document.getElementById('hipVideoPreview');
+  const status=document.getElementById('hipUploadStatus');
+
+  hipSelectedVideoFile=null;
+  if(hipSelectedVideoObjectUrl){
+    URL.revokeObjectURL(hipSelectedVideoObjectUrl);
+    hipSelectedVideoObjectUrl='';
+  }
+
+  if(!file){
+    preview.innerHTML='<span>🎞️</span><b>Belum ada video dipilih</b><small>Video pendek 20–60 saat paling sesuai sebagai bukti HIP.</small>';
+    return;
+  }
+
+  if(!String(file.type||'').startsWith('video/')){
+    input.value='';
+    status.textContent='Pilih fail video.';
+    return;
+  }
+
+  if(file.size>15*1024*1024){
+    input.value='';
+    status.innerHTML=`⚠️ Video <b>${esc(file.name)}</b> bersaiz ${formatBytes(file.size)}. Had upload terus ialah 15 MB. Upload ke Google Drive atau YouTube dan tampal pautannya.`;
+    preview.innerHTML='<span>🔗</span><b>Gunakan ruangan pautan video</b><small>Video besar lebih stabil jika disimpan terus di Google Drive.</small>';
+    return;
+  }
+
+  hipSelectedVideoFile=file;
+  hipSelectedVideoObjectUrl=URL.createObjectURL(file);
+  preview.innerHTML=`
+    <video controls playsinline preload="metadata" src="${esc(hipSelectedVideoObjectUrl)}"></video>
+    <div><b>${esc(file.name)}</b><small>${formatBytes(file.size)} • ${esc(file.type||'video')}</small></div>`;
+  status.innerHTML='✅ Video dipilih. Lengkapkan tajuk aktiviti dan tekan <b>Simpan Bukti HIP</b>.';
+}
+
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||''));
+    reader.onerror=()=>reject(new Error('Video tidak dapat dibaca.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveHipActivityVideo(){
+  const status=document.getElementById('hipUploadStatus');
+  const btn=document.getElementById('hipSaveBtn');
+  const ting=document.getElementById('hipTingkatan').value;
+  const kelas=document.getElementById('hipKelas').value;
+  const tarikh=document.getElementById('hipTarikh').value;
+  const guru=document.getElementById('hipGuru').value;
+  const tajuk=document.getElementById('hipTajuk').value.trim();
+  const peserta=document.getElementById('hipPeserta').value.trim();
+  const catatan=document.getElementById('hipCatatan').value.trim();
+  const link=document.getElementById('hipVideoLink').value.trim();
+
+  if(!ting||!kelas||!tarikh||!guru||!tajuk){
+    status.textContent='Lengkapkan Tingkatan, Kelas, Tarikh, Guru dan Tajuk Aktiviti.';
+    return;
+  }
+  if(!hipSelectedVideoFile&&!link){
+    status.textContent='Rakam/pilih video atau tampal pautan video dahulu.';
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent='⏳ Menyimpan video...';
+  status.innerHTML=hipSelectedVideoFile
+    ? `⏳ Sedang menghantar video ${formatBytes(hipSelectedVideoFile.size)} ke Google Drive...`
+    : '⏳ Sedang menyimpan pautan video...';
+
+  try{
+    const payload={
+      action:'saveHipActivityVideo',
+      tingkatan:ting,
+      kelas:kelas,
+      tarikhAktiviti:tarikh,
+      guru:guru,
+      tajuk:tajuk,
+      peserta:peserta||'Seluruh kelas',
+      catatan:catatan,
+      videoLink:link
+    };
+
+    if(hipSelectedVideoFile){
+      const dataUrl=await fileToDataUrl(hipSelectedVideoFile);
+      payload.base64=dataUrl.split(',')[1]||'';
+      payload.mimeType=hipSelectedVideoFile.type||'video/mp4';
+      payload.fileName=hipSelectedVideoFile.name||`HIP_${Date.now()}.mp4`;
+      payload.sizeBytes=hipSelectedVideoFile.size||0;
+    }
+
+    const res=await fetch(CONFIG.SHEET_API_URL,{
+      method:'POST',
+      body:JSON.stringify(payload)
+    });
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Video gagal disimpan');
+
+    status.innerHTML=out.sharingOk===false
+      ? '⚠️ Video disimpan tetapi perkongsian umum disekat. Pengguna mungkin perlu login akaun sekolah untuk menonton.'
+      : '✅ Bukti video HIP berjaya disimpan dan dimasukkan ke galeri.';
+
+    const keepTing=ting, keepClass=kelas, keepGuru=guru;
+    resetHipForm(true);
+    document.getElementById('hipTingkatan').value=keepTing;
+    syncHipClasses();
+    document.getElementById('hipKelas').value=keepClass;
+    document.getElementById('hipGuru').value=keepGuru;
+    await loadHipActivityGallery();
+  }catch(e){
+    status.textContent='❌ '+e.message;
+  }finally{
+    btn.disabled=false;
+    btn.textContent='💾 Simpan Bukti HIP';
+  }
+}
+
+function resetHipForm(keepStatus=false){
+  document.getElementById('hipTajuk').value='';
+  document.getElementById('hipPeserta').value='';
+  document.getElementById('hipCatatan').value='';
+  document.getElementById('hipVideoLink').value='';
+  document.getElementById('hipVideoFile').value='';
+  hipSelectedVideoFile=null;
+
+  if(hipSelectedVideoObjectUrl){
+    URL.revokeObjectURL(hipSelectedVideoObjectUrl);
+    hipSelectedVideoObjectUrl='';
+  }
+
+  document.getElementById('hipVideoPreview').innerHTML=
+    '<span>🎞️</span><b>Belum ada video dipilih</b><small>Video pendek 20–60 saat paling sesuai sebagai bukti HIP.</small>';
+  if(!keepStatus) document.getElementById('hipUploadStatus').textContent='Borang dikosongkan.';
+}
+
+async function loadHipActivityGallery(){
+  const grid=document.getElementById('hipVideoGallery');
+  const status=document.getElementById('hipGalleryStatus');
+  if(!grid||!status) return;
+
+  const ting=document.getElementById('hipTingkatan')?.value||'';
+  const kelas=document.getElementById('hipKelas')?.value||'';
+
+  status.textContent='⏳ Memuatkan video aktiviti HIP...';
+  grid.innerHTML=Array.from({length:4},()=>'<div class="hip-gallery-skeleton"></div>').join('');
+
+  try{
+    const res=await fetch(pbdApiUrl({
+      action:'hipActivityGallery',
+      tingkatan:ting,
+      kelas:kelas,
+      limit:40,
+      v:Date.now()
+    }));
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Galeri HIP gagal dibaca');
+
+    const rows=out.rows||[];
+    status.innerHTML=`✅ <b>${rows.length}</b> video aktiviti HIP dipaparkan.`;
+
+    if(!rows.length){
+      grid.innerHTML=`<div class="gallery-empty-state">
+        <span>🎬</span><b>Belum ada video</b>
+        <p>Rakam video pendek atau masukkan pautan video bagi kelas ini.</p>
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML=rows.map((item,i)=>`
+      <article class="hip-video-card">
+        <button type="button" class="hip-video-poster"
+          onclick="openHipVideo('${encodeURIComponent(item.previewUrl||item.viewUrl||item.videoUrl||'')}','${encodeURIComponent(item.tajuk||'Aktiviti HIP')}')">
+          ${item.thumbnailUrl
+            ? `<img src="${esc(item.thumbnailUrl)}" alt="${esc(item.tajuk||'Video HIP')}" loading="lazy" onerror="this.style.display='none'">`
+            : ''}
+          <span class="hip-play-icon">▶</span>
+          <span class="hip-video-number">VIDEO #${i+1}</span>
+        </button>
+        <div class="hip-video-info">
+          <p class="eyebrow">${esc(item.tarikhAktiviti||'-')} • TINGKATAN ${esc(item.tingkatan||'')} ${esc(item.kelas||'')}</p>
+          <h3>${esc(item.tajuk||'Aktiviti HIP')}</h3>
+          <p><b>${esc(item.peserta||'Seluruh kelas')}</b></p>
+          ${item.catatan?`<p class="hip-video-note">${esc(item.catatan)}</p>`:''}
+          <small>Guru: ${esc(cleanName(item.guru||'-'))}</small>
+          <div class="hip-video-card-actions">
+            <button type="button" onclick="openHipVideo('${encodeURIComponent(item.previewUrl||item.viewUrl||item.videoUrl||'')}','${encodeURIComponent(item.tajuk||'Aktiviti HIP')}')">▶ Mainkan</button>
+            <button type="button" onclick="openUrl('${String(item.viewUrl||item.videoUrl||'').replace(/'/g,"\\'")}')">↗ Buka</button>
+          </div>
+        </div>
+      </article>`).join('');
+  }catch(e){
+    status.textContent='❌ '+e.message;
+    grid.innerHTML=`<div class="gallery-empty-state"><span>⚠️</span><b>Galeri gagal dimuatkan</b><p>${esc(e.message)}</p></div>`;
+  }
+}
+
+function openHipVideo(encodedUrl,encodedTitle){
+  const url=decodeURIComponent(String(encodedUrl||''));
+  const title=decodeURIComponent(String(encodedTitle||'Aktiviti HIP'));
+  const dialog=document.getElementById('hipVideoDialog');
+  const body=document.getElementById('hipVideoDialogBody');
+  if(!dialog||!body||!url) return;
+
+  const canEmbed=/drive\.google\.com\/file\/d\/[^/]+\/preview|youtube\.com\/embed\//i.test(url);
+  body.innerHTML=`
+    <p class="eyebrow">BUKTI VIDEO HIP</p>
+    <h2>${esc(title)}</h2>
+    <div class="hip-player-wrap">
+      ${canEmbed
+        ? `<iframe src="${esc(url)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`
+        : `<video controls playsinline src="${esc(url)}"></video>`}
+    </div>
+    <button type="button" class="pill" onclick="openUrl('${String(url).replace(/'/g,"\\'")}')">↗ Buka video dalam tab baharu</button>`;
+
+  if(!dialog.open) dialog.showModal();
+}
+
+function closeHipVideo(){
+  const dialog=document.getElementById('hipVideoDialog');
+  const body=document.getElementById('hipVideoDialogBody');
+  if(body) body.innerHTML='';
+  if(dialog?.open) dialog.close();
 }
 
 

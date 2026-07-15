@@ -1021,3 +1021,227 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:inve
   .student-work-gallery{grid-template-columns:1fr}
   .evidence-gallery-badge{white-space:normal}
 }
+
+
+/* =========================================================
+   v7.3 — Galeri Aktiviti Murid dan Bukti Video HIP
+   ========================================================= */
+.hip-activity-panel{
+  background:
+    radial-gradient(circle at 8% 8%,rgba(244,114,182,.14),transparent 28%),
+    radial-gradient(circle at 88% 5%,rgba(56,189,248,.14),transparent 30%),
+    linear-gradient(145deg,rgba(70,32,112,.97),rgba(18,73,111,.95));
+}
+.hip-section-head{align-items:flex-start}
+.hip-section-head h2{font-size:30px;margin:3px 0 5px}
+.hip-limit-badge{
+  padding:9px 14px;
+  border-radius:999px;
+  color:#fbcfe8;
+  border:1px solid rgba(244,114,182,.4);
+  background:rgba(244,114,182,.1);
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.hip-upload-card{
+  padding:18px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:22px;
+  background:rgba(9,18,48,.24);
+}
+.hip-controls{
+  grid-template-columns:repeat(4,minmax(150px,1fr));
+  align-items:end;
+}
+.hip-title-field{grid-column:span 2}
+.hip-note-field{grid-column:span 2}
+.hip-note-field textarea{
+  width:100%;
+  resize:vertical;
+  min-height:56px;
+  border-radius:14px;
+  padding:11px 13px;
+  color:#fff;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.07);
+}
+.hip-video-source{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+  margin-top:14px;
+}
+.hip-record-box,.hip-video-preview{
+  min-height:175px;
+  padding:17px;
+  border-radius:19px;
+  border:1px solid rgba(255,255,255,.13);
+  background:rgba(255,255,255,.055);
+}
+.hip-record-box{
+  display:grid;
+  grid-template-columns:1fr;
+  align-content:center;
+  gap:10px;
+}
+.hip-record-btn{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  min-height:74px;
+  padding:13px;
+  border-radius:16px;
+  border:1px solid rgba(125,211,252,.45);
+  background:linear-gradient(135deg,rgba(59,130,246,.24),rgba(236,72,153,.16));
+  cursor:pointer;
+  text-align:left;
+  transition:.18s ease;
+}
+.hip-record-btn:hover{transform:translateY(-2px);border-color:rgba(125,211,252,.8)}
+.hip-record-btn input{position:absolute;width:1px;height:1px;opacity:0}
+.hip-record-btn b,.hip-record-btn small{display:block}
+.hip-record-btn small{color:#c7d2fe;margin-top:4px}
+.hip-record-icon{font-size:30px}
+.hip-or{text-align:center;margin:0;color:#a5b4fc;font-size:10px;font-weight:950;letter-spacing:.1em}
+.hip-link-field small{display:block;color:#a5b4fc;margin-top:4px}
+.hip-video-preview{
+  display:grid;
+  place-items:center;
+  align-content:center;
+  text-align:center;
+  overflow:hidden;
+}
+.hip-video-preview>span{font-size:41px}
+.hip-video-preview>b{margin-top:8px}
+.hip-video-preview>small{color:#c7d2fe;margin-top:4px}
+.hip-video-preview video{
+  width:100%;
+  max-height:210px;
+  border-radius:13px;
+  background:#050816;
+}
+.hip-video-preview>div{margin-top:8px}
+.hip-video-preview>div small{display:block;color:#c7d2fe;margin-top:3px}
+.hip-actions{display:flex;gap:10px;margin-top:14px}
+.hip-gallery-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:15px;
+  margin:24px 0 12px;
+}
+.hip-gallery-header h3{margin:0 0 4px;font-size:23px}
+.hip-video-gallery{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+.hip-video-card{
+  min-width:0;
+  overflow:hidden;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.14);
+  background:linear-gradient(165deg,rgba(25,35,78,.97),rgba(17,29,59,.97));
+  box-shadow:0 14px 28px rgba(0,0,0,.17);
+}
+.hip-video-poster{
+  appearance:none;
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:100%;
+  aspect-ratio:16/9;
+  padding:0;
+  overflow:hidden;
+  border:0;
+  background:
+    radial-gradient(circle at center,rgba(56,189,248,.2),transparent 35%),
+    linear-gradient(135deg,#111936,#253b67);
+  cursor:pointer;
+}
+.hip-video-poster img{width:100%;height:100%;object-fit:cover}
+.hip-play-icon{
+  position:absolute;
+  display:grid;
+  place-items:center;
+  width:58px;height:58px;
+  border-radius:999px;
+  color:#fff;
+  background:rgba(236,72,153,.88);
+  border:4px solid rgba(255,255,255,.75);
+  font-size:20px;
+  padding-left:4px;
+  box-shadow:0 10px 24px rgba(0,0,0,.35);
+}
+.hip-video-number{
+  position:absolute;
+  left:10px;top:10px;
+  padding:6px 8px;
+  border-radius:8px;
+  color:#a5f3fc;
+  background:rgba(8,15,38,.78);
+  font-size:9px;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+.hip-video-info{padding:15px}
+.hip-video-info h3{margin:5px 0;font-size:16px;line-height:1.35}
+.hip-video-info p{margin:4px 0;color:#dbeafe;font-size:11px}
+.hip-video-info small{color:#a5b4fc}
+.hip-video-note{
+  margin-top:9px!important;
+  padding:8px;
+  border-radius:10px;
+  background:rgba(56,189,248,.08);
+  border-left:3px solid rgba(56,189,248,.55);
+}
+.hip-video-card-actions{display:flex;gap:7px;margin-top:12px}
+.hip-video-card-actions button{
+  flex:1;
+  padding:8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.14);
+  color:#fff;
+  background:rgba(255,255,255,.07);
+  cursor:pointer;
+  font-weight:850;
+}
+.hip-video-card-actions button:hover{border-color:rgba(103,232,249,.55)}
+.hip-video-dialog{width:min(930px,95%)}
+.hip-player-wrap{
+  width:100%;
+  aspect-ratio:16/9;
+  margin:15px 0;
+  overflow:hidden;
+  border-radius:16px;
+  background:#050816;
+}
+.hip-player-wrap iframe,.hip-player-wrap video{
+  width:100%;
+  height:100%;
+  border:0;
+  background:#050816;
+}
+.hip-gallery-skeleton{
+  aspect-ratio:16/12;
+  border-radius:20px;
+  background:linear-gradient(100deg,rgba(255,255,255,.06) 30%,rgba(255,255,255,.14) 45%,rgba(255,255,255,.06) 60%);
+  background-size:230% 100%;
+  animation:galleryShimmer 1.2s infinite linear;
+}
+@media(max-width:1000px){
+  .hip-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hip-title-field,.hip-note-field{grid-column:span 2}
+  .hip-video-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .hip-controls{grid-template-columns:1fr}
+  .hip-title-field,.hip-note-field{grid-column:auto}
+  .hip-video-source{grid-template-columns:1fr}
+  .hip-video-gallery{grid-template-columns:1fr}
+  .hip-limit-badge{white-space:normal}
+  .hip-gallery-header{align-items:flex-start;flex-direction:column}
+}
