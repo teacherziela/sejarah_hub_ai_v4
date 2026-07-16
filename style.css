@@ -1297,3 +1297,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:inve
   box-shadow:0 14px 30px rgba(249,115,22,.16);
   outline:none;
 }
+
+
+/* v7.5.2 filter kebal */
+select option{color:#111827;background:#ffffff}

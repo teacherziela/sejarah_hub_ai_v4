@@ -1,3 +1,44 @@
+// v7.5.2 FILTER KEBAL — jangan biarkan dropdown Tingkatan/Kelas kosong.
+(function(){
+  const CLASS_LIST = ['ADIL','BESTARI','CENDEKIA','DEDIKASI','EHSAN','GIGIH','JUJUR','PROGRESIF','RASIONAL','TEKUN','USAHA','YAKIN'];
+  const TING_LIST = ['1','2'];
+  function safeText(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function fillTingkatan(id){
+    const el=document.getElementById(id);
+    if(!el) return;
+    const current=el.value;
+    if(el.options.length<=1){
+      el.innerHTML='<option value="">Pilih Tingkatan</option>'+TING_LIST.map(t=>`<option value="${t}">Tingkatan ${t}</option>`).join('');
+      if(current) el.value=current;
+    }
+  }
+  function fillKelas(id){
+    const el=document.getElementById(id);
+    if(!el) return;
+    const current=el.value;
+    if(el.options.length<=1){
+      el.innerHTML='<option value="">Pilih Kelas</option>'+CLASS_LIST.map(k=>`<option value="${safeText(k)}">${safeText(k)}</option>`).join('');
+      if(current) el.value=current;
+    }
+  }
+  function fixFilters(){
+    ['pbdTingkatan','rumusTingkatan','examTingkatan','galleryPbdTingkatan','hipTingkatan'].forEach(fillTingkatan);
+    ['pbdKelas','rumusKelas','examKelas','galleryPbdKelas','hipKelas'].forEach(fillKelas);
+  }
+  document.addEventListener('DOMContentLoaded',fixFilters);
+  window.addEventListener('load',fixFilters);
+  document.addEventListener('change',function(e){
+    const id=e.target&&e.target.id;
+    if(id&&/Tingkatan$/.test(id)){
+      setTimeout(fixFilters,0);
+      setTimeout(fixFilters,100);
+      setTimeout(fixFilters,300);
+    }
+  },true);
+  for(let i=1;i<=12;i++) setTimeout(fixFilters,i*500);
+  window.fixSejarahFilters=fixFilters;
+})();
+
 let hub = { guru:[], pengumuman:[], dskp:[], linkPantas:[], galeri:[], bbm:[] };
 let guruData = [];
 const fallback = { guru:[], pengumuman:[], dskp:[], linkPantas:[], galeri:[], bbm:[] };
