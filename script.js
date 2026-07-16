@@ -70,6 +70,8 @@ async function init(){
   document.getElementById('examKelas')?.addEventListener('change', onExamContextChanged);
   document.getElementById('examUjian')?.addEventListener('change', onExamContextChanged);
   document.getElementById('examAnalyseBtn')?.addEventListener('click', renderExamAnalysis);
+  document.getElementById('examPrintOnlyBtn')?.addEventListener('click',()=>openExamPrintReport('examOnly'));
+  document.getElementById('examPrintPbdBtn')?.addEventListener('click',()=>openExamPrintReport('examPbd'));
   document.getElementById('examStudent')?.addEventListener('change', loadExamStudent);
   document.getElementById('examLoadStudentBtn')?.addEventListener('click', loadExamStudent);
   document.getElementById('examSaveBtn')?.addEventListener('click', saveExamRecord);
@@ -1703,6 +1705,7 @@ async function initExam(){
 }
 
 function initExamControls(){
+  ensureExamPrintButtons();
   const tingSel=document.getElementById('examTingkatan');
   if(!tingSel) return;
 
@@ -2117,6 +2120,316 @@ function clearExamAnalysis(){
 
 function summaryCard(title,value,desc,cls=''){
   return `<article class="summary-card ${cls}"><h3>${title}</h3><strong>${esc(value)}</strong><p>${esc(desc)}</p></article>`;
+}
+
+
+function ensureExamPrintButtons(){
+  if(document.getElementById('examPrintActions')) return;
+
+  const analyseBtn=document.getElementById('examAnalyseBtn');
+  if(!analyseBtn) return;
+
+  const wrap=document.createElement('div');
+  wrap.id='examPrintActions';
+  wrap.className='exam-print-actions';
+  wrap.innerHTML=`
+    <button type="button" class="pill exam-report-btn" id="examPrintOnlyBtn">🖨️ Cetak Analisis Peperiksaan</button>
+    <button type="button" class="pill exam-report-btn pbd-compare-btn" id="examPrintPbdBtn">📊 Cetak Peperiksaan vs PBD</button>
+  `;
+
+  analyseBtn.insertAdjacentElement('afterend',wrap);
+  document.getElementById('examPrintOnlyBtn')?.addEventListener('click',()=>openExamPrintReport('examOnly'));
+  document.getElementById('examPrintPbdBtn')?.addEventListener('click',()=>openExamPrintReport('examPbd'));
+}
+
+async function openExamPrintReport(mode){
+  const ctx=currentExamContext();
+  const status=document.getElementById('examStatus');
+
+  if(!ctx.tingkatan||!ctx.kelas||!ctx.ujian){
+    if(status) status.textContent='Pilih tingkatan, kelas dan ujian dahulu sebelum mencetak laporan.';
+    return;
+  }
+
+  const win=window.open('','_blank');
+  if(!win){
+    if(status) status.textContent='Popup disekat. Benarkan popup untuk portal ini, kemudian cuba lagi.';
+    return;
+  }
+
+  win.document.open();
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Memuat laporan</title>
+    <style>body{font-family:Arial,sans-serif;padding:40px;text-align:center;color:#24314d}.icon{font-size:44px}</style></head>
+    <body><div class="icon">📊</div><h2>Memuat laporan...</h2><p>Tingkatan ${esc(ctx.tingkatan)} ${esc(ctx.kelas)} • ${esc(ctx.ujian)}</p></body></html>`);
+  win.document.close();
+
+  try{
+    const res=await fetch(examApiUrl({action:'examAnalysis',...ctx,v:Date.now()}));
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message||'Gagal menjana laporan');
+
+    const html=mode==='examPbd'
+      ? buildExamPbdPrintHtml(data)
+      : buildExamOnlyPrintHtml(data);
+
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }catch(e){
+    win.document.open();
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Ralat Laporan</title></head>
+      <body style="font-family:Arial,sans-serif;padding:40px"><h2>❌ Laporan gagal dijana</h2><p>${esc(e.message)}</p>
+      <button onclick="window.close()">Tutup</button></body></html>`);
+    win.document.close();
+  }
+}
+
+function examPrintDate(){
+  return new Date().toLocaleDateString('ms-MY',{day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function examPrintNum(v,suffix=''){
+  if(v===''||v===null||v===undefined) return '-';
+  return `${v}${suffix}`;
+}
+
+function examReportBaseCss(){
+  return `
+    :root{--ink:#172033;--line:#253047;--soft:#eef3f8;--accent:#263b7a;--muted:#54637d}
+    *{box-sizing:border-box}
+    body{margin:0;background:#e9eef5;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+    .toolbar{position:sticky;top:0;z-index:20;display:flex;justify-content:center;gap:10px;align-items:center;padding:12px;background:#172033;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+    .toolbar button{border:0;border-radius:999px;padding:11px 18px;font-weight:800;cursor:pointer}
+    .print-btn{background:#32c5ff;color:#092033}.close-btn{background:#fff;color:#172033}
+    .toolbar small{opacity:.8;margin-left:8px}
+    .page{width:277mm;min-height:190mm;margin:10mm auto;padding:8mm;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.13)}
+    .page.break{break-after:page;page-break-after:always}
+    .header{display:flex;justify-content:center;align-items:center;gap:14px;text-align:center;margin-bottom:5mm}
+    .header img{width:18mm;height:18mm;object-fit:contain}
+    h1{margin:0;font-size:18pt;letter-spacing:.25px} h2{margin:2mm 0 0;font-size:13pt} h3{margin:6mm 0 2.5mm;font-size:12pt}
+    .meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2mm 8mm;margin:0 0 5mm;font-size:9pt}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:3mm;margin:4mm 0 5mm}
+    .kpi div{border:1.2px solid var(--line);border-radius:5px;padding:3mm;background:#f8fafc}
+    .kpi span{display:block;color:var(--muted);font-size:8pt}.kpi b{display:block;font-size:17pt;margin-top:1mm}
+    table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8.4pt;margin-top:2mm}
+    thead{display:table-header-group} tr{break-inside:avoid}
+    th,td{border:1.1px solid var(--line);padding:2mm 1.5mm;vertical-align:middle;word-wrap:break-word}
+    th{background:var(--soft);text-align:center;font-weight:800}
+    td.center{text-align:center}.name{font-weight:700}.small{font-size:7.5pt;color:var(--muted)}
+    .status-good{color:#166534;font-weight:800}.status-warn{color:#92400e;font-weight:800}.status-danger{color:#991b1b;font-weight:800}
+    .foot{display:flex;justify-content:space-between;gap:10mm;margin-top:4mm;font-size:7.5pt;color:#45556d}
+    @media print{
+      @page{size:A4 landscape;margin:7mm}
+      body{background:#fff}.toolbar{display:none!important}
+      .page{width:auto;min-height:auto;margin:0;padding:0;box-shadow:none}
+      .break{break-after:page;page-break-after:always}
+    }`;
+}
+
+function statusClass(status){
+  const s=examNorm(status);
+  if(s.includes('INTERVENSI')||s.includes('RENDAH')||s.includes('TIADA')) return 'status-danger';
+  if(s.includes('SELARAS')||s.includes('PEMANTAUAN')) return 'status-warn';
+  if(s.includes('KONSISTEN')) return 'status-good';
+  return '';
+}
+
+function reportToolbar(){
+  return `<div class="toolbar">
+    <button class="print-btn" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+    <button class="close-btn" onclick="window.close()">Tutup</button>
+    <small>Pilih “Save as PDF” jika mahu simpan sebagai fail PDF.</small>
+  </div>`;
+}
+
+function reportHeader(title,subtitle){
+  const logoUrl=new URL('logo-smktj2.jpg',location.href).href;
+  return `<header class="header">
+    <img src="${logoUrl}" alt="Logo sekolah">
+    <div><h1>${title}</h1><h2>${subtitle||'SMK TAMAN JASMIN 2'}</h2></div>
+  </header>`;
+}
+
+function buildExamOnlyPrintHtml(data){
+  const s=data.summary||{};
+  const students=(data.students||[]).slice().sort((a,b)=>{
+    if(a.peratus===''&&b.peratus!=='') return 1;
+    if(a.peratus!==''&&b.peratus==='') return -1;
+    return Number(b.peratus||0)-Number(a.peratus||0) || String(a.nama||'').localeCompare(String(b.nama||''));
+  });
+  const items=data.itemAnalysis||[];
+  const topics=data.topicAnalysis||[];
+
+  const studentRows=students.map((x,i)=>`<tr>
+    <td class="center">${i+1}</td>
+    <td class="name">${esc(x.nama)}</td>
+    <td class="center">${examPrintNum(x.jumlahObj)}</td>
+    <td class="center">${examPrintNum(x.jumlahStruktur)}</td>
+    <td class="center">${examPrintNum(x.jumlahEsei)}</td>
+    <td class="center"><b>${examPrintNum(x.peratus,'%')}</b></td>
+    <td class="center"><b>${esc(x.gred||'-')}</b></td>
+  </tr>`).join('');
+
+  const itemRows=items.map((x,i)=>`<tr>
+    <td class="center">${i+1}</td>
+    <td class="center">${esc(x.soalan)}</td>
+    <td>${esc(x.bahagian)}</td>
+    <td>${esc(x.topik)}</td>
+    <td class="center">${esc(x.aras||'-')}</td>
+    <td class="center">${esc(x.markahPenuh)}</td>
+    <td class="center">${esc(x.dijawab)}</td>
+    <td class="center">${esc(x.lemah)}</td>
+    <td class="center"><b>${esc(x.peratus)}%</b></td>
+  </tr>`).join('');
+
+  const topicRows=topics.slice(0,12).map((x,i)=>`<tr>
+    <td class="center">${i+1}</td>
+    <td>${esc(x.topik)}</td>
+    <td class="center"><b>${esc(x.peratus)}%</b></td>
+    <td class="center">${esc(x.murid||0)}</td>
+    <td class="center">${esc(x.muridLemah||0)}</td>
+  </tr>`).join('');
+
+  return `<!doctype html><html lang="ms"><head><meta charset="utf-8"><title>Laporan Analisis Peperiksaan</title>
+    <style>${examReportBaseCss()}</style></head><body>
+    ${reportToolbar()}
+    <section class="page break">
+      ${reportHeader('LAPORAN ANALISIS PEPERIKSAAN SEJARAH','SMK TAMAN JASMIN 2')}
+      <div class="meta">
+        <div><b>Kelas:</b> Tingkatan ${esc(data.tingkatan)} ${esc(data.kelas)}</div>
+        <div><b>Ujian:</b> ${esc(data.ujian)}</div>
+        <div><b>Tarikh Cetakan:</b> ${examPrintDate()}</div>
+      </div>
+      <div class="kpi">
+        <div><span>Murid Aktif</span><b>${esc(s.totalActive||0)}</b></div>
+        <div><span>Ada Markah</span><b>${esc(s.adaMarkah||0)}</b></div>
+        <div><span>Tiada Markah</span><b>${esc(s.tiadaMarkah||0)}</b></div>
+        <div><span>Purata Peperiksaan</span><b>${esc(s.avgExam||0)}%</b></div>
+      </div>
+      <h3>Senarai Markah Murid</h3>
+      <table>
+        <colgroup><col style="width:10mm"><col><col style="width:20mm"><col style="width:23mm"><col style="width:20mm"><col style="width:21mm"><col style="width:17mm"></colgroup>
+        <thead><tr><th>Bil</th><th>Nama Murid</th><th>Obj</th><th>Struktur</th><th>Esei</th><th>Peratus</th><th>Gred</th></tr></thead>
+        <tbody>${studentRows||'<tr><td colspan="7" class="center">Tiada data markah.</td></tr>'}</tbody>
+      </table>
+      <div class="foot"><span>Analisis ini berdasarkan rekod markah terkini bagi setiap murid.</span><span>${students.length} murid dipaparkan</span></div>
+    </section>
+
+    <section class="page">
+      ${reportHeader('ANALISIS ITEM DAN TOPIK PEPERIKSAAN','SMK TAMAN JASMIN 2')}
+      <div class="meta">
+        <div><b>Kelas:</b> Tingkatan ${esc(data.tingkatan)} ${esc(data.kelas)}</div>
+        <div><b>Ujian:</b> ${esc(data.ujian)}</div>
+        <div><b>Tarikh Cetakan:</b> ${examPrintDate()}</div>
+      </div>
+      <h3>Topik Paling Lemah</h3>
+      <table>
+        <colgroup><col style="width:10mm"><col><col style="width:26mm"><col style="width:26mm"><col style="width:28mm"></colgroup>
+        <thead><tr><th>Bil</th><th>Topik</th><th>Peratus</th><th>Murid</th><th>Murid Lemah</th></tr></thead>
+        <tbody>${topicRows||'<tr><td colspan="5" class="center">Tiada data topik.</td></tr>'}</tbody>
+      </table>
+      <h3>Analisis Mengikut Soalan</h3>
+      <table>
+        <colgroup><col style="width:8mm"><col style="width:14mm"><col style="width:22mm"><col><col style="width:22mm"><col style="width:18mm"><col style="width:18mm"><col style="width:18mm"><col style="width:18mm"></colgroup>
+        <thead><tr><th>Bil</th><th>Item</th><th>Bahagian</th><th>Topik</th><th>Aras</th><th>Markah</th><th>Dijawab</th><th>Lemah</th><th>%</th></tr></thead>
+        <tbody>${itemRows||'<tr><td colspan="9" class="center">Tiada analisis item.</td></tr>'}</tbody>
+      </table>
+      <div class="foot"><span>Peratus item dikira berbanding markah penuh item dan jumlah murid yang menjawab.</span><span>${items.length} item</span></div>
+    </section>
+  </body></html>`;
+}
+
+function buildExamPbdPrintHtml(data){
+  const s=data.summary||{};
+  const students=data.students||[];
+  const intervention=students.filter(x=>examNorm(x.status).includes('INTERVENSI'));
+  const mismatch=students.filter(x=>examNorm(x.status).includes('TINGGI')||examNorm(x.status).includes('RENDAH')||examNorm(x.status).includes('BERBEZA'));
+  const good=students.filter(x=>examNorm(x.status).includes('KONSISTEN'));
+
+  const rows=students.map((x,i)=>`<tr>
+    <td class="center">${i+1}</td>
+    <td class="name">${esc(x.nama)}</td>
+    <td class="center"><b>${examPrintNum(x.peratus,'%')}</b></td>
+    <td class="center">${esc(x.gred||'-')}</td>
+    <td class="center"><b>${x.tp?`TP${esc(x.tp)}`:'-'}</b></td>
+    <td class="${statusClass(x.status)}">${esc(x.status||'-')}</td>
+    <td class="center">${esc(x.match||'-')}</td>
+  </tr>`).join('');
+
+  const focusRows=[...intervention,...mismatch].slice(0,18).map((x,i)=>`<tr>
+    <td class="center">${i+1}</td>
+    <td class="name">${esc(x.nama)}</td>
+    <td class="center">${examPrintNum(x.peratus,'%')}</td>
+    <td class="center">${x.tp?`TP${esc(x.tp)}`:'-'}</td>
+    <td class="${statusClass(x.status)}">${esc(x.status)}</td>
+    <td>${recommendationForExamPbd(x)}</td>
+  </tr>`).join('');
+
+  return `<!doctype html><html lang="ms"><head><meta charset="utf-8"><title>Laporan Peperiksaan vs PBD</title>
+    <style>${examReportBaseCss()}</style></head><body>
+    ${reportToolbar()}
+    <section class="page break">
+      ${reportHeader('LAPORAN PEPERIKSAAN VS PBD SEJARAH','SMK TAMAN JASMIN 2')}
+      <div class="meta">
+        <div><b>Kelas:</b> Tingkatan ${esc(data.tingkatan)} ${esc(data.kelas)}</div>
+        <div><b>Ujian:</b> ${esc(data.ujian)}</div>
+        <div><b>Tarikh Cetakan:</b> ${examPrintDate()}</div>
+      </div>
+      <div class="kpi">
+        <div><span>Purata Peperiksaan</span><b>${esc(s.avgExam||0)}%</b></div>
+        <div><span>Purata TP</span><b>${esc(s.avgTp||0)}</b></div>
+        <div><span>Kedua-dua Lemah</span><b>${esc(s.bothLow||0)}</b></div>
+        <div><span>Konsisten Baik</span><b>${esc(s.consistentGood||0)}</b></div>
+      </div>
+      <h3>Senarai Perbandingan Murid</h3>
+      <table>
+        <colgroup><col style="width:10mm"><col><col style="width:22mm"><col style="width:16mm"><col style="width:18mm"><col style="width:45mm"><col style="width:25mm"></colgroup>
+        <thead><tr><th>Bil</th><th>Nama Murid</th><th>Peperiksaan</th><th>Gred</th><th>TP</th><th>Status</th><th>Padanan</th></tr></thead>
+        <tbody>${rows||'<tr><td colspan="7" class="center">Tiada data perbandingan.</td></tr>'}</tbody>
+      </table>
+      <div class="foot"><span>TP yang digunakan ialah TP tertinggi murid; jika TP sama, rekod paling baharu digunakan.</span><span>${students.length} murid dipaparkan</span></div>
+    </section>
+
+    <section class="page">
+      ${reportHeader('RUMUSAN TINDAKAN SUSULAN','SMK TAMAN JASMIN 2')}
+      <div class="meta">
+        <div><b>Kelas:</b> Tingkatan ${esc(data.tingkatan)} ${esc(data.kelas)}</div>
+        <div><b>Ujian:</b> ${esc(data.ujian)}</div>
+        <div><b>Tarikh Cetakan:</b> ${examPrintDate()}</div>
+      </div>
+      <div class="kpi">
+        <div><span>Perlu Intervensi</span><b>${intervention.length}</b></div>
+        <div><span>Tidak Selaras</span><b>${(s.highExamLowTp||0)+(s.lowExamHighTp||0)}</b></div>
+        <div><span>Konsisten Baik</span><b>${good.length}</b></div>
+        <div><span>Tiada Markah</span><b>${esc(s.tiadaMarkah||0)}</b></div>
+      </div>
+      <h3>Cadangan Tindakan Mengikut Murid</h3>
+      <table>
+        <colgroup><col style="width:10mm"><col><col style="width:25mm"><col style="width:20mm"><col style="width:45mm"><col style="width:70mm"></colgroup>
+        <thead><tr><th>Bil</th><th>Nama Murid</th><th>Peperiksaan</th><th>TP</th><th>Status</th><th>Cadangan Tindakan</th></tr></thead>
+        <tbody>${focusRows||'<tr><td colspan="6" class="center">Tiada murid dalam kategori intervensi/tidak selaras.</td></tr>'}</tbody>
+      </table>
+      <h3>Nota Interpretasi</h3>
+      <table>
+        <tbody>
+          <tr><th style="width:52mm">Kedua-dua Lemah</th><td>Peperiksaan bawah 35% dan TP1–TP2. Keutamaan untuk intervensi dan bimbingan asas.</td></tr>
+          <tr><th>Tidak Selaras</th><td>Markah peperiksaan dan TP menunjukkan jurang ketara. Semak bukti PBD, topik yang diuji dan bentuk pentaksiran.</td></tr>
+          <tr><th>Konsisten Baik</th><td>Murid menunjukkan pencapaian peperiksaan sekurang-kurangnya 50% dan TP4–TP6.</td></tr>
+        </tbody>
+      </table>
+      <div class="foot"><span>Laporan ini membantu guru menyasarkan intervensi, pengayaan dan semakan bukti PBD.</span><span>Sejarah Hub AI</span></div>
+    </section>
+  </body></html>`;
+}
+
+function recommendationForExamPbd(x){
+  const s=examNorm(x.status);
+  if(s.includes('INTERVENSI')) return 'Bimbingan asas, latihan berpandu dan semakan semula topik paling lemah.';
+  if(s.includes('PEPERIKSAAN TINGGI')) return 'Semak bukti PBD dan beri peluang tugasan KBAT atau pembentangan untuk mengukuhkan TP.';
+  if(s.includes('TP BAIK')) return 'Semak kemahiran menjawab peperiksaan dan beri latihan format soalan.';
+  if(s.includes('TIADA MARKAH')) return 'Lengkapkan rekod markah peperiksaan atau semak status kehadiran.';
+  if(s.includes('TIADA REKOD TP')) return 'Lengkapkan pentaksiran PBD bagi topik berkaitan.';
+  return 'Teruskan pemantauan dan beri latihan pengukuhan.';
 }
 
 async function renderExamAnalysis(){
