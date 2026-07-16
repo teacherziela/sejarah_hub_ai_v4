@@ -185,14 +185,19 @@ async function initPbd(){
     const res = await fetch(pbdApiUrl({action:'pbdInitLite'}));
     pbdData = await res.json();
     if(!pbdData.success) throw new Error(pbdData.message||'Gagal baca data PBD');
-    const tings = [...new Set((pbdData.murid||[]).map(m=>muridTing(m)).filter(Boolean))].sort((a,b)=>Number(a)-Number(b));
-    document.getElementById('pbdTingkatan').innerHTML = '<option value="">Pilih Tingkatan</option>' + tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
+
+    forcePopulatePbdFilters();
     renderPbdGuruOptions();
     initPbdSummaryControls();
     renderPbdSummary();
     document.getElementById('pbdStatus').textContent='Sedia. Pilih tingkatan dan kelas untuk rumusan, atau isi PBD seperti biasa.';
   }catch(e){
-    document.getElementById('pbdStatus').textContent='Gagal muat PBD: '+e.message;
+    // Jangan biarkan dropdown kosong. Filter masih boleh digunakan untuk rumusan/cetak
+    // kerana data sebenar akan dibaca terus daripada Apps Script.
+    pbdData = pbdData || {murid:[],topik:[],rekod:[]};
+    forcePopulatePbdFilters();
+    initPbdSummaryControls();
+    document.getElementById('pbdStatus').textContent='Data murid belum penuh dimuatkan, tetapi filter asas telah dipulihkan. Cuba pilih kelas dan papar rumusan.';
   }
 }
 function onPbdTingkatan(){
@@ -495,6 +500,54 @@ function val(obj, names){
 }
 function muridTing(m){ return String(val(m,['Tingkatan','Tingkat','Tingka'])).trim(); }
 function muridKelas(m){ return String(val(m,['Kelas'])).trim(); }
+const FALLBACK_SEJARAH_CLASSES = {
+  '1':['ADIL','BESTARI','CENDEKIA','GIGIH','JUJUR','TEKUN','YAKIN','RASIONAL'],
+  '2':['ADIL','CENDEKIA','DEDIKASI','EHSAN','GIGIH','PROGRESIF','RASIONAL','USAHA']
+};
+
+function fallbackTingkatanList(){
+  const fromData=[...new Set((pbdData.murid||[]).map(m=>muridTing(m)).filter(Boolean))]
+    .sort((a,b)=>Number(a)-Number(b));
+  return fromData.length ? fromData : ['1','2'];
+}
+
+function fallbackClassList(ting){
+  const fromData=[...new Set(activeMuridFor(ting,'').map(m=>muridKelas(m)).filter(Boolean))].sort();
+  if(fromData.length) return fromData;
+  return (FALLBACK_SEJARAH_CLASSES[String(ting)]||[]).slice();
+}
+
+function populateSelectOptions(select, placeholder, rows, labelFn){
+  if(!select) return;
+  const current=select.value;
+  select.innerHTML=`<option value="">${esc(placeholder)}</option>`+
+    rows.map(x=>`<option value="${esc(x)}">${esc(labelFn?labelFn(x):x)}</option>`).join('');
+  if(rows.includes(current)) select.value=current;
+}
+
+function forcePopulatePbdFilters(){
+  const tings=fallbackTingkatanList();
+
+  populateSelectOptions(document.getElementById('pbdTingkatan'),'Pilih Tingkatan',tings,t=>`Tingkatan ${t}`);
+  populateSelectOptions(document.getElementById('rumusTingkatan'),'Pilih Tingkatan',tings,t=>`Tingkatan ${t}`);
+  populateSelectOptions(document.getElementById('examTingkatan'),'Pilih Tingkatan',tings,t=>`Tingkatan ${t}`);
+  populateSelectOptions(document.getElementById('galleryPbdTingkatan'),'Semua Tingkatan',tings,t=>`Tingkatan ${t}`);
+  populateSelectOptions(document.getElementById('hipTingkatan'),'Pilih Tingkatan',tings,t=>`Tingkatan ${t}`);
+
+  ['pbd','rumus','exam','galleryPbd','hip'].forEach(prefix=>{
+    const tingEl=document.getElementById(prefix==='pbd'?'pbdTingkatan':`${prefix}Tingkatan`);
+    const kelasEl=document.getElementById(prefix==='pbd'?'pbdKelas':`${prefix}Kelas`);
+    if(!tingEl||!kelasEl) return;
+    const ting=tingEl.value||tings[0]||'';
+    if(!tingEl.value && tings.length && (prefix==='rumus'||prefix==='exam')) tingEl.value=tings[0];
+    const realTing=tingEl.value||ting;
+    const classes=realTing ? fallbackClassList(realTing) : [];
+    const placeholder=prefix==='galleryPbd'?'Semua Kelas':'Pilih Kelas';
+    populateSelectOptions(kelasEl,placeholder,classes,k=>realTing?`Tingkatan ${realTing} ${k}`:k);
+    if((prefix==='rumus'||prefix==='exam') && classes.length && !kelasEl.value) kelasEl.value=classes[0];
+  });
+}
+
 function activeMuridFor(ting, kelas){
   return (pbdData.murid||[]).filter(m=>{
     const status = String(val(m,['Status'])||'AKTIF').toUpperCase();
@@ -507,9 +560,9 @@ function initPbdSummaryControls(){
   const kelasSel = document.getElementById('rumusKelas');
   if(!tingSel || !kelasSel) return;
 
-  const tings = [...new Set((pbdData.murid||[]).map(m=>muridTing(m)).filter(Boolean))].sort((a,b)=>Number(a)-Number(b));
+  const tings = fallbackTingkatanList();
   tingSel.innerHTML = '<option value="">Pilih Tingkatan</option>' + tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
-  if(tings.length) tingSel.value = tings[0];
+  if(tings.length && !tingSel.value) tingSel.value = tings[0];
   onRumusTingkatan();
 }
 function onRumusTingkatan(){
@@ -517,9 +570,9 @@ function onRumusTingkatan(){
   const kelasSel = document.getElementById('rumusKelas');
   if(!kelasSel) return;
 
-  const kelas = [...new Set(activeMuridFor(ting,'').map(m=>muridKelas(m)).filter(Boolean))].sort();
+  const kelas = fallbackClassList(ting);
   kelasSel.innerHTML = '<option value="">Pilih Kelas</option>' + kelas.map(k=>`<option value="${esc(k)}">${esc(ting ? ting+' '+k : k)}</option>`).join('');
-  if(kelas.length) kelasSel.value = kelas[0];
+  if(kelas.length && !kelasSel.value) kelasSel.value = kelas[0];
   renderPbdSummary();
 }
 async function fetchClassSummary(ting, kelas, ujian){
@@ -1710,11 +1763,7 @@ function initExamControls(){
   const tingSel=document.getElementById('examTingkatan');
   if(!tingSel) return;
 
-  const tings=[...new Set((pbdData.murid||[])
-    .filter(m=>muridStatus(m)!=='PINDAH')
-    .map(m=>muridTing(m))
-    .filter(Boolean))]
-    .sort((a,b)=>Number(a)-Number(b));
+  const tings=fallbackTingkatanList();
 
   tingSel.innerHTML='<option value="">Pilih Tingkatan</option>'+tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
 
@@ -1726,11 +1775,7 @@ function initExamControls(){
 
 function onExamTingkatan(){
   const ting=document.getElementById('examTingkatan').value;
-  const kelas=[...new Set((pbdData.murid||[])
-    .filter(m=>muridStatus(m)!=='PINDAH' && String(muridTing(m))===String(ting))
-    .map(m=>muridKelas(m))
-    .filter(Boolean))]
-    .sort();
+  const kelas=fallbackClassList(ting);
 
   const kelasSel=document.getElementById('examKelas');
   kelasSel.innerHTML='<option value="">Pilih Kelas</option>'+kelas.map(k=>`<option value="${esc(k)}">${esc(ting+' '+k)}</option>`).join('');
