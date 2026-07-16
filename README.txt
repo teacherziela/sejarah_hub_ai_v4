@@ -1,13 +1,24 @@
-PATCH v7.4.1 — FIX BUTANG CETAK ANALISIS
+PATCH v7.5 — LAPORAN INTERVENSI PBD TP1–TP2
 
-Punca:
-- script.js sudah diganti, tetapi butang cetak tidak muncul kerana butang dijana melalui JavaScript dan portal/cache tidak memaparkannya.
+FUNGSI BAHARU
+- Butang baharu pada Rumusan PBD:
+  "Cetak Intervensi TP1–TP2"
+- Laporan menyenaraikan semua murid yang TP tertinggi semasa ialah TP1 atau TP2.
+- Laporan menyediakan ruang kosong untuk guru tulis:
+  1. Catatan Guru
+  2. Tindakan / Tarikh Semakan
+  3. Paraf
+- Laporan juga menyediakan cadangan awal intervensi secara automatik.
 
-Pembaikan:
-- index.html kini mempunyai butang cetak secara terus:
-  1. Cetak Analisis Peperiksaan
-  2. Cetak Peperiksaan vs PBD
-- index.html juga dipaksa baca script.js?v=741 dan style.css?v=741.
+KANDUNGAN LAPORAN
+- Nama murid
+- TP tertinggi
+- Topik / tarikh rekod
+- Markah peperiksaan jika ada
+- Cadangan awal intervensi
+- Ruang catatan guru
+- Ruang tindakan susulan
+- Ruang paraf
 
 CARA PASANG
 
@@ -18,12 +29,16 @@ GITHUB
 4. Commit changes
 
 APPS SCRIPT
-- Jika Code.gs sudah v7.3/v7.4, tak wajib ganti.
-- Jika mahu selamat, ganti Code.gs juga dan deploy semula.
+- Code.gs tidak wajib diganti jika sistem sudah v7.4.1.
+- Fail Code.gs disertakan untuk versi lengkap dan selamat.
+- Jika ganti Code.gs, Save dan Deploy semula.
 
 SELEPAS PASANG
-1. Tunggu GitHub Pages 1-2 minit.
-2. Buka portal.
-3. Tekan Ctrl + Shift + R.
-4. Pergi Analisis Peperiksaan + PBD.
-5. Butang cetak akan kelihatan di bawah/sebelah Papar Analisis.
+1. Buka portal.
+2. Tekan Ctrl + Shift + R.
+3. Pergi Rumusan PBD.
+4. Pilih Tingkatan dan Kelas.
+5. Tekan "Cetak Intervensi TP1–TP2".
+6. Pilih Print atau Save as PDF.
+
+Nota: Jika mahu TP2 sahaja, guru boleh abaikan baris TP1. Laporan ini sengaja ambil TP1–TP2 sebab kedua-duanya biasa masuk kategori intervensi.

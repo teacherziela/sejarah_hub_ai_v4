@@ -1279,3 +1279,21 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:inve
   .exam-print-actions{width:100%}
   .exam-print-actions .pill{width:100%;justify-content:center}
 }
+
+
+/* =========================================================
+   v7.5 — Butang laporan intervensi PBD TP1–TP2
+   ========================================================= */
+.intervention-report-btn{
+  border-color:rgba(251,146,60,.42);
+  background:linear-gradient(135deg,rgba(249,115,22,.23),rgba(239,68,68,.14));
+  color:#ffedd5;
+  box-shadow:0 10px 24px rgba(249,115,22,.09);
+}
+.intervention-report-btn:hover,
+.intervention-report-btn:focus-visible{
+  transform:translateY(-2px);
+  border-color:rgba(251,146,60,.78);
+  box-shadow:0 14px 30px rgba(249,115,22,.16);
+  outline:none;
+}

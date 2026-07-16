@@ -65,6 +65,7 @@ async function init(){
   document.getElementById('rumusUjian')?.addEventListener('change', renderPbdSummary);
   document.getElementById('rumusRefreshBtn')?.addEventListener('click', renderPbdSummary);
   document.getElementById('pbdPrintReportBtn')?.addEventListener('click', openPbdPrintReport);
+  document.getElementById('pbdInterventionReportBtn')?.addEventListener('click', openPbdInterventionReport);
 
   document.getElementById('examTingkatan')?.addEventListener('change', onExamTingkatan);
   document.getElementById('examKelas')?.addEventListener('change', onExamContextChanged);
