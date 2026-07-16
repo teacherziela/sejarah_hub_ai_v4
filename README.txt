@@ -1,39 +1,29 @@
-PATCH v7.2 — GALERI HASIL MURID
+PATCH v7.4.1 — FIX BUTANG CETAK ANALISIS
 
-FUNGSI BAHARU
-- Menambah menu "Hasil Murid".
-- Menambah ruangan "Galeri Hasil Murid" dalam portal.
-- Galeri membaca dua jenis gambar:
-  1. Gambar lama AppSheet yang disimpan sebagai laluan REKOD TP_Images/nama_fail.jpg.
-  2. Gambar bukti baharu yang disimpan sebagai pautan Google Drive penuh oleh portal v7.1.
-- Sistem memadankan nama fail lama dengan folder:
-  https://drive.google.com/drive/folders/1iNinTVUr5DLYU7agis8_hC1G1f9CkMTE
-- Penapis tersedia:
-  Tingkatan, Kelas, Topik dan TP.
-- Kad galeri memaparkan gambar, nama murid, kelas, topik, TP, tarikh dan guru.
-- Klik gambar untuk membuka gambar penuh.
-- Maksimum 80 gambar dipaparkan setiap carian supaya portal kekal pantas.
+Punca:
+- script.js sudah diganti, tetapi butang cetak tidak muncul kerana butang dijana melalui JavaScript dan portal/cache tidak memaparkannya.
+
+Pembaikan:
+- index.html kini mempunyai butang cetak secara terus:
+  1. Cetak Analisis Peperiksaan
+  2. Cetak Peperiksaan vs PBD
+- index.html juga dipaksa baca script.js?v=741 dan style.css?v=741.
 
 CARA PASANG
 
 GITHUB
-1. Ganti script.js
-2. Ganti style.css
-3. Commit changes
+1. Ganti index.html
+2. Ganti script.js
+3. Ganti style.css
+4. Commit changes
 
 APPS SCRIPT
-1. Ganti keseluruhan Code.gs
-2. Save
-3. Deploy > Manage deployments > Edit > New version > Deploy
+- Jika Code.gs sudah v7.3/v7.4, tak wajib ganti.
+- Jika mahu selamat, ganti Code.gs juga dan deploy semula.
 
 SELEPAS PASANG
-1. Buka portal.
-2. Tekan Ctrl + Shift + R.
-3. Tekan menu "Hasil Murid" atau scroll ke Galeri Hasil Murid.
-4. Pilih Tingkatan/Kelas/Topik/TP.
-5. Tekan Papar Galeri.
-
-NOTA
-- Folder gambar lama tidak dipindahkan dan tidak dipadam.
-- Rekod dalam Google Sheet tidak diubah.
-- Fail baharu yang diambil melalui portal v7.1 juga akan masuk galeri secara automatik.
+1. Tunggu GitHub Pages 1-2 minit.
+2. Buka portal.
+3. Tekan Ctrl + Shift + R.
+4. Pergi Analisis Peperiksaan + PBD.
+5. Butang cetak akan kelihatan di bawah/sebelah Papar Analisis.

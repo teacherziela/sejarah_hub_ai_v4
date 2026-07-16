@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v7.2 - GALERI HASIL MURID + BUKTI PBD LAMA/BAHARU
+// SEJARAH HUB AI v7.4 - CETAK ANALISIS PEPERIKSAAN + VIDEO HIP
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -38,6 +38,11 @@ function doGet(e) {
     e.parameter.tp || '',
     e.parameter.limit || '80'
   ));
+  if (action === 'hipActivityGallery') return jsonResponse(readHipActivityGallery(
+    e.parameter.tingkatan || '',
+    e.parameter.kelas || '',
+    e.parameter.limit || '40'
+  ));
 
   // Analisis peperiksaan + PBD
   if (action === 'examInit') return jsonResponse(readExamInit());
@@ -61,6 +66,7 @@ function doPost(e) {
   if (data.action === 'delete') return jsonResponse(deleteRecord(module, data.id));
   if (data.action === 'savePbdBatch') return jsonResponse(savePbdBatch(data.records || []));
   if (data.action === 'uploadPbdEvidence') return jsonResponse(uploadPbdEvidence(data));
+  if (data.action === 'saveHipActivityVideo') return jsonResponse(saveHipActivityVideo(data));
   if (data.action === 'saveExamRecord') return jsonResponse(saveExamRecord(data));
   if (data.action === 'saveItemMapBatch') return jsonResponse(saveItemMapBatch(data));
   if (data.action === 'uploadQuestionPaper') return jsonResponse(uploadQuestionPaper(data));
@@ -1004,6 +1010,228 @@ function readPbdEvidenceGallery(tingkatan,kelas,topik,tp,limit){
       totalMatched:filtered.length,
       unresolved:unresolved,
       limit:limit
+    };
+  }catch(err){
+    return {success:false,message:String(err&&err.message?err.message:err)};
+  }
+}
+
+
+var HIP_VIDEO_FOLDER_NAME='BUKTI HIP SEJARAH';
+var HIP_VIDEO_SHEET_NAME='AKTIVITI HIP';
+
+function hipVideoFolder_(tingkatan,kelas){
+  var roots=DriveApp.getFoldersByName(HIP_VIDEO_FOLDER_NAME);
+  var root=roots.hasNext() ? roots.next() : DriveApp.createFolder(HIP_VIDEO_FOLDER_NAME);
+
+  var subName=('T'+String(tingkatan||'')+'_'+String(kelas||''))
+    .replace(/[\\/:*?"<>|]/g,'_')
+    .replace(/\s+/g,'_');
+
+  var subs=root.getFoldersByName(subName);
+  return subs.hasNext() ? subs.next() : root.createFolder(subName);
+}
+
+function ensureHipVideoSheet_(){
+  var ss=getPbdSs();
+  var sh=ss.getSheetByName(HIP_VIDEO_SHEET_NAME);
+  if(!sh){
+    sh=ss.insertSheet(HIP_VIDEO_SHEET_NAME);
+    sh.getRange(1,1,1,15).setValues([[
+      'IDVideo','Tarikh Rekod','Tarikh Aktiviti','Tingkatan','Kelas',
+      'Tajuk Aktiviti','Nama/Kumpulan','Catatan','Guru','Video URL',
+      'Preview URL','Thumbnail URL','Jenis','Saiz Bytes','Status Perkongsian'
+    ]]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function youtubeVideoId_(url){
+  var text=String(url||'').trim();
+  var match=text.match(/youtu\.be\/([^?&#/]+)|youtube\.com\/(?:watch\?v=|embed\/|shorts\/)([^?&#/]+)/i);
+  return match ? (match[1]||match[2]||'') : '';
+}
+
+function hipVideoUrls_(url){
+  var raw=String(url||'').trim();
+  var driveId=driveFileIdFromText_(raw);
+  if(driveId){
+    return {
+      videoUrl:raw,
+      viewUrl:'https://drive.google.com/file/d/'+driveId+'/view',
+      previewUrl:'https://drive.google.com/file/d/'+driveId+'/preview',
+      thumbnailUrl:'https://drive.google.com/thumbnail?id='+driveId+'&sz=w1000',
+      type:'DRIVE'
+    };
+  }
+
+  var youtubeId=youtubeVideoId_(raw);
+  if(youtubeId){
+    return {
+      videoUrl:raw,
+      viewUrl:'https://www.youtube.com/watch?v='+youtubeId,
+      previewUrl:'https://www.youtube.com/embed/'+youtubeId,
+      thumbnailUrl:'https://img.youtube.com/vi/'+youtubeId+'/hqdefault.jpg',
+      type:'YOUTUBE'
+    };
+  }
+
+  return {
+    videoUrl:raw,
+    viewUrl:raw,
+    previewUrl:raw,
+    thumbnailUrl:'',
+    type:'PAUTAN'
+  };
+}
+
+function saveHipActivityVideo(data){
+  try{
+    var tingkatan=String(data.tingkatan||'').trim();
+    var kelas=String(data.kelas||'').trim();
+    var tarikhAktiviti=String(data.tarikhAktiviti||'').trim();
+    var guru=cleanName_(data.guru||'');
+    var tajuk=String(data.tajuk||'').trim();
+    var peserta=String(data.peserta||'Seluruh kelas').trim();
+    var catatan=String(data.catatan||'').trim();
+    var link=String(data.videoLink||'').trim();
+    var base64=String(data.base64||'').trim();
+
+    if(!tingkatan||!kelas||!tarikhAktiviti||!guru||!tajuk){
+      return {success:false,message:'Maklumat aktiviti belum lengkap.'};
+    }
+    if(!base64&&!link){
+      return {success:false,message:'Video atau pautan video diperlukan.'};
+    }
+
+    var meta;
+    var sharingOk=true;
+    var sizeBytes=Number(data.sizeBytes||0);
+    var jenis='PAUTAN';
+
+    if(base64){
+      var mimeType=String(data.mimeType||'video/mp4').trim();
+      if(!/^video\//i.test(mimeType)){
+        return {success:false,message:'Fail yang dipilih bukan video.'};
+      }
+
+      var bytes=Utilities.base64Decode(base64);
+      sizeBytes=bytes.length;
+      if(bytes.length>20*1024*1024){
+        return {success:false,message:'Video melebihi had 20 MB pelayan. Gunakan pautan Google Drive atau YouTube.'};
+      }
+
+      var fileName=String(data.fileName||('HIP_'+Date.now()+'.mp4'))
+        .replace(/[\\/:*?"<>|]/g,'_');
+      var file=hipVideoFolder_(tingkatan,kelas).createFile(
+        Utilities.newBlob(bytes,mimeType,fileName)
+      );
+      file.setDescription([
+        'Bukti Aktiviti HIP',
+        'Tajuk: '+tajuk,
+        'Tingkatan/Kelas: '+tingkatan+' '+kelas,
+        'Peserta: '+peserta,
+        'Guru: '+guru
+      ].join('\n'));
+
+      try{
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);
+      }catch(shareErr){
+        sharingOk=false;
+      }
+
+      meta={
+        videoUrl:'https://drive.google.com/file/d/'+file.getId()+'/view',
+        viewUrl:'https://drive.google.com/file/d/'+file.getId()+'/view',
+        previewUrl:'https://drive.google.com/file/d/'+file.getId()+'/preview',
+        thumbnailUrl:'https://drive.google.com/thumbnail?id='+file.getId()+'&sz=w1000',
+        type:'UPLOAD'
+      };
+      jenis='UPLOAD';
+    }else{
+      meta=hipVideoUrls_(link);
+      jenis=meta.type;
+    }
+
+    var sh=ensureHipVideoSheet_();
+    var id=Utilities.getUuid().slice(0,10);
+    sh.appendRow([
+      id,
+      new Date(),
+      parseCalendarDate_(tarikhAktiviti),
+      tingkatan,
+      kelas,
+      tajuk,
+      peserta,
+      catatan,
+      guru,
+      meta.viewUrl||meta.videoUrl||'',
+      meta.previewUrl||'',
+      meta.thumbnailUrl||'',
+      jenis,
+      sizeBytes||'',
+      sharingOk?'LINK':'TERHAD'
+    ]);
+
+    return {
+      success:true,
+      id:id,
+      videoUrl:meta.videoUrl||'',
+      viewUrl:meta.viewUrl||'',
+      previewUrl:meta.previewUrl||'',
+      thumbnailUrl:meta.thumbnailUrl||'',
+      sharingOk:sharingOk,
+      message:'Bukti video HIP berjaya disimpan.'
+    };
+  }catch(err){
+    return {success:false,message:String(err&&err.message?err.message:err)};
+  }
+}
+
+function readHipActivityGallery(tingkatan,kelas,limit){
+  try{
+    limit=Math.max(1,Math.min(80,Number(limit||40)));
+    var sh=ensureHipVideoSheet_();
+    var rows=rowsToObjects_(safeRangeValues_(sh,20));
+
+    var output=rows.map(function(o){
+      var recordDate=pick_(o,['Tarikh Rekod']);
+      var activityDate=pick_(o,['Tarikh Aktiviti']);
+      return {
+        id:String(pick_(o,['IDVideo','ID'])||'').trim(),
+        tingkatan:String(pick_(o,['Tingkatan'])||'').trim(),
+        kelas:String(pick_(o,['Kelas'])||'').trim(),
+        tajuk:String(pick_(o,['Tajuk Aktiviti','Tajuk'])||'').trim(),
+        peserta:String(pick_(o,['Nama/Kumpulan','Peserta'])||'').trim(),
+        catatan:String(pick_(o,['Catatan'])||'').trim(),
+        guru:cleanName_(pick_(o,['Guru'])||''),
+        videoUrl:String(pick_(o,['Video URL'])||'').trim(),
+        previewUrl:String(pick_(o,['Preview URL'])||'').trim(),
+        thumbnailUrl:String(pick_(o,['Thumbnail URL'])||'').trim(),
+        jenis:String(pick_(o,['Jenis'])||'').trim(),
+        tarikhAktiviti:fmtDate_(activityDate),
+        dateNum:dateNum_(activityDate||recordDate),
+        row:o._row||0
+      };
+    }).filter(function(r){
+      if(!r.videoUrl&&!r.previewUrl) return false;
+      if(tingkatan&&String(r.tingkatan)!==String(tingkatan)) return false;
+      if(kelas&&normalizeClass_(r.kelas)!==normalizeClass_(kelas)) return false;
+      return true;
+    });
+
+    output.sort(function(a,b){
+      return Number(b.dateNum||0)-Number(a.dateNum||0) ||
+        Number(b.row||0)-Number(a.row||0);
+    });
+
+    output=output.slice(0,limit);
+
+    return {
+      success:true,
+      rows:output,
+      count:output.length
     };
   }catch(err){
     return {success:false,message:String(err&&err.message?err.message:err)};
