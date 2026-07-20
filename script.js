@@ -171,12 +171,56 @@ function renderGuru(list){
   if(!list.length){grid.innerHTML='<p class="note">Belum ada biodata guru aktif dalam Google Sheet.</p>';return;}
   grid.innerHTML=list.map(g=>`<div class="guru-card premium-card"><img class="avatar" src="${driveImg(g.Foto)||logo()}" onerror="this.onerror=null;this.src='logo-smktj2.jpg'"><div><h3>${esc(cleanName(g.Nama))}</h3><p>${esc(g.Jawatan||'Guru Akademik')}</p><p class="note">${esc(yearsText(g.Pengalaman)||g.Kelas||'')}</p>${String(g.Opsyen||'').split(',').filter(Boolean).map(t=>`<span class="tag">${esc(t.trim())}</span>`).join('')}</div><button onclick="openProfile('${esc(g.ID)}')">Lihat Profil</button></div>`).join('');
 }
-function renderPbdGuruOptions(){
+
+// v7.6.3 — senarai guru fallback. Data GURU sebenar tetap diutamakan jika berjaya dibaca.
+const FALLBACK_GURU_SEJARAH = [
+  'ZAMZILA BINTI MOHAMAT',
+  'ZAMZILA MOHAMAT',
+  'CIKGU ZAMZILA',
+  'EN NASRAN',
+  'EN SAFERI',
+  'PN HARYATI',
+  'PN ROHAWATI',
+  'PN MASSITA'
+];
+
+function uniqueCleanGuruList(list){
+  const seen=new Set();
+  const out=[];
+  (list||[]).forEach(x=>{
+    const name=cleanName(typeof x==='string' ? x : val(x,['Nama Guru','Nama','nama','Guru','Ditafsir_Oleh','Ditafsir Oleh']));
+    if(!name) return;
+    const key=name.toUpperCase().replace(/\s+/g,' ');
+    if(!seen.has(key)){
+      seen.add(key);
+      out.push(name);
+    }
+  });
+  return out.sort((a,b)=>a.localeCompare(b));
+}
+
+function getAllGuruOptions(){
+  const fromGuruData = uniqueCleanGuruList(Array.isArray(guruData)?guruData:[]);
+  const fromPbdGuru = uniqueCleanGuruList((pbdData && Array.isArray(pbdData.guru)) ? pbdData.guru : []);
+  const fromRekod = uniqueCleanGuruList((pbdData && Array.isArray(pbdData.rekod)) ? pbdData.rekod.map(r=>val(r,['Ditafsir_Oleh','Ditafsir Oleh','Guru','Guru Penilai'])) : []);
+  const combined = uniqueCleanGuruList([...fromGuruData, ...fromPbdGuru, ...fromRekod, ...FALLBACK_GURU_SEJARAH]);
+  return combined.length ? combined : FALLBACK_GURU_SEJARAH.slice();
+}
+
+function rebuildGuruDropdownSafe(){
   const sel=document.getElementById('pbdGuru');
   if(!sel) return;
-  const names=fallbackGuruList();
+  const current=sel.value;
+  const names=getAllGuruOptions();
   sel.innerHTML='<option value="">Pilih guru</option>'+names.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
-  if(names.includes('ZAMZILA BINTI MOHAMAT')) sel.value='ZAMZILA BINTI MOHAMAT';
+  if(current && names.includes(current)) sel.value=current;
+  else if(names.includes('ZAMZILA BINTI MOHAMAT')) sel.value='ZAMZILA BINTI MOHAMAT';
+  else if(names.length) sel.value=names[0];
+}
+
+
+function renderPbdGuruOptions(){
+  rebuildGuruDropdownSafe();
 }
 
 function openProfile(id){
@@ -230,6 +274,11 @@ for(let i=1;i<=12;i++) setTimeout(fixTopikGuruDropdowns,i*600);
 document.addEventListener('change',function(e){
   if(e.target && e.target.id==='pbdTingkatan') setTimeout(fixTopikGuruDropdowns,80);
 },true);
+
+setTimeout(rebuildGuruDropdownSafe,700);
+setTimeout(rebuildGuruDropdownSafe,1800);
+setTimeout(rebuildGuruDropdownSafe,3500);
+
 async function initPbd(){
   try{
     document.getElementById('pbdStatus').textContent='Memuat data PBD...';
@@ -239,6 +288,7 @@ async function initPbd(){
 
     forcePopulatePbdFilters();
     renderPbdGuruOptions();
+    rebuildGuruDropdownSafe();
     initPbdSummaryControls();
     renderPbdSummary();
     document.getElementById('pbdStatus').textContent='Sedia. Pilih tingkatan dan kelas untuk rumusan, atau isi PBD seperti biasa.';
