@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v7.5 - LAPORAN INTERVENSI TP1-TP2 + CETAK ANALISIS
+// SEJARAH HUB AI v7.6 - LAPORAN INTERVENSI TP1-TP2 + CETAK ANALISIS
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -65,6 +65,7 @@ function doPost(e) {
   if (data.action === 'update') return jsonResponse(updateRecord(module, data));
   if (data.action === 'delete') return jsonResponse(deleteRecord(module, data.id));
   if (data.action === 'savePbdBatch') return jsonResponse(savePbdBatch(data.records || []));
+  if (data.action === 'savePbdIntervention') return jsonResponse(savePbdIntervention(data));
   if (data.action === 'uploadPbdEvidence') return jsonResponse(uploadPbdEvidence(data));
   if (data.action === 'saveHipActivityVideo') return jsonResponse(saveHipActivityVideo(data));
   if (data.action === 'saveExamRecord') return jsonResponse(saveExamRecord(data));
@@ -1233,6 +1234,64 @@ function readHipActivityGallery(tingkatan,kelas,limit){
       rows:output,
       count:output.length
     };
+  }catch(err){
+    return {success:false,message:String(err&&err.message?err.message:err)};
+  }
+}
+
+
+var PBD_INTERVENTION_SHEET_NAME='INTERVENSI PBD';
+
+function ensurePbdInterventionSheet_(){
+  var ss=getPbdSs();
+  var sh=ss.getSheetByName(PBD_INTERVENTION_SHEET_NAME);
+  if(!sh){
+    sh=ss.insertSheet(PBD_INTERVENTION_SHEET_NAME);
+    sh.getRange(1,1,1,17).setValues([[
+      'IDIntervensi','Tarikh Simpan','Tingkatan','Kelas','IDMurid','Nama Murid',
+      'TP','Topik','Tarikh Rekod TP','Ujian','Peratus','Gred',
+      'Intervensi Guru','Tarikh Semakan','Catatan Guru','Guru','Status'
+    ]]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+function savePbdIntervention(data){
+  try{
+    var nama=String(data.namaMurid||'').trim();
+    var tingkatan=String(data.tingkatan||'').trim();
+    var kelas=String(data.kelas||'').trim();
+    var intervensi=String(data.intervensi||'').trim();
+
+    if(!nama||!tingkatan||!kelas||!intervensi){
+      return {success:false,message:'Maklumat intervensi belum lengkap.'};
+    }
+
+    var sh=ensurePbdInterventionSheet_();
+    var id=Utilities.getUuid().slice(0,10);
+
+    sh.appendRow([
+      id,
+      new Date(),
+      tingkatan,
+      kelas,
+      String(data.idMurid||'').trim(),
+      nama,
+      data.tp||'',
+      data.topik||'',
+      data.tarikhRekod||'',
+      data.ujian||'',
+      data.peratus||'',
+      data.gred||'',
+      intervensi,
+      data.tarikhSemakan ? parseCalendarDate_(data.tarikhSemakan) : '',
+      data.catatanGuru||'',
+      cleanName_(data.guru||''),
+      'DIREKOD'
+    ]);
+
+    return {success:true,id:id,message:'Intervensi berjaya disimpan.'};
   }catch(err){
     return {success:false,message:String(err&&err.message?err.message:err)};
   }

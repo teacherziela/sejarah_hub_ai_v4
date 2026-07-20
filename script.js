@@ -174,12 +174,11 @@ function renderGuru(list){
 function renderPbdGuruOptions(){
   const sel=document.getElementById('pbdGuru');
   if(!sel) return;
-  const current=sel.value;
-  const names=[...new Set((guruData||[]).map(g=>cleanName(g.Nama)).filter(Boolean))].sort();
-  sel.innerHTML='<option value="">Pilih guru</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
-  if(current && names.includes(current)) sel.value=current;
-  else if(names.length) sel.value=names[0];
+  const names=fallbackGuruList();
+  sel.innerHTML='<option value="">Pilih guru</option>'+names.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  if(names.includes('ZAMZILA BINTI MOHAMAT')) sel.value='ZAMZILA BINTI MOHAMAT';
 }
+
 function openProfile(id){
   const g=guruData.find(x=>String(x.ID)===String(id)); if(!g) return;
   const email = String(g.Email||'').trim();
@@ -220,6 +219,17 @@ function pbdApiUrl(params){
   qs.set('v', Date.now());
   return `${CONFIG.SHEET_API_URL}?${qs.toString()}`;
 }
+
+function fixTopikGuruDropdowns(){
+  const topik=document.getElementById('pbdTopik');
+  if(topik && topik.options.length<=1 && document.getElementById('pbdTingkatan')?.value){ renderPbdTopik(); }
+  const guru=document.getElementById('pbdGuru');
+  if(guru && guru.options.length<=1){ renderPbdGuruOptions(); }
+}
+for(let i=1;i<=12;i++) setTimeout(fixTopikGuruDropdowns,i*600);
+document.addEventListener('change',function(e){
+  if(e.target && e.target.id==='pbdTingkatan') setTimeout(fixTopikGuruDropdowns,80);
+},true);
 async function initPbd(){
   try{
     document.getElementById('pbdStatus').textContent='Memuat data PBD...';
@@ -251,11 +261,30 @@ function onPbdTingkatan(){
 }
 function onPbdKelas(){ document.getElementById('pbdStudents').innerHTML=''; document.getElementById('pbdSaveBtn').style.display='none'; }
 function renderPbdTopik(){
-  const ting=document.getElementById('pbdTingkatan').value;
-  const opts=(pbdData.topik||[]).filter(t=>!ting || String(t.Tingkatan)==String(ting));
-  document.getElementById('pbdTopik').innerHTML='<option value="">Pilih Topik / SP</option>'+opts.map(t=>`<option value="${esc(t.IDTopik)}">${esc((t['SK (Standard Kandungan)']||t.Topik||'')+' — '+(t['SP (Standard Pembelajaran)']||''))}</option>`).join('');
+  const ting=document.getElementById('pbdTingkatan')?.value||'';
+  const opts=fallbackTopikList(ting);
+  const topikSel=document.getElementById('pbdTopik');
+  if(!topikSel) return;
+  topikSel.innerHTML='<option value="">Pilih Topik / SP</option>'+opts.map((t,i)=>{
+    const id=String(t.IDTopik||t['ID Topik']||t.idTopik||t.ID||`FB_${ting}_${i}`).trim();
+    const topik=String(t.Topik||t.topik||t.Tajuk||t.tajuk||'Topik').trim();
+    const sp=String(t.SP||t.sp||t['SP (Standard Pembelajaran)']||'').trim();
+    const sk=String(t.SK||t.sk||t['SK (Standard Kandungan)']||'').trim();
+    const label=[topik,sp].filter(Boolean).join(' • ');
+    return `<option value="${esc(id)}" data-topik="${esc(topik)}" data-sk="${esc(sk)}" data-sp="${esc(sp)}">${esc(label)}</option>`;
+  }).join('');
 }
-function selectedTopik(){ const id=document.getElementById('pbdTopik').value; return (pbdData.topik||[]).find(t=>String(t.IDTopik)===String(id)); }
+
+function selectedTopik(){
+  const sel=document.getElementById('pbdTopik');
+  const id=sel?.value || '';
+  const opt=sel?.selectedOptions?.[0];
+  const all=fallbackTopikList(document.getElementById('pbdTingkatan')?.value||'');
+  const found=all.find(t=>String(t.IDTopik||t['ID Topik']||t.idTopik||t.ID||'')===String(id));
+  if(found) return found;
+  return {IDTopik:id, Topik:opt?.dataset?.topik || opt?.textContent || '', SK:opt?.dataset?.sk || '', SP:opt?.dataset?.sp || ''};
+}
+
 function muridIdOf(m){ return m.IDMurid || m['IDMurid '] || m['ID Murid'] || m.idMurid || m.id || ''; }
 function muridNama(m){ return String(val(m,['Nama Murid','Nama','nama'])).trim(); }
 function muridFoto(m){ return String(val(m,['Foto','foto','Photo','photo','Gambar'])||'').trim(); }
@@ -541,6 +570,50 @@ function val(obj, names){
 }
 function muridTing(m){ return String(val(m,['Tingkatan','Tingkat','Tingka'])).trim(); }
 function muridKelas(m){ return String(val(m,['Kelas'])).trim(); }
+
+// v7.6.1 — fallback Topik/SP dan Guru jika data lambat/tersekat.
+const FALLBACK_SEJARAH_TOPIK = {
+  '1': [
+    {IDTopik:'T1_B1_1', Tingkatan:'1', Topik:'1.1 Pengertian Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.1 Pengertian Sejarah'},
+    {IDTopik:'T1_B1_2', Tingkatan:'1', Topik:'1.2 Pengertian Sejarah Mengikut Pandangan Sejarawan', SK:'1.0 Mengenali Sejarah', SP:'1.2 Pandangan Sejarawan'},
+    {IDTopik:'T1_B1_3', Tingkatan:'1', Topik:'1.3 Masa Silam dan Ruang dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.3 Masa Silam dan Ruang'},
+    {IDTopik:'T1_B1_4', Tingkatan:'1', Topik:'1.4 Sumber Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.4 Sumber Sejarah'},
+    {IDTopik:'T1_B2_1', Tingkatan:'1', Topik:'2.1 Zaman Air Batu', SK:'2.0 Zaman Air Batu', SP:'2.1 Dunia Kita'},
+    {IDTopik:'T1_B3_1', Tingkatan:'1', Topik:'3.1 Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.1 Maksud Zaman Prasejarah'},
+    {IDTopik:'T1_B4_1', Tingkatan:'1', Topik:'4.1 Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.1 Maksud Tamadun'},
+    {IDTopik:'T1_B4_2', Tingkatan:'1', Topik:'4.2 Peningkatan Tamadun dan Sumbangannya', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.2 Peningkatan Tamadun'}
+  ],
+  '2': [
+    {IDTopik:'T2_B1_1', Tingkatan:'2', Topik:'1.1 Konsep Alam Melayu', SK:'1.0 Kerajaan Alam Melayu', SP:'1.1 Konsep Alam Melayu'},
+    {IDTopik:'T2_B1_2', Tingkatan:'2', Topik:'1.2 Kewujudan Kerajaan Alam Melayu', SK:'1.0 Kerajaan Alam Melayu', SP:'1.2 Kewujudan Kerajaan Alam Melayu'},
+    {IDTopik:'T2_B2_1', Tingkatan:'2', Topik:'2.1 Sistem Pemerintahan Kerajaan Alam Melayu', SK:'2.0 Sistem Pemerintahan dan Kegiatan Ekonomi', SP:'2.1 Sistem Pemerintahan'},
+    {IDTopik:'T2_B2_2', Tingkatan:'2', Topik:'2.2 Kegiatan Ekonomi Kerajaan Alam Melayu', SK:'2.0 Sistem Pemerintahan dan Kegiatan Ekonomi', SP:'2.2 Kegiatan Ekonomi'},
+    {IDTopik:'T2_B3_1', Tingkatan:'2', Topik:'3.1 Bahasa dan Tulisan', SK:'3.0 Sosiobudaya Masyarakat Kerajaan Alam Melayu', SP:'3.1 Bahasa dan Tulisan'},
+    {IDTopik:'T2_B3_2', Tingkatan:'2', Topik:'3.2 Persuratan dan Seni Bina', SK:'3.0 Sosiobudaya Masyarakat Kerajaan Alam Melayu', SP:'3.2 Persuratan dan Seni Bina'},
+    {IDTopik:'T2_B4_1', Tingkatan:'2', Topik:'4.1 Agama dan Kepercayaan', SK:'4.0 Agama, Kepercayaan dan Keunikan Warisan', SP:'4.1 Agama dan Kepercayaan'},
+    {IDTopik:'T2_B4_2', Tingkatan:'2', Topik:'4.2 Keunikan Warisan Masyarakat Kerajaan Alam Melayu', SK:'4.0 Agama, Kepercayaan dan Keunikan Warisan', SP:'4.2 Keunikan Warisan'},
+    {IDTopik:'T2_B5_1', Tingkatan:'2', Topik:'5.1 Pengasasan Kesultanan Melayu Melaka', SK:'5.0 Kesultanan Melayu Melaka', SP:'5.1 Pengasasan Kesultanan Melayu Melaka'},
+    {IDTopik:'T2_B5_2', Tingkatan:'2', Topik:'5.2 Kegemilangan Kesultanan Melayu Melaka', SK:'5.0 Kesultanan Melayu Melaka', SP:'5.2 Kegemilangan Melaka'},
+    {IDTopik:'T2_B5_3', Tingkatan:'2', Topik:'5.3 Kejatuhan Kesultanan Melayu Melaka', SK:'5.0 Kesultanan Melayu Melaka', SP:'5.3 Kejatuhan Melaka'},
+    {IDTopik:'T2_B6_1', Tingkatan:'2', Topik:'6.1 Pengasasan Kesultanan Johor Riau', SK:'6.0 Kesultanan Johor Riau', SP:'6.1 Pengasasan Kesultanan Johor Riau'},
+    {IDTopik:'T2_B6_2', Tingkatan:'2', Topik:'6.2 Cabaran ke Arah Kegemilangan', SK:'6.0 Kesultanan Johor Riau', SP:'6.2 Cabaran ke Arah Kegemilangan'}
+  ]
+};
+function fallbackTopikList(ting){
+  const fromData=(pbdData.topik||[])
+    .filter(t=>!ting || String(t.Tingkatan||t.tingkatan||'')===String(ting))
+    .filter(t=>String(t.Topik||t.topik||t.Tajuk||t.tajuk||'').trim());
+  if(fromData.length) return fromData;
+  return (FALLBACK_SEJARAH_TOPIK[String(ting)]||[]).slice();
+}
+function fallbackGuruList(){
+  const names=[
+    ...(Array.isArray(guruData)?guruData:[]).map(g=>cleanName(val(g,['Nama Guru','Nama','nama']))),
+    ...((pbdData.guru||[]).map(g=>cleanName(val(g,['Nama Guru','Nama','nama'])))),
+    'ZAMZILA BINTI MOHAMAT'
+  ].filter(Boolean);
+  return [...new Set(names)].sort();
+}
 const FALLBACK_SEJARAH_CLASSES = {
   '1':['ADIL','BESTARI','CENDEKIA','GIGIH','JUJUR','TEKUN','YAKIN','RASIONAL'],
   '2':['ADIL','CENDEKIA','DEDIKASI','EHSAN','GIGIH','PROGRESIF','RASIONAL','USAHA']
@@ -859,7 +932,7 @@ function openPbdStudentList(type='active',value=''){
       <div><p class="eyebrow">TINGKATAN ${esc(data.tingkatan)} ${esc(data.kelas)}</p><h2>${pbdListTitle(type,value)}</h2></div>
       <span class="count-pill">${students.length} murid</span>
     </div>
-    <div class="student-card-list">${students.map(s=>`
+    <div class="student-card-list">${students.map(s=> type==='weak' ? renderInterventionStudentCard(s) : `
       <button type="button" class="student-list-card" onclick="openPbdStudentProfile('${encodeURIComponent(studentKeyOf(s))}')">
         ${studentAvatarHtml(s,'list-avatar')}
         <span class="student-list-main">
@@ -872,6 +945,90 @@ function openPbdStudentList(type='active',value=''){
 
   if(!dialog.open) dialog.showModal();
 }
+
+
+function todayIso(){
+  return new Date().toISOString().slice(0,10);
+}
+
+function renderInterventionStudentCard(s){
+  const key=encodeURIComponent(studentKeyOf(s));
+  const examText=s.peratus!==''&&s.peratus!==undefined ? `${s.peratus}% • Gred ${s.gred||'-'}` : 'Belum ada markah';
+  const suggestion=pbdInterventionSuggestion ? pbdInterventionSuggestion(s.tp,s.peratus) : 'Latihan pengukuhan dan pemantauan semula.';
+  return `<article class="student-list-card intervention-card" data-student-key="${key}">
+    ${studentAvatarHtml(s,'list-avatar')}
+    <div class="student-list-main">
+      <strong>${esc(s.nama||'-')}</strong>
+      <small>TP${esc(s.tp||'-')} • ${esc(examText)} • ${esc(s.topik||'Topik tidak dinyatakan')}</small>
+      <div class="intervention-fields">
+        <label>Cadangan / Intervensi guru
+          <textarea class="intervention-text" rows="2" placeholder="Tulis intervensi sebenar untuk murid ini">${esc(s.intervensi||suggestion)}</textarea>
+        </label>
+        <label>Tarikh semakan
+          <input class="intervention-date" type="date" value="${todayIso()}">
+        </label>
+        <label>Catatan ringkas
+          <input class="intervention-note" type="text" placeholder="Contoh: Latihan ulangkaji Bab 4 / bimbingan individu">
+        </label>
+        <div class="intervention-actions">
+          <button type="button" onclick="event.stopPropagation();savePbdInterventionFromCard(this,'${key}')">💾 Simpan Intervensi</button>
+          <button type="button" onclick="event.stopPropagation();openPbdStudentProfile('${key}')">👁️ Profil</button>
+        </div>
+        <small class="intervention-state"></small>
+      </div>
+    </div>
+    <span class="student-list-score"><b>TP${esc(s.tp||'-')}</b>${examBadge(s)}</span>
+  </article>`;
+}
+
+async function savePbdInterventionFromCard(btn,encodedKey){
+  const card=btn.closest('.intervention-card');
+  const state=card?.querySelector('.intervention-state');
+  const s=findPbdStudent(encodedKey);
+  if(!card||!s){
+    if(state) state.textContent='Murid tidak dijumpai.';
+    return;
+  }
+
+  const payload={
+    action:'savePbdIntervention',
+    tingkatan:currentPbdSummaryData?.tingkatan||s.tingkatan||'',
+    kelas:currentPbdSummaryData?.kelas||s.kelas||'',
+    idMurid:s.id||'',
+    namaMurid:s.nama||'',
+    tp:s.tp||'',
+    topik:s.topik||'',
+    tarikhRekod:s.tarikh||'',
+    ujian:s.ujian||currentPbdSummaryData?.ujian||'UPSA',
+    peratus:s.peratus===''?'':s.peratus,
+    gred:s.gred||'',
+    intervensi:card.querySelector('.intervention-text')?.value||'',
+    tarikhSemakan:card.querySelector('.intervention-date')?.value||'',
+    catatanGuru:card.querySelector('.intervention-note')?.value||'',
+    guru:document.getElementById('pbdGuru')?.value || document.getElementById('hipGuru')?.value || ''
+  };
+
+  if(!payload.intervensi.trim()){
+    if(state) state.textContent='Tulis intervensi dahulu.';
+    return;
+  }
+
+  btn.disabled=true;
+  if(state) state.textContent='⏳ Menyimpan intervensi...';
+
+  try{
+    const res=await fetch(CONFIG.SHEET_API_URL,{method:'POST',body:JSON.stringify(payload)});
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Gagal simpan intervensi');
+    if(state) state.textContent='✅ Intervensi disimpan dalam Google Sheet.';
+  }catch(e){
+    if(state) state.textContent='❌ '+e.message;
+  }finally{
+    btn.disabled=false;
+  }
+}
+
+window.savePbdInterventionFromCard=savePbdInterventionFromCard;
 
 function findPbdStudent(key){
   const decoded=decodeURIComponent(String(key||''));
@@ -1709,7 +1866,31 @@ function closeHipVideo(){
   if(dialog?.open) dialog.close();
 }
 
+async function openPbdInterventionReport(){
+  const ting=document.getElementById('rumusTingkatan')?.value||'';
+  const kelas=document.getElementById('rumusKelas')?.value||'';
+  const ujian=document.getElementById('rumusUjian')?.value||'UPSA';
+  if(!ting||!kelas){ alert('Pilih Tingkatan dan Kelas dahulu.'); return; }
+  const win=window.open('','_blank');
+  if(!win){ alert('Popup disekat. Benarkan popup untuk portal ini.'); return; }
+  win.document.write('<p style="font-family:Arial;padding:30px">Memuat laporan intervensi...</p>');
+  const data = (currentPbdSummaryData && String(currentPbdSummaryData.tingkatan)===String(ting) && examClassNorm(currentPbdSummaryData.kelas)===examClassNorm(kelas))
+    ? currentPbdSummaryData
+    : await fetchClassSummary(ting,kelas,ujian);
+  win.document.open();
+  win.document.write(buildPbdInterventionPrintHtml(data));
+  win.document.close();
+}
+function buildPbdInterventionPrintHtml(data){
+  const students=(data.allList||data.weakList||[]).filter(s=>Number(s.tp)>0&&Number(s.tp)<=2);
+  const rows=students.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.nama)}</td><td>TP${esc(s.tp)}</td><td>${esc(s.topik||'-')}</td><td></td><td></td><td></td></tr>`).join('');
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Intervensi PBD</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial}table{border-collapse:collapse;width:100%;font-size:11px}td,th{border:1px solid #111;padding:8px;vertical-align:top}th{background:#eee}.space{height:45px}</style></head><body><button onclick="window.print()">Cetak</button><h2>LAPORAN INTERVENSI PBD SEJARAH TP1–TP2</h2><p>Kelas: Tingkatan ${esc(data.tingkatan)} ${esc(data.kelas)}</p><table><thead><tr><th>Bil</th><th>Nama Murid</th><th>TP</th><th>Topik</th><th>Cadangan Intervensi</th><th>Tindakan / Tarikh Semakan</th><th>Paraf</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+}
 
+
+
+window.openPbdInterventionReport=openPbdInterventionReport;
+window.openPbdPrintReport=openPbdPrintReport;
 // ================= ANALISIS PEPERIKSAAN + PBD v6.4 =================
 let examData={ ujian:['UPSA'], items:[], itemMap:[] };
 

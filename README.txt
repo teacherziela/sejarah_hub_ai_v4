@@ -1,22 +1,12 @@
-PATCH v7.5.2 — FILTER KEBAL / TAK KOSONG
+PATCH v7.6.1 — FIX TOPIK/SP DAN GURU DROPDOWN
 
-Pembaikan paling selamat:
-- Dropdown Tingkatan dan Kelas diletakkan terus dalam index.html.
-- script.js juga ada guard supaya dropdown tidak menjadi kosong walaupun data lambat load.
-- Tiada perubahan pada data Google Sheet.
-- Tiada perubahan Apps Script diperlukan.
+Fungsi:
+- Dropdown Topik / SP tidak kosong lagi.
+- Dropdown Guru tidak kosong lagi.
+- Jika data TOPIK lambat dibaca, sistem guna fallback topik Sejarah Tingkatan 1 dan 2.
+- Jika data GURU lambat dibaca, sistem tetap letak ZAMZILA BINTI MOHAMAT.
 
 CARA PASANG
-GITHUB SAHAJA:
-1. Ganti index.html
-2. Ganti script.js
-3. Ganti style.css
-4. Commit changes
-
-JANGAN usik Code.gs untuk patch ini.
-
-SELEPAS PASANG:
-1. Tunggu 1-2 minit.
-2. Buka portal.
-3. Tekan Ctrl + Shift + R dua kali.
-4. Pilih Tingkatan dan Kelas.
+GitHub: ganti index.html, script.js, style.css.
+Apps Script: Code.gs tidak wajib ganti jika sudah v7.6.
+Selepas commit, tekan Ctrl + Shift + R dua kali.

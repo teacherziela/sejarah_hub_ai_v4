@@ -1301,3 +1301,75 @@ input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:inve
 
 /* v7.5.2 filter kebal */
 select option{color:#111827;background:#ffffff}
+
+
+/* =========================================================
+   v7.6 — Intervensi terus dalam popup TP1–TP2
+   ========================================================= */
+.intervention-card{
+  align-items:start;
+  cursor:default;
+}
+.intervention-fields{
+  display:grid;
+  grid-template-columns:1fr 170px;
+  gap:10px;
+  margin-top:12px;
+  padding:12px;
+  border:1px solid rgba(251,146,60,.32);
+  border-radius:14px;
+  background:rgba(249,115,22,.08);
+}
+.intervention-fields label{
+  display:grid;
+  gap:5px;
+  color:#fdebd3;
+  font-size:11px;
+  font-weight:900;
+}
+.intervention-fields label:first-child{
+  grid-column:1/-1;
+}
+.intervention-fields textarea,
+.intervention-fields input{
+  width:100%;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(15,23,42,.45);
+  color:#fff;
+  padding:9px 10px;
+  font:inherit;
+  font-size:12px;
+}
+.intervention-fields textarea::placeholder,
+.intervention-fields input::placeholder{color:#a5b4fc}
+.intervention-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.intervention-actions button{
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:10px;
+  background:rgba(255,255,255,.09);
+  color:#fff;
+  padding:8px 10px;
+  font-weight:900;
+  cursor:pointer;
+}
+.intervention-actions button:first-child{
+  background:linear-gradient(135deg,rgba(34,197,94,.28),rgba(14,165,233,.18));
+  border-color:rgba(134,239,172,.35);
+}
+.intervention-state{
+  align-self:center;
+  color:#a5f3fc!important;
+  font-weight:800!important;
+}
+@media(max-width:760px){
+  .intervention-fields{grid-template-columns:1fr}
+  .intervention-actions{flex-direction:column;align-items:stretch}
+}
+
+/* v7.6.1 topik sp guru */
+#pbdTopik option,#pbdGuru option{color:#111827;background:#ffffff}
