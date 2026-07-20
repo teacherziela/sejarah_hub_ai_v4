@@ -1373,3 +1373,8 @@ select option{color:#111827;background:#ffffff}
 
 /* v7.6.1 topik sp guru */
 #pbdTopik option,#pbdGuru option{color:#111827;background:#ffffff}
+
+
+/* v7.6.2 paksa topik sp guru */
+#pbdTopik option,#pbdGuru option{color:#111827!important;background:#ffffff!important}
+#pbdTopik,#pbdGuru{min-width:240px}

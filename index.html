@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sejarah Hub AI | SMK Taman Jasmin 2</title>
-  <link rel="stylesheet" href="style.css?v=761" />
+  <link rel="stylesheet" href="style.css?v=762" />
 </head>
 <body class="portal-body">
   <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
@@ -126,13 +126,18 @@
           <select id="pbdKelas"><option value="">Pilih Kelas</option></select>
         </label>
         <label>Topik / SP
-          <select id="pbdTopik"><option value="">Pilih Topik</option></select>
+          <select id="pbdTopik">
+              <option value="">Pilih Topik / SP</option>
+            </select>
         </label>
         <label>Tarikh Pentaksiran
           <input id="pbdTarikh" type="date" />
         </label>
         <label>Ditafsir oleh
-          <select id="pbdGuru"><option value="">Pilih guru</option></select>
+          <select id="pbdGuru">
+              <option value="">Pilih guru</option>
+              <option value="ZAMZILA BINTI MOHAMAT">ZAMZILA BINTI MOHAMAT</option>
+            </select>
         </label>
         <button class="pill primary" id="pbdLoadBtn">Papar Murid</button>
       </div>
@@ -283,8 +288,8 @@
     <div id="studentExplorerBody"></div>
   </dialog>
 
-  <footer>Versi 7.6.1 Fix Topik SP Guru • Avatar automatik • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
+  <footer>Versi 7.6.2 Paksa Topik SP Guru • Avatar automatik • Data disambung ke Google Sheet • Sejarah Hub AI</footer>
   <script src="config.js"></script>
-  <script src="script.js?v=761"></script>
+  <script src="script.js?v=762"></script>
 </body>
 </html>

@@ -3040,3 +3040,88 @@ async function saveExamRecord(){
     btn.disabled=false;
   }
 }
+
+
+// =========================================================
+// v7.6.2 EMERGENCY FIX — PAKSA TOPIK/SP + GURU KELUAR
+// Tidak bergantung kepada Google Sheet loading. Jangan padam.
+// =========================================================
+(function(){
+  const TOPIK_PAKSA = {
+    '1': [
+      ['T1_B1_1','1.1 Pengertian Sejarah','1.0 Mengenali Sejarah','1.1 Pengertian Sejarah'],
+      ['T1_B1_2','1.2 Pengertian Sejarah Mengikut Pandangan Sejarawan','1.0 Mengenali Sejarah','1.2 Pandangan Sejarawan'],
+      ['T1_B1_3','1.3 Masa Silam dan Ruang dalam Sejarah','1.0 Mengenali Sejarah','1.3 Masa Silam dan Ruang'],
+      ['T1_B1_4','1.4 Sumber Sejarah','1.0 Mengenali Sejarah','1.4 Sumber Sejarah'],
+      ['T1_B2_1','2.1 Zaman Air Batu','2.0 Zaman Air Batu','2.1 Dunia Kita'],
+      ['T1_B2_2','2.2 Zaman Air Batu Akhir','2.0 Zaman Air Batu','2.2 Zaman Air Batu Akhir'],
+      ['T1_B3_1','3.1 Maksud Zaman Prasejarah','3.0 Zaman Prasejarah','3.1 Maksud Zaman Prasejarah'],
+      ['T1_B3_2','3.2 Lokasi Zaman Prasejarah','3.0 Zaman Prasejarah','3.2 Lokasi Zaman Prasejarah'],
+      ['T1_B3_3','3.3 Ciri-ciri Kehidupan Manusia Zaman Prasejarah','3.0 Zaman Prasejarah','3.3 Ciri-ciri Kehidupan'],
+      ['T1_B4_1','4.1 Maksud Tamadun','4.0 Tamadun Dunia dan Sumbangannya','4.1 Maksud Tamadun'],
+      ['T1_B4_2','4.2 Konsep Tamadun','4.0 Tamadun Dunia dan Sumbangannya','4.2 Konsep Tamadun'],
+      ['T1_B4_3','4.3 Tamadun Awal Dunia','4.0 Tamadun Dunia dan Sumbangannya','4.3 Tamadun Awal Dunia'],
+      ['T1_B5_1','5.1 Empat Lokasi Tamadun Awal Dunia','5.0 Tamadun Awal Dunia','5.1 Lokasi Tamadun Awal Dunia'],
+      ['T1_B5_2','5.2 Sumbangan Tamadun Awal Dunia','5.0 Tamadun Awal Dunia','5.2 Sumbangan Tamadun Awal Dunia'],
+      ['T1_B6_1','6.1 Tamadun Yunani','6.0 Peningkatan Tamadun Yunani dan Rom','6.1 Tamadun Yunani'],
+      ['T1_B6_2','6.2 Peningkatan Pemerintahan dan Pentadbiran Tamadun Yunani','6.0 Peningkatan Tamadun Yunani dan Rom','6.2 Peningkatan Tamadun Yunani']
+    ],
+    '2': [
+      ['T2_B1_1','1.1 Konsep Alam Melayu','1.0 Kerajaan Alam Melayu','1.1 Konsep Alam Melayu'],
+      ['T2_B1_2','1.2 Kewujudan Kerajaan Alam Melayu','1.0 Kerajaan Alam Melayu','1.2 Kewujudan Kerajaan Alam Melayu'],
+      ['T2_B2_1','2.1 Sistem Pemerintahan Kerajaan Alam Melayu','2.0 Sistem Pemerintahan dan Kegiatan Ekonomi','2.1 Sistem Pemerintahan'],
+      ['T2_B2_2','2.2 Kegiatan Ekonomi Kerajaan Alam Melayu','2.0 Sistem Pemerintahan dan Kegiatan Ekonomi','2.2 Kegiatan Ekonomi'],
+      ['T2_B3_1','3.1 Bahasa dan Tulisan','3.0 Sosiobudaya Masyarakat Kerajaan Alam Melayu','3.1 Bahasa dan Tulisan'],
+      ['T2_B3_2','3.2 Persuratan dan Seni Bina','3.0 Sosiobudaya Masyarakat Kerajaan Alam Melayu','3.2 Persuratan dan Seni Bina'],
+      ['T2_B4_1','4.1 Agama dan Kepercayaan','4.0 Agama, Kepercayaan dan Keunikan Warisan','4.1 Agama dan Kepercayaan'],
+      ['T2_B4_2','4.2 Keunikan Warisan Masyarakat Kerajaan Alam Melayu','4.0 Agama, Kepercayaan dan Keunikan Warisan','4.2 Keunikan Warisan'],
+      ['T2_B5_1','5.1 Pengasasan Kesultanan Melayu Melaka','5.0 Kesultanan Melayu Melaka','5.1 Pengasasan Kesultanan Melayu Melaka'],
+      ['T2_B5_2','5.2 Kegemilangan Kesultanan Melayu Melaka','5.0 Kesultanan Melayu Melaka','5.2 Kegemilangan Kesultanan Melayu Melaka'],
+      ['T2_B5_3','5.3 Kejatuhan Kesultanan Melayu Melaka','5.0 Kesultanan Melayu Melaka','5.3 Kejatuhan Kesultanan Melayu Melaka'],
+      ['T2_B6_1','6.1 Pengasasan Kesultanan Johor Riau','6.0 Kesultanan Johor Riau','6.1 Pengasasan Kesultanan Johor Riau'],
+      ['T2_B6_2','6.2 Cabaran ke Arah Kegemilangan Kesultanan Johor Riau','6.0 Kesultanan Johor Riau','6.2 Cabaran ke Arah Kegemilangan'],
+      ['T2_B6_3','6.3 Strategi Menghadapi Cabaran','6.0 Kesultanan Johor Riau','6.3 Strategi Menghadapi Cabaran']
+    ]
+  };
+  function h(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function tingValue(){
+    const raw = String(document.getElementById('pbdTingkatan')?.value || '').trim();
+    const m = raw.match(/[12]/);
+    return m ? m[0] : '';
+  }
+  function isiTopikPaksa(){
+    const sel=document.getElementById('pbdTopik');
+    if(!sel) return;
+    const ting=tingValue();
+    const rows=TOPIK_PAKSA[ting] || [];
+    const current=sel.value;
+    sel.innerHTML='<option value="">Pilih Topik / SP</option>'+rows.map(r=>{
+      const [id,topik,sk,sp]=r;
+      return `<option value="${h(id)}" data-topik="${h(topik)}" data-sk="${h(sk)}" data-sp="${h(sp)}">${h(topik)} • ${h(sp)}</option>`;
+    }).join('');
+    if(current && Array.from(sel.options).some(o=>o.value===current)) sel.value=current;
+  }
+  function isiGuruPaksa(){
+    const sel=document.getElementById('pbdGuru');
+    if(!sel) return;
+    const current=sel.value;
+    if(sel.options.length<=1 || !Array.from(sel.options).some(o=>o.value==='ZAMZILA BINTI MOHAMAT')){
+      sel.innerHTML='<option value="">Pilih guru</option><option value="ZAMZILA BINTI MOHAMAT">ZAMZILA BINTI MOHAMAT</option>';
+      sel.value=current || 'ZAMZILA BINTI MOHAMAT';
+    }
+  }
+  function paksaTopikGuru(){ isiTopikPaksa(); isiGuruPaksa(); }
+
+  try{ renderPbdTopik = isiTopikPaksa; }catch(e){ window.renderPbdTopik = isiTopikPaksa; }
+  try{ renderPbdGuruOptions = isiGuruPaksa; }catch(e){ window.renderPbdGuruOptions = isiGuruPaksa; }
+  window.paksaTopikGuru = paksaTopikGuru;
+
+  document.addEventListener('DOMContentLoaded', paksaTopikGuru);
+  window.addEventListener('load', paksaTopikGuru);
+  document.addEventListener('change', function(e){
+    if(e.target && (e.target.id==='pbdTingkatan' || e.target.id==='pbdKelas')){
+      setTimeout(paksaTopikGuru,0); setTimeout(paksaTopikGuru,150); setTimeout(paksaTopikGuru,500);
+    }
+  }, true);
+  for(let i=1;i<=16;i++) setTimeout(paksaTopikGuru,i*500);
+})();
