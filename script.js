@@ -175,20 +175,31 @@ function renderGuru(list){
 // v7.6.3 — senarai guru fallback. Data GURU sebenar tetap diutamakan jika berjaya dibaca.
 const FALLBACK_GURU_SEJARAH = [
   'ZAMZILA BINTI MOHAMAT',
-  'ZAMZILA MOHAMAT',
-  'CIKGU ZAMZILA',
-  'EN NASRAN',
-  'EN SAFERI',
-  'PN HARYATI',
-  'PN ROHAWATI',
-  'PN MASSITA'
+  'NUR FADILA BINTI ALWI',
+  'ROZILA BINTI MAT ALI',
+  'NUR IZWANIE NATASYA BINTI ABDUL RAHMAN',
+  'MASURIA BINTI MAT SEMAN',
+  'AZURA BINTI ABDUL WAHAB',
+  'HAFSAH BINTI MOHAMAD CHABAR',
+  'NORSYAHIRA BINTI AMRON'
 ];
+
+
+function cleanGuruSejarahName(name){
+  return cleanName(name)
+    .replace(/\bKPM\s*-\s*GURU\b/gi,'')
+    .replace(/\bKPM\s+GURU\b/gi,'')
+    .replace(/\bKPM-Guru\b/gi,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
 
 function uniqueCleanGuruList(list){
   const seen=new Set();
   const out=[];
   (list||[]).forEach(x=>{
-    const name=cleanName(typeof x==='string' ? x : val(x,['Nama Guru','Nama','nama','Guru','Ditafsir_Oleh','Ditafsir Oleh']));
+    const raw = typeof x==='string' ? x : val(x,['Nama Guru','Nama','nama','Guru']);
+    const name=cleanGuruSejarahName(raw);
     if(!name) return;
     const key=name.toUpperCase().replace(/\s+/g,' ');
     if(!seen.has(key)){
@@ -200,11 +211,19 @@ function uniqueCleanGuruList(list){
 }
 
 function getAllGuruOptions(){
+  // Dropdown Ditafsir Oleh mesti ikut tab GURU sahaja.
+  // Kalau data GURU lambat dimuatkan, guna fallback guru sejarah yang sah sahaja.
   const fromGuruData = uniqueCleanGuruList(Array.isArray(guruData)?guruData:[]);
   const fromPbdGuru = uniqueCleanGuruList((pbdData && Array.isArray(pbdData.guru)) ? pbdData.guru : []);
-  const fromRekod = uniqueCleanGuruList((pbdData && Array.isArray(pbdData.rekod)) ? pbdData.rekod.map(r=>val(r,['Ditafsir_Oleh','Ditafsir Oleh','Guru','Guru Penilai'])) : []);
-  const combined = uniqueCleanGuruList([...fromGuruData, ...fromPbdGuru, ...fromRekod, ...FALLBACK_GURU_SEJARAH]);
-  return combined.length ? combined : FALLBACK_GURU_SEJARAH.slice();
+  const strictList = uniqueCleanGuruList([...fromGuruData, ...fromPbdGuru]);
+
+  // Buang nama pentadbir / bukan guru sejarah yang pernah masuk fallback lama.
+  const blocked = new Set([
+    'EN NASRAN','EN SAFERI','PN HARYATI','PN MASSITA','PN ROHAWATI','CIKGU ZAMZILA','ZAMZILA MOHAMAT'
+  ]);
+
+  const cleaned = strictList.filter(n=>!blocked.has(n.toUpperCase()));
+  return cleaned.length ? cleaned : FALLBACK_GURU_SEJARAH.slice();
 }
 
 function rebuildGuruDropdownSafe(){
