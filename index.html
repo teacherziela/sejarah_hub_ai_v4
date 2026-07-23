@@ -1,13 +1,295 @@
-<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07152b"><title>3K SMART AI | Liga Adiwira Ceria</title><link rel="stylesheet" href="style.css?v=13"></head><body><main>
-<div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
-<header class="topbar"><a class="brand" href="#utama"><span class="crest logo"><img src="assets/logo-smktj2.jpg" alt="Logo SMK Taman Jasmin 2"></span><span><strong>3K SMART AI</strong><small>Eco Command Centre</small></span></a><nav><a href="#ranking">Ranking</a><a href="#menu">Modul</a><a href="#analisis">Analisis</a></nav><button class="admin" data-menu="Panel Pentadbir">🔐 Panel Pentadbir</button></header>
-<section class="hero" id="utama"><div class="hero-copy"><p class="eyebrow">SISTEM PINTAR KEBERSIHAN • KESIHATAN • KESELAMATAN</p><h1>3K SMART <span>AI</span></h1><h2>Liga Adiwira Ceria 2026</h2><p class="lead">Pantau kebersihan, nilai kelas dan raikan Adiwira 3K dalam satu pusat digital yang pantas dan mesra guru.</p><div class="actions"><label>Bulan<select id="month"><option>Julai</option><option>Februari</option><option>Mac</option></select></label><button class="refresh" id="refresh">↻ Segarkan Data</button></div></div><div class="hero-emblem" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="leaf">✦<b>3K</b><small>BERSIH • CERIA • SELAMAT</small></div></div></section>
-<section class="stats"><article class="stat-link" data-stat="classes" tabindex="0"><span>🏫</span><div><small>Kelas dinilai</small><strong id="classCount">0</strong><em>Klik untuk senarai</em></div></article><article class="stat-link" data-stat="champion" tabindex="0"><span>👑</span><div><small>Juara semasa</small><strong id="champion">-</strong><em>Klik untuk prestasi</em></div></article><article class="stat-link" data-stat="highest" tabindex="0"><span>📊</span><div><small>Purata tertinggi</small><strong id="topScore">0.00</strong><em>Klik untuk butiran</em></div></article><article class="stat-link" data-stat="review" tabindex="0"><span>⚠️</span><div><small>Perlu semakan</small><strong id="reviewCount">0</strong><em>Klik untuk intervensi</em></div></article></section>
-<section class="section podium-section" id="ranking"><div class="section-heading"><div><p class="eyebrow">HALL OF EXCELLENCE</p><h2>Podium Adiwira <span id="podiumMonth">Julai</span></h2></div><span class="live"><i></i> LANGSUNG</span></div><div class="month-tabs" id="monthTabs"></div><p class="tap-hint">Klik nama kelas untuk melihat prestasi merentas bulan.</p><div class="podium" id="podium"></div></section>
-<section class="section" id="menu"><div class="section-heading"><div><p class="eyebrow">PUSAT KAWALAN</p><h2>Semua urusan 3K, satu tempat.</h2></div><p class="active-label">Paparan: <b id="activeLabel">Utama</b></p></div><div class="menu-grid">
-<button class="menu-card" data-menu="Isi Penilaian"><span>📝</span><div><strong>Isi Penilaian</strong><small>Rekod markah kelas</small></div><i>↗</i></button><button class="menu-card" data-menu="Ranking 3K"><span>🏆</span><div><strong>Ranking 3K</strong><small>Kedudukan langsung</small></div><i>↗</i></button><button class="menu-card" data-menu="Analisis Pintar"><span>🤖</span><div><strong>Analisis Pintar</strong><small>Rumusan automatik</small></div><i>↗</i></button><button class="menu-card" data-menu="Hall of Fame"><span>🌟</span><div><strong>Hall of Fame</strong><small>Rekod para juara</small></div><i>↗</i></button><button class="menu-card" data-menu="Prestasi Kelas"><span>📈</span><div><strong>Prestasi Kelas</strong><small>Lihat perkembangan</small></div><i>↗</i></button><button class="menu-card" data-menu="Galeri Bukti"><span>🖼️</span><div><strong>Galeri Bukti</strong><small>Foto penilaian</small></div><i>↗</i></button><button class="menu-card" data-menu="Laporan & PDF"><span>📄</span><div><strong>Laporan & PDF</strong><small>Dokumentasi rasmi</small></div><i>↗</i></button><button class="menu-card" data-menu="Pengumuman"><span>📢</span><div><strong>Pengumuman</strong><small>Hebahan Unit 3K</small></div><i>↗</i></button></div></section>
-<section class="section intelligence" id="analisis"><article class="ai-card"><div class="ai-icon">AI</div><div><p class="eyebrow">SUARA AI 3K</p><h2>Rumusan pintar bulan <span id="aiMonth">Julai</span></h2><p id="summary"></p><button data-menu="Analisis Pintar">Lihat analisis penuh →</button></div></article><article class="ranking-card"><div class="ranking-title"><h3>Ranking teratas</h3><small id="recordCount">8 rekod terpilih</small></div><div id="rankingList"></div></article></section>
-<footer><b>3K SMART AI</b><span>SMK Taman Jasmin 2 • Liga Adiwira Ceria 2026</span><small>Versi GitHub Pages</small></footer>
-<div class="modal" id="moduleModal" aria-hidden="true"><div class="modal-panel"><button class="modal-close" id="modalClose" aria-label="Tutup">×</button><div id="modalContent"></div></div></div>
-<div class="toast" id="toast"></div>
-</main><script src="config.js?v=13"></script><script src="script.js?v=13"></script></body></html>
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sejarah Hub AI | SMK Taman Jasmin 2</title>
+  <link rel="stylesheet" href="style.css?v=764" />
+</head>
+<body class="portal-body">
+  <div class="bg-orb orb-a"></div><div class="bg-orb orb-b"></div>
+  <header class="hero">
+    <img src="logo-smktj2.jpg" class="logo" alt="Logo SMK Taman Jasmin 2" onerror="this.onerror=null;this.src='assets/logo-smktj2.jpg'" />
+    <div class="hero-text">
+      <p class="eyebrow">Smart History Management System</p>
+      <h1>SEJARAH HUB AI</h1>
+      <p class="subtitle">Panitia Sejarah SMK Taman Jasmin 2</p>
+      <div class="top-controls">
+        <label>Tahun Akademik
+          <select id="yearSelect"><option>2026</option><option>2027</option><option>2028</option><option>2029</option></select>
+        </label>
+        <button id="reloadBtn" class="pill">🔄 Refresh Data</button>
+        <a href="admin.html" class="pill primary">🔐 Panel Pentadbir</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="glass welcome">
+      <div>
+        <h2>Selamat datang, Cikgu</h2>
+        <p>Semua bahan Panitia Sejarah dalam satu pusat: PBD, markah peperiksaan, analisis item, DSKP, biodata guru, BBM digital, galeri dan pengumuman.</p>
+      </div>
+      <div class="stat-strip" id="statStrip"></div>
+    </section>
+
+    <section class="hex-grid" id="menuGrid"></section>
+
+    <section class="glass panel pbd-panel" id="pbdPanel">
+      <div class="section-head">
+        <h2>📊 PBD / Rumusan TP</h2>
+        <span class="note">Rumusan kelas: 1 murid = 1 TP tertinggi. Isi TP masih terus disimpan ke REKOD TP</span>
+      </div>
+
+      <div class="pbd-summary-block">
+        <div class="section-head compact-head">
+          <h2>📈 Rumusan TP Tertinggi Mengikut Kelas</h2>
+          <span class="note">Pilih kelas sahaja. Sistem ambil TP tertinggi setiap murid walaupun ada banyak rekod.</span>
+        </div>
+        <div class="pbd-controls summary-controls class-only-controls">
+          <label>Tingkatan
+            <select id="rumusTingkatan">
+              <option value="">Pilih Tingkatan</option>
+              <option value="1">Tingkatan 1</option>
+              <option value="2">Tingkatan 2</option>
+            </select>
+          </label>
+          <label>Kelas
+            <select id="rumusKelas">
+              <option value="">Pilih Kelas</option>
+              <option value="ADIL">ADIL</option>
+              <option value="BESTARI">BESTARI</option>
+              <option value="CENDEKIA">CENDEKIA</option>
+              <option value="DEDIKASI">DEDIKASI</option>
+              <option value="EHSAN">EHSAN</option>
+              <option value="GIGIH">GIGIH</option>
+              <option value="JUJUR">JUJUR</option>
+              <option value="PROGRESIF">PROGRESIF</option>
+              <option value="RASIONAL">RASIONAL</option>
+              <option value="TEKUN">TEKUN</option>
+              <option value="USAHA">USAHA</option>
+              <option value="YAKIN">YAKIN</option>
+            </select>
+          </label>
+          <label>Peperiksaan Fame
+            <select id="rumusUjian">
+              <option value="UPSA">UPSA</option>
+            </select>
+          </label>
+          <button class="pill primary" id="rumusRefreshBtn">Papar Rumusan Kelas</button>
+          <button class="pill print-report-btn" id="pbdPrintReportBtn" onclick="openPbdPrintReport()">🖨️ Cetak Laporan PBD</button>
+          <button class="pill intervention-report-btn" id="pbdInterventionReportBtn" onclick="openPbdInterventionReport()">🚨 Cetak Intervensi TP1–TP2</button>
+        </div>
+        <div id="pbdSummaryMeta" class="note pbd-status-box">Pilih tingkatan dan kelas untuk lihat rumusan.</div>
+        <div id="pbdSummaryCards" class="summary-cards"></div>
+        <div id="pbdTpChart" class="pbd-chart"></div>
+
+        <section class="fame-section" aria-labelledby="fameHeading">
+          <div class="section-head compact-head">
+            <div>
+              <h3 id="fameHeading">🌟 Fame of Sejarah</h3>
+              <p class="note fame-note">Murid dengan pencapaian PBD dan peperiksaan yang baik. Avatar dijana automatik — gambar sebenar tidak wajib.</p>
+            </div>
+            <span class="fame-rule">TP4–TP6 + Gred A/B</span>
+          </div>
+          <div id="pbdFameGrid" class="fame-grid">
+            <p class="note">Pilih kelas untuk melihat Fame of Sejarah.</p>
+          </div>
+        </section>
+
+        <div id="pbdGuruSummary" class="teacher-summary"></div>
+        <div class="pbd-list-grid">
+          <div class="pbd-list-card">
+            <h3>🚨 Murid Lemah / Perlu Bimbingan (TP1–TP2)</h3>
+            <div id="pbdWeakList" class="pbd-mini-table"><p class="note">Belum dipaparkan.</p></div>
+          </div>
+          <div class="pbd-list-card">
+            <h3>❌ Murid Tiada Rekod TP</h3>
+            <div id="pbdNoRecordList" class="pbd-mini-table"><p class="note">Belum dipaparkan.</p></div>
+          </div>
+        </div>
+        <div class="pbd-list-card full-list-card">
+          <h3>📋 Semakan TP Terkini Semua Murid</h3>
+          <div id="pbdAllTpList" class="pbd-mini-table"><p class="note">Belum dipaparkan.</p></div>
+        </div>
+      </div>
+
+      <div class="section-head compact-head isi-head">
+        <h2>📝 Isi PBD</h2>
+        <span class="note">Pilih tarikh pentaksiran melalui kalendar, kemudian pilih murid dan TP.</span>
+      </div>
+      <div class="pbd-controls">
+        <label>Tingkatan
+          <select id="pbdTingkatan"><option value="">Pilih Tingkatan</option></select>
+        </label>
+        <label>Kelas
+          <select id="pbdKelas"><option value="">Pilih Kelas</option></select>
+        </label>
+        <label>Topik / SP
+          <select id="pbdTopik">
+              <option value="">Pilih Topik / SP</option>
+            </select>
+        </label>
+        <label>Tarikh Pentaksiran
+          <input id="pbdTarikh" type="date" />
+        </label>
+        <label>Ditafsir oleh
+          <select id="pbdGuru">
+              <option value="">Pilih guru</option>
+              <option value="ZAMZILA BINTI MOHAMAT">ZAMZILA BINTI MOHAMAT</option>
+            </select>
+        </label>
+        <button class="pill primary" id="pbdLoadBtn">Papar Murid</button>
+      </div>
+      <div id="pbdStatus" class="note pbd-status-box"></div>
+      <div id="pbdProgress" class="pbd-progress"></div>
+      <div id="pbdStudents" class="pbd-students"></div>
+      <div class="pbd-actions">
+        <button class="pill primary" id="pbdSaveBtn" style="display:none">💾 Simpan TP ke Google Sheet</button>
+      </div>
+    </section>
+
+
+
+    <section class="glass panel exam-panel" id="examPanel">
+      <div class="section-head">
+        <h2>📊 Analisis Peperiksaan + PBD</h2>
+        <span class="note">Data markah dibaca daripada fail Analisis Item Sejarah 2026 dan dibandingkan dengan TP tertinggi murid.</span>
+      </div>
+
+      <div class="exam-controls">
+        <label>Tingkatan
+          <select id="examTingkatan"><option value="">Pilih Tingkatan</option></select>
+        </label>
+        <label>Kelas
+          <select id="examKelas"><option value="">Pilih Kelas</option></select>
+        </label>
+        <label>Ujian
+          <input id="examUjian" list="examUjianList" value="UPSA" placeholder="Contoh: UPSA" />
+          <datalist id="examUjianList"><option value="UPSA"></option></datalist>
+        </label>
+        <button class="pill primary" id="examAnalyseBtn">Papar Analisis</button>
+        <div id="examPrintActions" class="exam-print-actions">
+          <button type="button" class="pill exam-report-btn" id="examPrintOnlyBtn">🖨️ Cetak Analisis Peperiksaan</button>
+          <button type="button" class="pill exam-report-btn pbd-compare-btn" id="examPrintPbdBtn">📊 Cetak Peperiksaan vs PBD</button>
+        </div>
+      </div>
+
+      <div id="examStatus" class="note pbd-status-box">Pilih tingkatan, kelas dan ujian.</div>
+      <div id="examSummaryCards" class="summary-cards exam-summary-cards"></div>
+
+      <div class="exam-two-col">
+        <div class="pbd-list-card">
+          <h3>👩‍🎓 Perbandingan Markah Peperiksaan dan TP</h3>
+          <div id="examStudentTable" class="exam-table-wrap"><p class="note">Belum dipaparkan.</p></div>
+        </div>
+        <div class="pbd-list-card">
+          <h3>🎯 Topik Paling Lemah</h3>
+          <div id="examWeakTopics" class="exam-table-wrap"><p class="note">Belum dipaparkan.</p></div>
+        </div>
+      </div>
+
+      <div class="pbd-list-card full-list-card">
+        <h3>🧩 Analisis Mengikut Soalan dan Topik</h3>
+        <div id="examItemTable" class="exam-table-wrap"><p class="note">Belum dipaparkan.</p></div>
+      </div>
+
+      <details class="exam-details" open>
+        <summary>⌨️ Key In / Edit Markah Murid</summary>
+        <div class="exam-keyin-head">
+          <label>Murid
+            <select id="examStudent"><option value="">Pilih murid</option></select>
+          </label>
+          <label class="check-label">
+            <input id="examTH" type="checkbox" />
+            Tidak Hadir (TH)
+          </label>
+          <button type="button" class="pill" id="examLoadStudentBtn">Muat Markah</button>
+          <div id="examMarkPreview" class="mark-preview">Jumlah: 0/80 • 0% • Gred F</div>
+        </div>
+        <div id="examMarksGrid" class="exam-marks-grid"></div>
+        <div class="pbd-actions">
+          <button type="button" class="pill primary" id="examSaveBtn">💾 Simpan Markah ke Master Markah</button>
+        </div>
+        <div id="examSaveStatus" class="note pbd-status-box">Pilih murid untuk key in markah.</div>
+      </details>
+
+      <details class="exam-details">
+        <summary>🗺️ Pemetaan Soalan kepada Topik dan Aras</summary>
+        <p class="note">Seret kertas soalan ke kotak di bawah. Fail akan disimpan dalam Google Drive. Salin pautan dan hantar kepada Abah. Selepas Abah beri fail pemetaan, import fail itu di sini tanpa bayaran API.</p>
+
+        <div id="questionDropZone" class="question-drop-zone" tabindex="0" role="button" aria-label="Muat naik kertas soalan">
+          <input id="questionFileInput" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" hidden />
+          <div class="question-drop-icon">📄</div>
+          <div>
+            <b>Seret & lepaskan kertas soalan di sini</b>
+            <p>atau klik untuk pilih PDF, Word atau gambar • maksimum 8 MB</p>
+          </div>
+        </div>
+        <div class="question-upload-actions">
+          <button type="button" class="pill" id="questionChooseBtn">📎 Pilih Fail</button>
+          <button type="button" class="pill" id="questionOpenBtn" hidden>👁️ Buka Fail</button>
+          <button type="button" class="pill primary" id="questionCopyBtn" hidden>📋 Salin Pautan untuk Abah</button>
+          <button type="button" class="pill primary" id="mappingImportBtn">📥 Import Pemetaan Abah</button>
+          <button type="button" class="pill" id="mappingTemplateBtn">📄 Muat Turun Template</button>
+          <input id="mappingImportInput" type="file" accept=".csv,.json,text/csv,application/json" hidden />
+        </div>
+        <div id="questionUploadStatus" class="note pbd-status-box">Belum ada kertas soalan. Selepas Abah beri fail CSV/JSON, tekan Import Pemetaan Abah.</div>
+
+        <div id="examMapGrid" class="exam-map-grid"></div>
+        <div class="pbd-actions">
+          <button type="button" class="pill primary" id="examMapSaveBtn">💾 Simpan Pemetaan Item</button>
+        </div>
+        <div id="examMapStatus" class="note pbd-status-box">Pilih tingkatan dan ujian untuk pemetaan.</div>
+      </details>
+    </section>
+
+    <section class="grid-3">
+      <article class="glass panel">
+        <h2>📢 Pengumuman</h2>
+        <div id="pengumumanGrid" class="stack"></div>
+      </article>
+      <article class="glass panel">
+        <h2>🔗 Link Pantas</h2>
+        <div id="linkGrid" class="stack"></div>
+      </article>
+      <article class="glass panel">
+        <h2>📚 DSKP / Dokumen</h2>
+        <div id="dskpGrid" class="stack"></div>
+      </article>
+    </section>
+
+    <section class="glass panel" id="guruPanel">
+      <div class="section-head">
+        <h2>👥 Ahli Panitia</h2>
+        <input id="searchGuru" placeholder="Cari nama, jawatan, kelas..." />
+      </div>
+      <div id="guruGrid" class="guru-grid"></div>
+    </section>
+
+    <section class="glass panel">
+      <div class="section-head"><h2>🎮 BBM / AR / Game</h2><span class="note">Baca dari tab BBM</span></div>
+      <div id="bbmGrid" class="mini-grid"></div>
+    </section>
+
+    <section class="glass panel">
+      <div class="section-head"><h2>🖼️ Galeri Aktiviti</h2><span class="note">Baca dari tab GALERI</span></div>
+      <div id="galeriGrid" class="gallery-grid"></div>
+    </section>
+  </main>
+
+  <dialog id="profileDialog" class="profile-dialog">
+    <button class="close" onclick="closeProfile()">×</button>
+    <div id="profileBody"></div>
+  </dialog>
+
+  <dialog id="studentExplorerDialog" class="profile-dialog student-explorer-dialog">
+    <button class="close" onclick="closeStudentExplorer()">×</button>
+    <div id="studentExplorerBody"></div>
+  </dialog>
+
+  <footer>Versi 7.6.4 Guru Sejarah Sahaja</footer>
+  <script src="config.js"></script>
+  <script src="script.js?v=764"></script>
+</body>
+</html>
