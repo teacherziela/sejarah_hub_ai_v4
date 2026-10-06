@@ -646,31 +646,14 @@ function muridKelas(m){ return String(val(m,['Kelas'])).trim(); }
 // v7.6.1 — fallback Topik/SP dan Guru jika data lambat/tersekat.
 const FALLBACK_SEJARAH_TOPIK = {
   '1': [
-    {IDTopik:'T1_1_1', Tingkatan:'1', Topik:'1.1 Pengertian Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.1 Pengertian Sejarah'},
-    {IDTopik:'T1_1_2', Tingkatan:'1', Topik:'1.2 Pengertian Sejarah Mengikut Pandangan Sejarawan', SK:'1.0 Mengenali Sejarah', SP:'1.2 Pandangan Sejarawan'},
-    {IDTopik:'T1_1_3', Tingkatan:'1', Topik:'1.3 Masa Silam dan Ruang dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.3 Masa Silam dan Ruang'},
-    {IDTopik:'T1_1_4', Tingkatan:'1', Topik:'1.4 Sumber Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.4 Sumber Sejarah'},
-    {IDTopik:'T1_1_5', Tingkatan:'1', Topik:'1.5 Penyelidikan dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.5 Penyelidikan dalam Sejarah'},
-    {IDTopik:'T1_1_6', Tingkatan:'1', Topik:'1.6 Tafsiran dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.6 Tafsiran dalam Sejarah'},
-    {IDTopik:'T1_2_1', Tingkatan:'1', Topik:'2.1 Zaman Air Batu', SK:'2.0 Zaman Air Batu', SP:'2.1 Dunia Kita'},
-    {IDTopik:'T1_2_2', Tingkatan:'1', Topik:'2.2 Zaman Air Batu Akhir', SK:'2.0 Zaman Air Batu', SP:'2.2 Zaman Air Batu Akhir'},
-    {IDTopik:'T1_3_1', Tingkatan:'1', Topik:'3.1 Maksud Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.1 Maksud Zaman Prasejarah'},
-    {IDTopik:'T1_3_2', Tingkatan:'1', Topik:'3.2 Lokasi Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.2 Lokasi Zaman Prasejarah'},
-    {IDTopik:'T1_3_3', Tingkatan:'1', Topik:'3.3 Ciri-ciri Kehidupan Manusia Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.3 Ciri-ciri Kehidupan'},
-    {IDTopik:'T1_4_1', Tingkatan:'1', Topik:'4.1 Maksud Tamadun', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.1 Maksud Tamadun'},
-    {IDTopik:'T1_4_2', Tingkatan:'1', Topik:'4.2 Konsep Tamadun', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.2 Konsep Tamadun'},
-    {IDTopik:'T1_4_3', Tingkatan:'1', Topik:'4.3 Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.3 Tamadun Awal Dunia'},
-    {IDTopik:'T1_5_1', Tingkatan:'1', Topik:'5.1 Empat Lokasi Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'5.1 Lokasi Tamadun Awal Dunia'},
-    {IDTopik:'T1_5_2', Tingkatan:'1', Topik:'5.2 Sumbangan Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'5.2 Sumbangan Tamadun Awal Dunia'},
-    {IDTopik:'T1_6_1', Tingkatan:'1', Topik:'6.1 Tamadun Yunani', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'6.1 Tamadun Yunani'},
-    {IDTopik:'T1_6_2', Tingkatan:'1', Topik:'6.2 Peningkatan Pemerintahan dan Pentadbiran Tamadun Yunani', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'6.2 Peningkatan Tamadun Yunani'},
-    {IDTopik:'T1_7_1', Tingkatan:'1', Topik:'7.1 Tamadun India', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'7.1 Tamadun India'},
-    {IDTopik:'T1_7_2', Tingkatan:'1', Topik:'7.2 Tamadun China', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'7.2 Tamadun China'},
-    {IDTopik:'T1_8_1', Tingkatan:'1', Topik:'8.1 Latar Belakang Masyarakat Arab Sebelum Kedatangan Islam', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.1 Masyarakat Arab Jahiliah'},
-    {IDTopik:'T1_8_2', Tingkatan:'1', Topik:'8.2 Kemunculan dan Perkembangan Tamadun Islam', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.2 Tamadun Islam'},
-    {IDTopik:'T1_8_3', Tingkatan:'1', Topik:'8.3 Ketokohan Nabi Muhammad SAW sebagai Pemimpin', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.3 Ketokohan Nabi Muhammad SAW'},
-    {IDTopik:'T1_8_4', Tingkatan:'1', Topik:'8.4 Sumbangan Tamadun Islam kepada Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.4 Sumbangan Tamadun Islam'},
-    {IDTopik:'T1_8_5', Tingkatan:'1', Topik:'8.5 Sumbangan Tamadun Islam dalam Bidang Seni Bina', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.5 Seni Bina Islam'}
+    {IDTopik:'T1_B1_1', Tingkatan:'1', Topik:'1.1 Pengertian Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.1 Pengertian Sejarah'},
+    {IDTopik:'T1_B1_2', Tingkatan:'1', Topik:'1.2 Pengertian Sejarah Mengikut Pandangan Sejarawan', SK:'1.0 Mengenali Sejarah', SP:'1.2 Pandangan Sejarawan'},
+    {IDTopik:'T1_B1_3', Tingkatan:'1', Topik:'1.3 Masa Silam dan Ruang dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.3 Masa Silam dan Ruang'},
+    {IDTopik:'T1_B1_4', Tingkatan:'1', Topik:'1.4 Sumber Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.4 Sumber Sejarah'},
+    {IDTopik:'T1_B2_1', Tingkatan:'1', Topik:'2.1 Zaman Air Batu', SK:'2.0 Zaman Air Batu', SP:'2.1 Dunia Kita'},
+    {IDTopik:'T1_B3_1', Tingkatan:'1', Topik:'3.1 Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.1 Maksud Zaman Prasejarah'},
+    {IDTopik:'T1_B4_1', Tingkatan:'1', Topik:'4.1 Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.1 Maksud Tamadun'},
+    {IDTopik:'T1_B4_2', Tingkatan:'1', Topik:'4.2 Peningkatan Tamadun dan Sumbangannya', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.2 Peningkatan Tamadun'}
   ],
   '2': [
     {IDTopik:'T2_B1_1', Tingkatan:'2', Topik:'1.1 Konsep Alam Melayu', SK:'1.0 Kerajaan Alam Melayu', SP:'1.1 Konsep Alam Melayu'},
@@ -692,23 +675,9 @@ function fallbackTopikList(ting){
   const fromData=(pbdData.topik||[])
     .filter(t=>!ting || String(t.Tingkatan||t.tingkatan||'')===String(ting))
     .filter(t=>String(t.Topik||t.topik||t.Tajuk||t.tajuk||'').trim());
-
-  const fallback=(FALLBACK_SEJARAH_TOPIK[String(ting)]||[]).slice();
-  const merged=[];
-  const seen=new Set();
-
-  [...fromData,...fallback].forEach(t=>{
-    const topik=String(t.Topik||t.topik||t.Tajuk||t.tajuk||'').trim();
-    const sp=String(t.SP||t.sp||t['SP (Standard Pembelajaran)']||'').trim();
-    const key=examNorm(topik+' '+sp);
-    if(!topik || seen.has(key)) return;
-    seen.add(key);
-    merged.push(t);
-  });
-
-  return merged;
+  if(fromData.length) return fromData;
+  return (FALLBACK_SEJARAH_TOPIK[String(ting)]||[]).slice();
 }
-
 function fallbackGuruList(){
   const names=[
     ...(Array.isArray(guruData)?guruData:[]).map(g=>cleanName(val(g,['Nama Guru','Nama','nama']))),
@@ -3516,4 +3485,71 @@ async function saveExamRecord(){
     }
   }, true);
   for(let i=1;i<=16;i++) setTimeout(paksaTopikGuru,i*500);
+})();
+
+
+
+// =========================================================
+// v7.7.2 — PAKSA TOPIK TAMADUN ISLAM KELUAR UNTUK TINGKATAN 1
+// =========================================================
+const FORCE_TAMADUN_ISLAM_T1 = [
+  {id:'T1_4_3_ISLAM', label:'4.3 Tamadun Islam dan Sumbangannya • 4.3 Tamadun Islam dan Sumbangannya', topik:'4.3 Tamadun Islam dan Sumbangannya', sk:'4.0 Tamadun Dunia dan Sumbangannya', sp:'4.3 Tamadun Islam dan Sumbangannya'},
+  {id:'T1_4_3_1_ISLAM', label:'4.3.1 Latar Belakang Masyarakat Arab Sebelum Kedatangan Islam', topik:'4.3 Tamadun Islam dan Sumbangannya', sk:'4.0 Tamadun Dunia dan Sumbangannya', sp:'4.3.1 Latar belakang masyarakat Arab sebelum kedatangan Islam'},
+  {id:'T1_4_3_2_ISLAM', label:'4.3.2 Kemunculan dan Perkembangan Tamadun Islam', topik:'4.3 Tamadun Islam dan Sumbangannya', sk:'4.0 Tamadun Dunia dan Sumbangannya', sp:'4.3.2 Kemunculan dan perkembangan tamadun Islam'},
+  {id:'T1_4_3_3_ISLAM', label:'4.3.3 Ketokohan Nabi Muhammad SAW sebagai Pemimpin', topik:'4.3 Tamadun Islam dan Sumbangannya', sk:'4.0 Tamadun Dunia dan Sumbangannya', sp:'4.3.3 Ketokohan Nabi Muhammad SAW sebagai pemimpin'},
+  {id:'T1_4_3_4_ISLAM', label:'4.3.4 Sumbangan Tamadun Islam kepada Dunia', topik:'4.3 Tamadun Islam dan Sumbangannya', sk:'4.0 Tamadun Dunia dan Sumbangannya', sp:'4.3.4 Sumbangan tamadun Islam dalam pelbagai bidang'},
+  {id:'T1_4_3_5_ISLAM', label:'4.3.5 Sumbangan Tamadun Islam dalam Seni Bina', topik:'4.3 Tamadun Islam dan Sumbangannya', sk:'4.0 Tamadun Dunia dan Sumbangannya', sp:'4.3.5 Sumbangan tamadun Islam dalam seni bina'}
+];
+
+function ensureTamadunIslamT1Options(){
+  const ting = String(document.getElementById('pbdTingkatan')?.value || '');
+  const sel = document.getElementById('pbdTopik');
+  if(!sel || ting !== '1') return;
+  const optionTexts = [...sel.options].map(o => (o.textContent || '').toLowerCase());
+  const hasIslam = optionTexts.some(t => t.includes('tamadun islam') || t.includes('nabi muhammad'));
+  if(hasIslam) return;
+  const placeholder = sel.options[0] || null;
+  const insertBefore = sel.options[1] || null;
+  FORCE_TAMADUN_ISLAM_T1.slice().reverse().forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.id;
+    opt.textContent = item.label;
+    opt.dataset.topik = item.topik;
+    opt.dataset.sk = item.sk;
+    opt.dataset.sp = item.sp;
+    if(insertBefore) sel.insertBefore(opt, insertBefore);
+    else if(placeholder && placeholder.nextSibling) sel.insertBefore(opt, placeholder.nextSibling);
+    else sel.appendChild(opt);
+  });
+}
+
+(function patchTamadunIslamDropdown(){
+  function patchRender(){
+    const oldRender = window.renderPbdTopik;
+    if(typeof oldRender === 'function' && !oldRender.__patchedIslam){
+      const patched = function(){
+        const result = oldRender.apply(this, arguments);
+        setTimeout(ensureTamadunIslamT1Options, 0);
+        setTimeout(ensureTamadunIslamT1Options, 200);
+        setTimeout(ensureTamadunIslamT1Options, 700);
+        return result;
+      };
+      patched.__patchedIslam = true;
+      window.renderPbdTopik = patched;
+    }
+  }
+  patchRender();
+  document.addEventListener('change', function(e){
+    if(e.target && (e.target.id === 'pbdTingkatan' || e.target.id === 'pbdKelas' || e.target.id === 'pbdTopik')){
+      setTimeout(patchRender, 0);
+      setTimeout(ensureTamadunIslamT1Options, 0);
+      setTimeout(ensureTamadunIslamT1Options, 250);
+      setTimeout(ensureTamadunIslamT1Options, 800);
+    }
+  }, true);
+  document.addEventListener('DOMContentLoaded', function(){
+    for(let i=1;i<=18;i++) setTimeout(function(){ patchRender(); ensureTamadunIslamT1Options(); }, i*350);
+  });
+  for(let i=1;i<=18;i++) setTimeout(function(){ patchRender(); ensureTamadunIslamT1Options(); }, i*350);
+  window.ensureTamadunIslamT1Options = ensureTamadunIslamT1Options;
 })();

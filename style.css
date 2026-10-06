@@ -1514,3 +1514,6 @@ select option{color:#111827;background:#ffffff}
   .student-photo-grid{grid-template-columns:1fr}
   .photo-privacy-badge{white-space:normal}
 }
+
+/* v7.7.2 paksa tamadun islam */
+#pbdTopik option{color:#111827;background:#ffffff}
