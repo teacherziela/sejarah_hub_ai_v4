@@ -1381,3 +1381,136 @@ select option{color:#111827;background:#ffffff}
 
 /* v7.6.3 guru option */
 #pbdGuru option{color:#111827;background:#fff}
+
+
+/* =========================================================
+   v7.7 — Update Foto Profil Murid
+   ========================================================= */
+.student-photo-panel{
+  background:
+    radial-gradient(circle at 10% 10%,rgba(244,114,182,.14),transparent 28%),
+    radial-gradient(circle at 90% 4%,rgba(56,189,248,.14),transparent 30%),
+    linear-gradient(145deg,rgba(55,30,105,.96),rgba(15,72,112,.94));
+}
+.photo-section-head{align-items:flex-start}
+.photo-section-head h2{font-size:30px;margin:3px 0 5px}
+.photo-privacy-badge{
+  padding:9px 14px;
+  border-radius:999px;
+  color:#fbcfe8;
+  border:1px solid rgba(244,114,182,.4);
+  background:rgba(244,114,182,.1);
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
+}
+.student-photo-controls{
+  grid-template-columns:repeat(4,minmax(160px,1fr)) auto;
+  align-items:end;
+}
+.student-photo-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:15px;
+  margin-top:17px;
+}
+.photo-student-card{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  min-width:0;
+  padding:15px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.14);
+  background:linear-gradient(165deg,rgba(24,34,78,.96),rgba(18,29,58,.96));
+  box-shadow:0 14px 28px rgba(0,0,0,.17);
+}
+.photo-student-avatar{grid-row:1/4}
+.student-avatar.photo-profile-avatar{
+  width:76px;
+  height:76px;
+  font-size:20px;
+  border-width:3px;
+}
+.photo-student-info h3{
+  margin:2px 0 5px;
+  line-height:1.25;
+  font-size:15px;
+}
+.photo-student-info p{
+  margin:0 0 7px;
+  color:#dbeafe;
+  font-size:11px;
+}
+.photo-status-pill{
+  display:inline-flex;
+  width:max-content;
+  padding:6px 8px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:950;
+}
+.photo-status-pill.has-photo{
+  color:#dcfce7;
+  background:rgba(34,197,94,.16);
+  border:1px solid rgba(134,239,172,.3);
+}
+.photo-status-pill.missing-photo{
+  color:#fed7aa;
+  background:rgba(249,115,22,.13);
+  border:1px solid rgba(251,146,60,.3);
+}
+.student-face-camera-btn{
+  grid-column:2;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-height:43px;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid rgba(125,211,252,.42);
+  background:linear-gradient(135deg,rgba(59,130,246,.25),rgba(236,72,153,.14));
+  color:#eff6ff;
+  cursor:pointer;
+  font-size:12px;
+  transition:.18s ease;
+}
+.student-face-camera-btn:hover{
+  transform:translateY(-2px);
+  border-color:rgba(125,211,252,.75);
+}
+.student-face-camera-btn input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
+.student-face-state{
+  grid-column:2;
+  color:#a5f3fc;
+  font-size:10px;
+  line-height:1.35;
+}
+.pbd-row .pbd-face-mini{
+  display:grid;
+  place-items:center;
+}
+.student-avatar.pbd-mini-avatar{
+  width:46px;
+  height:46px;
+  font-size:13px;
+  border-width:2px;
+}
+@media(max-width:1100px){
+  .student-photo-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .student-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+  .student-photo-controls{grid-template-columns:1fr}
+  .student-photo-grid{grid-template-columns:1fr}
+  .photo-privacy-badge{white-space:normal}
+}

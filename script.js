@@ -123,6 +123,7 @@ async function init(){
 
   await loadYear();
   await initPbd();
+  initStudentPhotoPanel();
   initPbdEvidenceGallery();
   initHipActivityGallery();
   await initExam();
@@ -140,6 +141,7 @@ function renderStats(year){
 function renderMenu(year){
   const fixed=[
     {icon:'📊',title:'PBD / Rumusan',target:'pbdPanel'},
+    {icon:'📸',title:'Foto Murid',target:'studentPhotoPanel'},
     {icon:'🖼️',title:'Hasil Murid',target:'pbdEvidenceGalleryPanel'},
     {icon:'🎬',title:'Aktiviti HIP',target:'hipActivityPanel'},
     {icon:'🧩',title:'Analisis Peperiksaan',target:'examPanel'},
@@ -384,6 +386,7 @@ function loadPbdStudents(){
       data-name="${esc(nama)}"
       data-current-tp="${esc(current)}"
       data-evidence="">
+      <div class="pbd-face-mini">${studentAvatarHtml({nama:nama,foto:muridFoto(m)},'pbd-mini-avatar')}</div>
       <div class="pbd-name">
         <b>${i+1}. ${esc(nama)}</b>
         <span>${esc(ting+' '+kelas)} • ID: ${esc(muridId||'-')}</span>
@@ -643,14 +646,31 @@ function muridKelas(m){ return String(val(m,['Kelas'])).trim(); }
 // v7.6.1 — fallback Topik/SP dan Guru jika data lambat/tersekat.
 const FALLBACK_SEJARAH_TOPIK = {
   '1': [
-    {IDTopik:'T1_B1_1', Tingkatan:'1', Topik:'1.1 Pengertian Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.1 Pengertian Sejarah'},
-    {IDTopik:'T1_B1_2', Tingkatan:'1', Topik:'1.2 Pengertian Sejarah Mengikut Pandangan Sejarawan', SK:'1.0 Mengenali Sejarah', SP:'1.2 Pandangan Sejarawan'},
-    {IDTopik:'T1_B1_3', Tingkatan:'1', Topik:'1.3 Masa Silam dan Ruang dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.3 Masa Silam dan Ruang'},
-    {IDTopik:'T1_B1_4', Tingkatan:'1', Topik:'1.4 Sumber Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.4 Sumber Sejarah'},
-    {IDTopik:'T1_B2_1', Tingkatan:'1', Topik:'2.1 Zaman Air Batu', SK:'2.0 Zaman Air Batu', SP:'2.1 Dunia Kita'},
-    {IDTopik:'T1_B3_1', Tingkatan:'1', Topik:'3.1 Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.1 Maksud Zaman Prasejarah'},
-    {IDTopik:'T1_B4_1', Tingkatan:'1', Topik:'4.1 Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.1 Maksud Tamadun'},
-    {IDTopik:'T1_B4_2', Tingkatan:'1', Topik:'4.2 Peningkatan Tamadun dan Sumbangannya', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.2 Peningkatan Tamadun'}
+    {IDTopik:'T1_1_1', Tingkatan:'1', Topik:'1.1 Pengertian Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.1 Pengertian Sejarah'},
+    {IDTopik:'T1_1_2', Tingkatan:'1', Topik:'1.2 Pengertian Sejarah Mengikut Pandangan Sejarawan', SK:'1.0 Mengenali Sejarah', SP:'1.2 Pandangan Sejarawan'},
+    {IDTopik:'T1_1_3', Tingkatan:'1', Topik:'1.3 Masa Silam dan Ruang dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.3 Masa Silam dan Ruang'},
+    {IDTopik:'T1_1_4', Tingkatan:'1', Topik:'1.4 Sumber Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.4 Sumber Sejarah'},
+    {IDTopik:'T1_1_5', Tingkatan:'1', Topik:'1.5 Penyelidikan dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.5 Penyelidikan dalam Sejarah'},
+    {IDTopik:'T1_1_6', Tingkatan:'1', Topik:'1.6 Tafsiran dalam Sejarah', SK:'1.0 Mengenali Sejarah', SP:'1.6 Tafsiran dalam Sejarah'},
+    {IDTopik:'T1_2_1', Tingkatan:'1', Topik:'2.1 Zaman Air Batu', SK:'2.0 Zaman Air Batu', SP:'2.1 Dunia Kita'},
+    {IDTopik:'T1_2_2', Tingkatan:'1', Topik:'2.2 Zaman Air Batu Akhir', SK:'2.0 Zaman Air Batu', SP:'2.2 Zaman Air Batu Akhir'},
+    {IDTopik:'T1_3_1', Tingkatan:'1', Topik:'3.1 Maksud Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.1 Maksud Zaman Prasejarah'},
+    {IDTopik:'T1_3_2', Tingkatan:'1', Topik:'3.2 Lokasi Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.2 Lokasi Zaman Prasejarah'},
+    {IDTopik:'T1_3_3', Tingkatan:'1', Topik:'3.3 Ciri-ciri Kehidupan Manusia Zaman Prasejarah', SK:'3.0 Zaman Prasejarah', SP:'3.3 Ciri-ciri Kehidupan'},
+    {IDTopik:'T1_4_1', Tingkatan:'1', Topik:'4.1 Maksud Tamadun', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.1 Maksud Tamadun'},
+    {IDTopik:'T1_4_2', Tingkatan:'1', Topik:'4.2 Konsep Tamadun', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.2 Konsep Tamadun'},
+    {IDTopik:'T1_4_3', Tingkatan:'1', Topik:'4.3 Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'4.3 Tamadun Awal Dunia'},
+    {IDTopik:'T1_5_1', Tingkatan:'1', Topik:'5.1 Empat Lokasi Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'5.1 Lokasi Tamadun Awal Dunia'},
+    {IDTopik:'T1_5_2', Tingkatan:'1', Topik:'5.2 Sumbangan Tamadun Awal Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'5.2 Sumbangan Tamadun Awal Dunia'},
+    {IDTopik:'T1_6_1', Tingkatan:'1', Topik:'6.1 Tamadun Yunani', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'6.1 Tamadun Yunani'},
+    {IDTopik:'T1_6_2', Tingkatan:'1', Topik:'6.2 Peningkatan Pemerintahan dan Pentadbiran Tamadun Yunani', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'6.2 Peningkatan Tamadun Yunani'},
+    {IDTopik:'T1_7_1', Tingkatan:'1', Topik:'7.1 Tamadun India', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'7.1 Tamadun India'},
+    {IDTopik:'T1_7_2', Tingkatan:'1', Topik:'7.2 Tamadun China', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'7.2 Tamadun China'},
+    {IDTopik:'T1_8_1', Tingkatan:'1', Topik:'8.1 Latar Belakang Masyarakat Arab Sebelum Kedatangan Islam', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.1 Masyarakat Arab Jahiliah'},
+    {IDTopik:'T1_8_2', Tingkatan:'1', Topik:'8.2 Kemunculan dan Perkembangan Tamadun Islam', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.2 Tamadun Islam'},
+    {IDTopik:'T1_8_3', Tingkatan:'1', Topik:'8.3 Ketokohan Nabi Muhammad SAW sebagai Pemimpin', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.3 Ketokohan Nabi Muhammad SAW'},
+    {IDTopik:'T1_8_4', Tingkatan:'1', Topik:'8.4 Sumbangan Tamadun Islam kepada Dunia', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.4 Sumbangan Tamadun Islam'},
+    {IDTopik:'T1_8_5', Tingkatan:'1', Topik:'8.5 Sumbangan Tamadun Islam dalam Bidang Seni Bina', SK:'4.0 Tamadun Dunia dan Sumbangannya', SP:'8.5 Seni Bina Islam'}
   ],
   '2': [
     {IDTopik:'T2_B1_1', Tingkatan:'2', Topik:'1.1 Konsep Alam Melayu', SK:'1.0 Kerajaan Alam Melayu', SP:'1.1 Konsep Alam Melayu'},
@@ -672,9 +692,23 @@ function fallbackTopikList(ting){
   const fromData=(pbdData.topik||[])
     .filter(t=>!ting || String(t.Tingkatan||t.tingkatan||'')===String(ting))
     .filter(t=>String(t.Topik||t.topik||t.Tajuk||t.tajuk||'').trim());
-  if(fromData.length) return fromData;
-  return (FALLBACK_SEJARAH_TOPIK[String(ting)]||[]).slice();
+
+  const fallback=(FALLBACK_SEJARAH_TOPIK[String(ting)]||[]).slice();
+  const merged=[];
+  const seen=new Set();
+
+  [...fromData,...fallback].forEach(t=>{
+    const topik=String(t.Topik||t.topik||t.Tajuk||t.tajuk||'').trim();
+    const sp=String(t.SP||t.sp||t['SP (Standard Pembelajaran)']||'').trim();
+    const key=examNorm(topik+' '+sp);
+    if(!topik || seen.has(key)) return;
+    seen.add(key);
+    merged.push(t);
+  });
+
+  return merged;
 }
+
 function fallbackGuruList(){
   const names=[
     ...(Array.isArray(guruData)?guruData:[]).map(g=>cleanName(val(g,['Nama Guru','Nama','nama']))),
@@ -1366,6 +1400,295 @@ function buildPbdPrintHtml(data){
   </body>
   </html>`;
 }
+
+// ================= UPDATE FOTO PROFIL MURID v7.7 =================
+function initStudentPhotoPanel(){
+  if(document.getElementById('studentPhotoPanel')) return;
+
+  const anchor=document.getElementById('pbdPanel') || document.querySelector('.panel');
+  if(!anchor) return;
+
+  const section=document.createElement('section');
+  section.id='studentPhotoPanel';
+  section.className='panel student-photo-panel';
+  section.innerHTML=`
+    <div class="section-head photo-section-head">
+      <div>
+        <p class="eyebrow">FOTO PROFIL MURID</p>
+        <h2>📸 Update Foto Murid</h2>
+        <p class="note">Ambil gambar muka murid untuk mudahkan guru kenal murid semasa isi PBD. Gambar disimpan dalam tab MURID, kolum Foto.</p>
+      </div>
+      <span class="photo-privacy-badge">Foto profil, bukan bukti kerja</span>
+    </div>
+
+    <div class="controls student-photo-controls">
+      <label>Tingkatan
+        <select id="photoTingkatan"><option value="">Pilih Tingkatan</option></select>
+      </label>
+      <label>Kelas
+        <select id="photoKelas"><option value="">Pilih Kelas</option></select>
+      </label>
+      <label>Cari Nama
+        <input id="photoSearch" type="search" placeholder="Taip nama murid...">
+      </label>
+      <label>Status Foto
+        <select id="photoFilter">
+          <option value="all">Semua murid</option>
+          <option value="missing">Belum ada foto</option>
+          <option value="has">Sudah ada foto</option>
+        </select>
+      </label>
+      <button type="button" class="pill primary" id="photoRefreshBtn">Papar Murid</button>
+    </div>
+
+    <div id="studentPhotoStatus" class="note pbd-status-box">Pilih tingkatan dan kelas untuk kemas kini foto murid.</div>
+    <div id="studentPhotoGrid" class="student-photo-grid">
+      <div class="gallery-empty-state">
+        <span>📸</span>
+        <b>Mode foto murid sedia digunakan</b>
+        <p>Pilih kelas, kemudian tekan Ambil / Tukar Foto pada kad murid.</p>
+      </div>
+    </div>`;
+
+  anchor.insertAdjacentElement('afterend',section);
+
+  fillPhotoTingkatan();
+  document.getElementById('photoTingkatan')?.addEventListener('change',()=>{fillPhotoKelas(); renderStudentPhotoGrid();});
+  document.getElementById('photoKelas')?.addEventListener('change',renderStudentPhotoGrid);
+  document.getElementById('photoSearch')?.addEventListener('input',renderStudentPhotoGrid);
+  document.getElementById('photoFilter')?.addEventListener('change',renderStudentPhotoGrid);
+  document.getElementById('photoRefreshBtn')?.addEventListener('click',renderStudentPhotoGrid);
+
+  const pbdTing=document.getElementById('pbdTingkatan')?.value||document.getElementById('rumusTingkatan')?.value||'';
+  const pbdKelas=document.getElementById('pbdKelas')?.value||document.getElementById('rumusKelas')?.value||'';
+  if(pbdTing){
+    document.getElementById('photoTingkatan').value=pbdTing;
+    fillPhotoKelas();
+    if(pbdKelas) document.getElementById('photoKelas').value=pbdKelas;
+    renderStudentPhotoGrid();
+  }
+}
+
+function fillPhotoTingkatan(){
+  const sel=document.getElementById('photoTingkatan');
+  if(!sel) return;
+  const tings = (typeof fallbackTingkatanList==='function'
+    ? fallbackTingkatanList()
+    : [...new Set((pbdData.murid||[]).map(m=>muridTing(m)).filter(Boolean))])
+    .sort((a,b)=>Number(a)-Number(b));
+  const current=sel.value;
+  sel.innerHTML='<option value="">Pilih Tingkatan</option>'+tings.map(t=>`<option value="${esc(t)}">Tingkatan ${esc(t)}</option>`).join('');
+  if(tings.includes(current)) sel.value=current;
+  else if(tings.length && !sel.value) sel.value=tings[0];
+  fillPhotoKelas();
+}
+
+function fillPhotoKelas(){
+  const ting=document.getElementById('photoTingkatan')?.value||'';
+  const sel=document.getElementById('photoKelas');
+  if(!sel) return;
+  const classes = typeof fallbackClassList==='function'
+    ? fallbackClassList(ting)
+    : [...new Set((pbdData.murid||[]).filter(m=>String(muridTing(m))===String(ting)).map(m=>muridKelas(m)).filter(Boolean))].sort();
+  const current=sel.value;
+  sel.innerHTML='<option value="">Pilih Kelas</option>'+classes.map(k=>`<option value="${esc(k)}">${esc(ting?`Tingkatan ${ting} ${k}`:k)}</option>`).join('');
+  if(classes.includes(current)) sel.value=current;
+  else if(classes.length && !sel.value) sel.value=classes[0];
+}
+
+function photoStudentList(){
+  const ting=document.getElementById('photoTingkatan')?.value||'';
+  const kelas=document.getElementById('photoKelas')?.value||'';
+  const q=examNorm(document.getElementById('photoSearch')?.value||'');
+  const filter=document.getElementById('photoFilter')?.value||'all';
+
+  return (pbdData.murid||[])
+    .filter(m=>muridStatus(m)!=='PINDAH')
+    .filter(m=>!ting || String(muridTing(m))===String(ting))
+    .filter(m=>!kelas || examClassNorm(muridKelas(m))===examClassNorm(kelas))
+    .filter(m=>!q || examNorm(muridNama(m)).includes(q))
+    .filter(m=>{
+      const has=Boolean(muridFoto(m));
+      if(filter==='has') return has;
+      if(filter==='missing') return !has;
+      return true;
+    })
+    .sort((a,b)=>muridNama(a).localeCompare(muridNama(b)));
+}
+
+function renderStudentPhotoGrid(){
+  const grid=document.getElementById('studentPhotoGrid');
+  const status=document.getElementById('studentPhotoStatus');
+  if(!grid||!status) return;
+
+  const ting=document.getElementById('photoTingkatan')?.value||'';
+  const kelas=document.getElementById('photoKelas')?.value||'';
+
+  if(!ting||!kelas){
+    status.textContent='Pilih Tingkatan dan Kelas dahulu.';
+    grid.innerHTML=`<div class="gallery-empty-state"><span>📸</span><b>Pilih kelas dahulu</b><p>Senarai murid akan muncul selepas kelas dipilih.</p></div>`;
+    return;
+  }
+
+  const rows=photoStudentList();
+  const hasCount=rows.filter(m=>muridFoto(m)).length;
+  status.innerHTML=`✅ <b>${rows.length}</b> murid dipaparkan • <b>${hasCount}</b> sudah ada foto • <b>${rows.length-hasCount}</b> belum ada foto.`;
+
+  if(!rows.length){
+    grid.innerHTML=`<div class="gallery-empty-state"><span>🔎</span><b>Tiada murid dijumpai</b><p>Cuba kosongkan carian nama atau tukar filter.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML=rows.map((m,i)=>renderStudentPhotoCard(m,i)).join('');
+}
+
+function renderStudentPhotoCard(m,i){
+  const id=String(muridIdOf(m)||'').trim();
+  const nama=muridNama(m);
+  const foto=muridFoto(m);
+  const ting=muridTing(m);
+  const kelas=muridKelas(m);
+  const safeKey=encodeURIComponent(id || `${ting}|${kelas}|${nama}`);
+  return `<article class="photo-student-card" data-id="${esc(id)}" data-name="${esc(nama)}" data-ting="${esc(ting)}" data-kelas="${esc(kelas)}">
+    <div class="photo-student-avatar">
+      ${studentAvatarHtml({nama:nama,foto:foto},'photo-profile-avatar')}
+    </div>
+    <div class="photo-student-info">
+      <p class="work-number">MURID #${i+1}</p>
+      <h3>${esc(nama)}</h3>
+      <p>${esc(ting?`Tingkatan ${ting} `:'')}${esc(kelas||'')} • ID: ${esc(id||'-')}</p>
+      <span class="photo-status-pill ${foto?'has-photo':'missing-photo'}">${foto?'✅ Foto sudah ada':'⚠️ Belum ada foto'}</span>
+    </div>
+    <label class="student-face-camera-btn">
+      <span>📷</span>
+      <b>${foto?'Tukar Foto':'Ambil Foto'}</b>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/*" capture="user" onchange="handleStudentFacePhoto(this,'${safeKey}')">
+    </label>
+    <small class="student-face-state">${foto?'Foto profil sedia ada.':'Ambil foto muka murid, kemudian sistem simpan ke tab MURID.'}</small>
+  </article>`;
+}
+
+function findPhotoStudentByKey(encodedKey){
+  const key=decodeURIComponent(String(encodedKey||''));
+  const parts=key.split('|');
+  return (pbdData.murid||[]).find(m=>{
+    const id=String(muridIdOf(m)||'').trim();
+    if(id && id===key) return true;
+    return String(muridTing(m))===String(parts[0]||'') &&
+      examClassNorm(muridKelas(m))===examClassNorm(parts[1]||'') &&
+      muridNama(m)===String(parts.slice(2).join('|')||'');
+  });
+}
+
+async function compressStudentFacePhoto(file){
+  if(!file || !String(file.type||'').startsWith('image/')){
+    throw new Error('Pilih fail gambar JPG, PNG atau WebP.');
+  }
+
+  const source=await readFileAsDataUrl(file);
+  const img=await new Promise((resolve,reject)=>{
+    const image=new Image();
+    image.onload=()=>resolve(image);
+    image.onerror=()=>reject(new Error('Gambar tidak dapat dibuka. Guna kamera atau fail JPG/PNG.'));
+    image.src=source;
+  });
+
+  const maxSide=700;
+  let width=img.naturalWidth||img.width;
+  let height=img.naturalHeight||img.height;
+  const scale=Math.min(1,maxSide/Math.max(width,height));
+  width=Math.max(1,Math.round(width*scale));
+  height=Math.max(1,Math.round(height*scale));
+
+  const canvas=document.createElement('canvas');
+  canvas.width=width;
+  canvas.height=height;
+  const ctx=canvas.getContext('2d',{alpha:false});
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(0,0,width,height);
+  ctx.drawImage(img,0,0,width,height);
+
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',0.82));
+  if(!blob) throw new Error('Gambar gagal diproses.');
+
+  const dataUrl=await readFileAsDataUrl(blob);
+  return {
+    base64:dataUrl.split(',')[1]||'',
+    mimeType:'image/jpeg',
+    preview:dataUrl,
+    bytes:blob.size
+  };
+}
+
+async function handleStudentFacePhoto(input,encodedKey){
+  const card=input.closest('.photo-student-card');
+  const state=card?.querySelector('.student-face-state');
+  const file=input.files?.[0];
+  const student=findPhotoStudentByKey(encodedKey);
+  if(!card||!file||!student) return;
+
+  if(state) state.textContent='⏳ Memproses foto muka murid...';
+
+  try{
+    const photo=await compressStudentFacePhoto(file);
+    if(photo.bytes>2.5*1024*1024) throw new Error('Foto masih terlalu besar. Cuba ambil gambar semula.');
+
+    const nama=muridNama(student);
+    const id=String(muridIdOf(student)||'').trim();
+    const ting=String(muridTing(student)||'').trim();
+    const kelas=String(muridKelas(student)||'').trim();
+    const safeName=nama.replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'');
+
+    const avatar=card.querySelector('.photo-student-avatar');
+    if(avatar){
+      avatar.innerHTML=`<img class="student-avatar photo-profile-avatar" src="${esc(photo.preview)}" alt="Foto ${esc(nama)}">`;
+    }
+    if(state) state.textContent='⏳ Menyimpan foto ke Google Drive dan tab MURID...';
+
+    const res=await fetch(CONFIG.SHEET_API_URL,{
+      method:'POST',
+      body:JSON.stringify({
+        action:'uploadStudentProfilePhoto',
+        idMurid:id,
+        namaMurid:nama,
+        tingkatan:ting,
+        kelas:kelas,
+        fileName:`${id||'MURID'}_${safeName||'foto'}_${Date.now()}.jpg`,
+        mimeType:photo.mimeType,
+        base64:photo.base64
+      })
+    });
+    const out=await res.json();
+    if(!out.success) throw new Error(out.message||'Foto gagal disimpan');
+
+    student.Foto=out.url||'';
+    student.foto=out.url||'';
+    student['Gambar']=out.url||'';
+
+    const pill=card.querySelector('.photo-status-pill');
+    if(pill){
+      pill.classList.remove('missing-photo');
+      pill.classList.add('has-photo');
+      pill.textContent='✅ Foto sudah ada';
+    }
+    const btnText=card.querySelector('.student-face-camera-btn b');
+    if(btnText) btnText.textContent='Tukar Foto';
+
+    if(state){
+      state.textContent=out.sharingOk===false
+        ? '⚠️ Foto disimpan, tetapi paparan umum mungkin disekat oleh akaun sekolah.'
+        : '✅ Foto profil murid berjaya disimpan.';
+    }
+    currentPbdSummaryData=null;
+  }catch(e){
+    if(state) state.textContent='❌ '+e.message;
+  }finally{
+    input.value='';
+  }
+}
+
+window.handleStudentFacePhoto=handleStudentFacePhoto;
+
 
 
 // ================= GALERI HASIL MURID / BUKTI PBD v7.2 =================

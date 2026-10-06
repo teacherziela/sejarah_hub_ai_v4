@@ -1,4 +1,4 @@
-// SEJARAH HUB AI v7.6 - LAPORAN INTERVENSI TP1-TP2 + CETAK ANALISIS
+// SEJARAH HUB AI v7.7 - LAPORAN INTERVENSI TP1-TP2 + CETAK ANALISIS
 // Project: Apps Script Panitia Ai
 // Fokus: Rumusan ikut KELAS sahaja.
 // Kiraan: 1 murid = 1 TP tertinggi walaupun murid ada banyak rekod. Jika TP sama, ambil rekod terbaru.
@@ -65,6 +65,7 @@ function doPost(e) {
   if (data.action === 'update') return jsonResponse(updateRecord(module, data));
   if (data.action === 'delete') return jsonResponse(deleteRecord(module, data.id));
   if (data.action === 'savePbdBatch') return jsonResponse(savePbdBatch(data.records || []));
+  if (data.action === 'uploadStudentProfilePhoto') return jsonResponse(uploadStudentProfilePhoto(data));
   if (data.action === 'savePbdIntervention') return jsonResponse(savePbdIntervention(data));
   if (data.action === 'uploadPbdEvidence') return jsonResponse(uploadPbdEvidence(data));
   if (data.action === 'saveHipActivityVideo') return jsonResponse(saveHipActivityVideo(data));
@@ -1292,6 +1293,134 @@ function savePbdIntervention(data){
     ]);
 
     return {success:true,id:id,message:'Intervensi berjaya disimpan.'};
+  }catch(err){
+    return {success:false,message:String(err&&err.message?err.message:err)};
+  }
+}
+
+
+var STUDENT_PROFILE_PHOTO_FOLDER_NAME='FOTO PROFIL MURID SEJARAH';
+
+function studentProfilePhotoFolder_(tingkatan,kelas){
+  var roots=DriveApp.getFoldersByName(STUDENT_PROFILE_PHOTO_FOLDER_NAME);
+  var root=roots.hasNext() ? roots.next() : DriveApp.createFolder(STUDENT_PROFILE_PHOTO_FOLDER_NAME);
+
+  var subName=('T'+String(tingkatan||'')+'_'+String(kelas||''))
+    .replace(/[\\/:*?"<>|]/g,'_')
+    .replace(/\s+/g,'_');
+
+  var subs=root.getFoldersByName(subName);
+  return subs.hasNext() ? subs.next() : root.createFolder(subName);
+}
+
+function uploadStudentProfilePhoto(data){
+  try{
+    var idMurid=String(data.idMurid||'').trim();
+    var nama=String(data.namaMurid||'').trim();
+    var tingkatan=String(data.tingkatan||'').trim();
+    var kelas=String(data.kelas||'').trim();
+    var fileName=String(data.fileName||'foto-murid.jpg').replace(/[\\/:*?"<>|]/g,'_');
+    var mimeType=String(data.mimeType||'image/jpeg').trim();
+    var base64=String(data.base64||'').trim();
+
+    if(!nama || !tingkatan || !kelas){
+      return {success:false,message:'Maklumat murid tidak lengkap.'};
+    }
+    if(!base64) return {success:false,message:'Foto kosong.'};
+    if(!/^image\//i.test(mimeType)) return {success:false,message:'Fail mestilah gambar.'};
+
+    var bytes=Utilities.base64Decode(base64);
+    if(bytes.length>3*1024*1024){
+      return {success:false,message:'Foto melebihi 3 MB selepas diproses.'};
+    }
+
+    var ss=getPbdSs();
+    var sh=ss.getSheetByName('MURID');
+    if(!sh) return {success:false,message:'Sheet MURID tidak dijumpai.'};
+
+    var lastCol=Math.max(1,sh.getLastColumn());
+    var headers=sh.getRange(1,1,1,lastCol).getDisplayValues()[0];
+
+    var idIdx=findHeaderIndex_(headers,['IDMurid','ID Murid','ID']);
+    var nameIdx=findHeaderIndex_(headers,['Nama Murid','Nama']);
+    var tingIdx=findHeaderIndex_(headers,['Tingkatan','Tingkat','Tingka']);
+    var classIdx=findHeaderIndex_(headers,['Kelas']);
+    var photoIdx=findHeaderIndex_(headers,['Foto','Photo','Gambar','Gambar Profil','Pautan Foto']);
+
+    if(photoIdx<0){
+      photoIdx=headers.length;
+      sh.getRange(1,photoIdx+1).setValue('Foto');
+      headers.push('Foto');
+    }
+
+    var lastRow=sh.getLastRow();
+    if(lastRow<2) return {success:false,message:'Senarai murid kosong.'};
+
+    var width=Math.max(headers.length,sh.getLastColumn());
+    var values=sh.getRange(2,1,lastRow-1,width).getDisplayValues();
+    var targetRow=0;
+
+    for(var i=0;i<values.length;i++){
+      var row=values[i];
+      var rowId=idIdx>-1 ? String(row[idIdx]||'').trim() : '';
+      if(idMurid && rowId===idMurid){
+        targetRow=i+2;
+        break;
+      }
+    }
+
+    if(!targetRow){
+      for(var j=0;j<values.length;j++){
+        var row2=values[j];
+        var rowName=nameIdx>-1 ? normalize_(row2[nameIdx]) : '';
+        var rowTing=tingIdx>-1 ? String(row2[tingIdx]||'').trim() : '';
+        var rowClass=classIdx>-1 ? normalizeClass_(row2[classIdx]) : '';
+
+        if(rowName===normalize_(nama) &&
+          rowTing===String(tingkatan) &&
+          rowClass===normalizeClass_(kelas)){
+          targetRow=j+2;
+          break;
+        }
+      }
+    }
+
+    if(!targetRow) return {success:false,message:'Murid tidak dijumpai dalam tab MURID.'};
+
+    var props=PropertiesService.getScriptProperties();
+    var photoKey='PROFILE_PHOTO_'+(idMurid || normalize_(nama)).replace(/[^0-9A-Za-z_]/g,'_');
+    var oldId=props.getProperty(photoKey);
+
+    var folder=studentProfilePhotoFolder_(tingkatan,kelas);
+    var blob=Utilities.newBlob(bytes,mimeType,fileName);
+    var file=folder.createFile(blob);
+    file.setDescription('Foto profil murid Sejarah: '+nama+' • Tingkatan '+tingkatan+' '+kelas);
+
+    var sharingOk=true;
+    try{
+      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK,DriveApp.Permission.VIEW);
+    }catch(shareErr){
+      sharingOk=false;
+    }
+
+    var viewUrl='https://drive.google.com/file/d/'+file.getId()+'/view';
+    var thumbnailUrl='https://drive.google.com/thumbnail?id='+file.getId()+'&sz=w900';
+
+    sh.getRange(targetRow,photoIdx+1).setValue(viewUrl);
+    props.setProperty(photoKey,file.getId());
+
+    if(oldId && oldId!==file.getId()){
+      try{ DriveApp.getFileById(oldId).setTrashed(true); }catch(ignoreOld){}
+    }
+
+    return {
+      success:true,
+      id:file.getId(),
+      url:viewUrl,
+      thumbnailUrl:thumbnailUrl,
+      sharingOk:sharingOk,
+      message:'Foto profil murid berjaya disimpan.'
+    };
   }catch(err){
     return {success:false,message:String(err&&err.message?err.message:err)};
   }
