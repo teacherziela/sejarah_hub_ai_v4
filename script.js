@@ -761,6 +761,99 @@ function onRumusTingkatan(){
   if(kelas.length && !kelasSel.value) kelasSel.value = kelas[0];
   renderPbdSummary();
 }
+
+// v7.8 — Semakan silang TP tertinggi terhadap matriks laporan PBD.
+// Tiada TP ditetapkan secara manual. Hanya ambil TP lebih tinggi yang
+// wujud dalam rekod murid sebenar, dan kekalkan rekod guru/peperiksaan.
+async function verifyPbdHighestTpAgainstReport(data, ting, kelas){
+  if(!data?.success || !Array.isArray(data.allList) || !data.allList.length) return data;
+  const highestById = new Map();
+  const normId = v => String(v||'').trim().toUpperCase();
+  const recordHighest = (key, tp) => {
+    const id = normId(key), level = Number(tp);
+    if(!id || !Number.isInteger(level) || level<1 || level>6) return;
+    highestById.set(id, Math.max(highestById.get(id)||0,level));
+  };
+
+  // Semak senarai rekod individu yang sudah disediakan oleh API.
+  (data.recordList||[]).forEach(r=>recordHighest(r.id||r.studentKey,r.tp));
+
+  // Sumber silang: setiap sel laporan menyimpan TP tertinggi mengikut topik.
+  // Permintaan baharu mengelakkan menggunakan halaman/response tersimpan.
+  try{
+    const url=pbdApiUrl({action:'pbdPrintReport',tingkatan:ting,kelas:kelas});
+    const response=await fetch(url,{cache:'no-store'});
+    if(response.ok){
+      const report=await response.json();
+      if(report?.success && Array.isArray(report.students)){
+        report.students.forEach(student=>{
+          const values=student.values||{};
+          const maxTp=Object.values(values).reduce((max,v)=>{
+            const tp=Number(v?.tp ?? v?.TP ?? 0);
+            return tp>=1 && tp<=6 ? Math.max(max,tp) : max;
+          },0);
+          recordHighest(student.id,maxTp);
+        });
+      }
+    }
+  }catch(error){
+    console.warn('Semakan silang PBD tidak tersedia; guna rumusan asal.',error);
+  }
+
+  let improved=0;
+  const all=data.allList.map(student=>{
+    const original=Number(student.tp)||0;
+    const verified=Math.max(original,highestById.get(normId(student.id||student.studentKey))||0);
+    if(verified<=original) return student;
+    improved++;
+    const copy={...student,tp:verified};
+    const percent=student.peratus===''||student.peratus==null?'':Number(student.peratus);
+    if(percent==='') copy.status='Ada TP, belum ada markah peperiksaan';
+    else if(percent>=82 && verified>=5) copy.status='Cemerlang PBD dan peperiksaan';
+    else if(percent>=66 && verified>=4) copy.status='Konsisten baik';
+    else if(percent<35 && verified<=2) copy.status='Perlu intervensi segera';
+    else if(verified<=2) copy.status='Perlu bimbingan PBD';
+    else copy.status='Prestasi sedang dipantau';
+    return copy;
+  });
+  if(!improved) return data;
+
+  const counts={1:0,2:0,3:0,4:0,5:0,6:0};
+  let adaTp=0,sumTp=0;
+  all.forEach(s=>{
+    const tp=Number(s.tp)||0;
+    if(tp>=1 && tp<=6){
+      counts[tp]++;
+      adaTp++;
+      sumTp+=tp;
+    }
+  });
+  const weak=all.filter(s=>Number(s.tp)>=1 && Number(s.tp)<=2)
+    .sort((a,b)=>Number(a.tp)-Number(b.tp)||String(a.nama).localeCompare(String(b.nama)));
+  const noRecord=all.filter(s=>!Number(s.tp));
+  const fame=all.filter(s=>Number(s.tp)>=4 && s.peratus!=='' &&
+    s.peratus!=null && Number(s.peratus)>=66).map(s=>{
+    const title=Number(s.tp)>=6 && Number(s.peratus)>=82?'👑 Ikon Sejarah':
+      Number(s.tp)>=5 && Number(s.peratus)>=82?'🏆 All-Star Sejarah':
+      Number(s.tp)>=5?'🌟 Bintang Sejarah':'🚀 Harapan Sejarah';
+    return {...s,fameTitle:title};
+  }).sort((a,b)=>Number(b.peratus)-Number(a.peratus)||
+    Number(b.tp)-Number(a.tp)||String(a.nama).localeCompare(String(b.nama))).slice(0,8);
+
+  console.info('Semakan silang PBD: '+improved+' TP tertinggi dipulihkan.',ting,kelas);
+  return {
+    ...data,
+    summary:{...data.summary,adaTp:adaTp,tiadaTp:noRecord.length,
+      weakCount:weak.length,tpCounts:counts,
+      avgTp:adaTp?Math.round(sumTp/adaTp*100)/100:0,fameCount:fame.length},
+    allList:all,
+    weakList:weak,
+    noRecordList:noRecord,
+    fameList:fame,
+    tpAudit:{verified:true,improved:improved}
+  };
+}
+
 async function fetchClassSummary(ting, kelas, ujian){
   const url = pbdApiUrl({
     action:'pbdClassSummary',
@@ -768,10 +861,10 @@ async function fetchClassSummary(ting, kelas, ujian){
     kelas:kelas,
     ujian:ujian||'UPSA'
   });
-  const res = await fetch(url);
+  const res = await fetch(url,{cache:'no-store'});
   const data = await res.json();
   if(!data.success) throw new Error(data.message || 'Gagal baca rumusan kelas');
-  return data;
+  return await verifyPbdHighestTpAgainstReport(data,ting,kelas);
 }
 function renderEmptySummary(msg){
   const meta = document.getElementById('pbdSummaryMeta');
