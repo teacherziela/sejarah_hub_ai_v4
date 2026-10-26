@@ -1336,8 +1336,8 @@ function buildPbdPrintHtml(data){
         const rec=(s.values||{})[t.key];
         const detail=rec
           ? `TP${esc(rec.tp)} • ${esc(rec.tarikh||'')} • ${esc(rec.guru||'')}`
-          : 'Belum ada rekod';
-        return `<td class="tp-cell" title="${detail}">${rec?esc(rec.tp):''}</td>`;
+          : 'TP3 sementara untuk semakan guru — tiada rekod pentaksiran dalam PBD';
+        return `<td class="tp-cell ${rec?'':'tp-provisional'}" title="${detail}">${rec?esc(rec.tp):'3*'}</td>`;
       }).join('');
 
       return `<tr>
@@ -1384,7 +1384,7 @@ function buildPbdPrintHtml(data){
       </table>
 
       <footer class="report-foot">
-        <span>Setiap sel memaparkan TP tertinggi murid bagi topik tersebut. Jika TP sama, rekod paling baharu digunakan.</span>
+        <span>Angka tanpa * = TP sebenar tertinggi. 3* = cadangan TP3 sementara, belum dinilai/disahkan dan tidak disimpan ke PBD.</span>
         <span>${students.length} murid aktif • ${topics.length} topik mempunyai rekod</span>
       </footer>
     </section>`;
@@ -1433,7 +1433,7 @@ function buildPbdPrintHtml(data){
       .bil-col{width:10mm}.name-col{width:72mm}.tp-col{width:auto}
       .bil{text-align:center}
       .student-name{text-align:left;font-weight:700}
-      .tp-cell{text-align:center;font-size:11pt;font-weight:800}
+      .tp-cell{text-align:center;font-size:11pt;font-weight:800}\n      .tp-provisional{color:#8b5a25;background:#fff8e7;font-style:italic}
       .topic-col{font-size:7.7pt;overflow-wrap:anywhere}
       .topic-code{display:block;color:var(--accent);font-size:7pt;margin-bottom:1mm}
       .report-foot{
