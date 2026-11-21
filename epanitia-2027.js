@@ -20,10 +20,16 @@ try{const value=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');links=Array.
 const state={category:'all',submodule:'',search:''};
 function meetingDocs(){
  const records=(typeof hub!=='undefined'&&Array.isArray(hub.pengumuman))?hub.pengumuman:[];
- return records.filter(p=>/mesyuarat\s+panitia/i.test(String(p.Tajuk||''))&&validUrl(p.Link)&&String(p.Status||'Aktif').toLowerCase()!=='tidak aktif').map((p,i)=>({
- id:'meeting-'+i,year:String(p.Tahun||((String(p.Tajuk||'')+' '+String(p.Tarikh||'')).match(/20\d{2}/)||[])[0]||year()),
+ const found=records.filter(p=>/mesyuarat\\s+panitia/i.test(String(p.Tajuk||''))&&validUrl(p.Link)&&String(p.Status||'Aktif').toLowerCase()!=='tidak aktif').map((p,i)=>({
+ id:'meeting-'+i,year:String(p.Tahun||((String(p.Tajuk||'')+' '+String(p.Tarikh||'')).match(/20\\d{2}/)||[])[0]||year()),
  name:String(p.Tajuk||'Minit Mesyuarat'),category:'mesyuarat',submodule:'Minit Mesyuarat',url:p.Link,description:'Dokumen sedia ada daripada Pengumuman',readonly:true
  }));
+ // These two existing 2026 documents were verified from the old announcement list.
+ const existing=[
+ {id:'existing-minit-1',year:'2026',name:'Mesyuarat Panitia Bil 1/2026',category:'mesyuarat',submodule:'Minit Mesyuarat',url:'https://docs.google.com/document/d/1yig6PL-vNTiL6I6-fwJvjGcpm06xFr0P/edit',description:'Dokumen mesyuarat sedia ada',readonly:true},
+ {id:'existing-minit-2',year:'2026',name:'Mesyuarat Panitia Sejarah ke 2',category:'mesyuarat',submodule:'Minit Mesyuarat',url:'https://docs.google.com/document/d/1UJNY2-J7nHL62U2aPqlKqgd_fsKVfCu08vePGrnQuU/edit',description:'Dokumen mesyuarat sedia ada',readonly:true}
+ ];
+ return [...found,...existing.filter(x=>!found.some(p=>p.url.match(/\/d\/([^/]+)/)?.[1]===x.url.match(/\/d\/([^/]+)/)?.[1]))];
 }
 window.refreshEpanitiaDocuments=()=>show();
 function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(links));return true;}catch{return false;}}
@@ -41,8 +47,8 @@ function show(){
  <details class="ep-editor"><summary>➕ Daftar pautan Google Drive untuk tahun ${esc(y)}</summary><form id="epForm"><label>Nama dokumen<input name="name" maxlength="120" required placeholder="Contoh: Pelan Taktikal Sejarah 2027"></label><label>Kategori<select name="category" id="epFormCategory">${CATEGORIES.map(c=>`<option value="${c.id}" ${state.category===c.id?"selected":""}>${esc(c.name)}</option>`).join('')}</select></label><label>Subfolder<select name="submodule" id="epFormSubmodule"></select></label><label>Pautan fail / folder<input name="url" type="url" required placeholder="https://drive.google.com/..."></label><label>Catatan (pilihan)<input name="description" maxlength="180" placeholder="Contoh: Versi diluluskan"></label><button type="submit" class="ep-action">Simpan pautan</button><p class="ep-hint">Versi awal: pautan disimpan pada pelayar/peranti ini sahaja, bukan pangkalan data bersama. Untuk semua guru melihat rekod yang sama, sambungan Google Sheets berizin diperlukan.</p><p id="epMessage" role="status"></p></form></details>
  <p class="ep-privacy">🔒 Jangan masukkan pautan data murid sensitif atau fail sulit yang dikongsi secara awam. Kebenaran akses Google Drive kekal mengawal siapa boleh melihat dokumen.</p>`;
  root.querySelector('#epSearch').addEventListener('input',e=>{const start=e.target.selectionStart;state.search=e.target.value;show();const n=document.getElementById('epSearch');n?.focus();n?.setSelectionRange(start,start);});
- root.querySelector('#epCategory').addEventListener('change',e=>{state.category=e.target.value;state.submodule='';show();});
- root.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{state.category=b.dataset.filter;state.submodule='';state.search='';show();root.querySelector('.ep-subhead')?.scrollIntoView({behavior:'smooth',block:'start'});}));
+ root.querySelector('#epCategory').addEventListener('change',e=>{state.category=e.target.value;state.submodule=e.target.value==='mesyuarat'?'Minit Mesyuarat':'';show();});
+ root.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{state.category=b.dataset.filter;state.submodule=b.dataset.filter==='mesyuarat'?'Minit Mesyuarat':'';state.search='';show();root.querySelector('.ep-subhead')?.scrollIntoView({behavior:'smooth',block:'start'});}));
  root.querySelectorAll('[data-subcategory]').forEach(b=>b.addEventListener('click',()=>{state.category=b.dataset.subcategory;state.submodule=b.dataset.submodule;state.search='';show();root.querySelector('.ep-subhead')?.scrollIntoView({behavior:'smooth',block:'start'});}));
  root.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{if(confirm('Buang pautan daripada pelayar ini? Dokumen asal tidak dipadam.')){links=links.filter(x=>x.id!==b.dataset.remove);persist();show();}}));
  root.querySelector('#epGuide').addEventListener('click',()=>{root.querySelector('details.ep-editor').open=true;root.querySelector('.ep-editor').scrollIntoView({behavior:'smooth'});});
