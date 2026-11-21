@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="ms" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-Panitia Sejarah • SMK Taman Jasmin 2 (Sesi Petang)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .tab-active {
+            background-color: rgba(245, 158, 11, 0.16);
+            color: #fbbf24;
+            border-right: 3px solid #f59e0b;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-amber-200 selection:text-slate-900">
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden sticky top-0 z-30 bg-slate-900 text-white px-4 py-3 flex items-center justify-between shadow-md">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center text-slate-950 font-display font-extrabold text-sm shadow-inner">
+                SJ2
+            </div>
+            <div>
+                <h1 class="font-display font-bold text-sm tracking-tight leading-none">e-Panitia Sejarah</h1>
+                <p class="text-[11px] text-amber-300 mt-0.5">SMK Taman Jasmin 2 • Petang</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openAddDocModal()" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-semibold text-xs flex items-center gap-1 shadow-xs active:scale-95 transition-transform">
+                <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>
+                <span>+ Fail</span>
+            </button>
+            <button id="mobile-menu-btn" onclick="toggleMobileSidebar()" class="p-2 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700" aria-label="Buka Menu">
+                <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Backdrop Mobile Sidebar -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-30 hidden lg:hidden"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed lg:sticky top-0 left-0 z-40 h-screen w-72 bg-slate-900 text-slate-300 flex flex-col justify-between transition-transform duration-300 -translate-x-full lg:translate-x-0 border-r border-slate-800 shrink-0">
+            <div>
+                <!-- Brand Identiti Sekolah -->
+                <div class="p-5 border-b border-slate-800/80 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20 font-display font-extrabold text-sm">
+                            SJ2
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-display font-bold text-base text-white tracking-tight">e-Panitia Sejarah</span>
+                                <span class="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 rounded-md border border-amber-500/30">PETANG</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-0.5">SMK Taman Jasmin 2 (T1 & T2)</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleMobileSidebar()" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Butang Tambah Dokumen -->
+                <div class="p-4">
+                    <button onclick="openAddDocModal()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-display font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98]">
+                        <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                        <span>Tambah Dokumen e-Fail</span>
+                    </button>
+                </div>
+
+                <!-- Navigasi Utama -->
+                <nav class="px-3 space-y-1">
+                    <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Pengurusan Panitia</p>
+                    
+                    <button onclick="switchView('dashboard')" id="nav-dashboard" class="nav-btn tab-active w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors">
+                        <span class="flex items-center gap-2.5">
+                            <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                            <span>Indeks 8 Kategori Rasmi</span>
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 font-semibold">8</span>
+                    </button>
+
+                    <button onclick="switchView('documents')" id="nav-documents" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">
+                        <span class="flex items-center gap-2.5">
+                            <i data-lucide="folder-open" class="w-4 h-4"></i>
+                            <span>Semua Dokumen e-Fail</span>
+                        </span>
+                        <span id="sidebar-doc-count" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">10</span>
+                    </button>
+
+                    <button onclick="switchView('checklist')" id="nav-checklist" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">
+                        <span class="flex items-center gap-2.5">
+                            <i data-lucide="check-square" class="w-4 h-4"></i>
+                            <span>Senarai Semak Audit</span>
+                        </span>
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">SKPM</span>
+                    </button>
+
+                    <button onclick="switchView('ai-studio')" id="nav-ai-studio" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors">
+                        <span class="flex items-center gap-2.5">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                            <span>Jana Minit & Laporan AI</span>
+                        </span>
+                    </button>
+                </nav>
+
+                <!-- Pintas Kategori Rasmi -->
+                <div class="px-3 mt-6">
+                    <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Pintas Kategori</p>
+                    <div class="space-y-1">
+                        <button onclick="filterByCategory('Standard 1-5 & Evidens')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800/60 transition-colors">
+                            <span>01 • Standard 1–5 & Evidens</span>
+                            <span class="text-[10px] text-slate-500">SKPMg2</span>
+                        </button>
+                        <button onclick="filterByCategory('Pelan & Perancangan')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800/60 transition-colors">
+                            <span>02 • Pelan & Perancangan</span>
+                            <span class="text-[10px] text-slate-500">KPI</span>
+                        </button>
+                        <button onclick="filterByCategory('Mesyuarat Panitia')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800/60 transition-colors">
+                            <span>03 • Mesyuarat Panitia</span>
+                            <span class="text-[10px] text-slate-500">Bil 1-4</span>
+                        </button>
+                        <button onclick="filterByCategory('PBD, UASA & Intervensi')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800/60 transition-colors">
+                            <span>05 • PBD, UASA & Intervensi</span>
+                            <span class="text-[10px] text-slate-500">T1 & T2</span>
+                        </button>
+                        <button onclick="filterByCategory('Inovasi PdP Digital')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800/60 transition-colors">
+                            <span>06 • Inovasi PdP Digital</span>
+                            <span class="text-[10px] text-slate-500">HV360</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Sidebar -->
+            <div class="p-4 border-t border-slate-800/80 bg-slate-950/40">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-300 font-bold text-xs">
+                        ZM
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-semibold text-white truncate">Cikgu Zamzila Mohamat</p>
+                        <p class="text-[11px] text-slate-400 truncate">SMK Taman Jasmin 2 • Petang</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 min-w-0 flex flex-col">
+            <!-- Top Bar Desktop -->
+            <div class="hidden lg:flex items-center justify-between px-8 py-4 bg-white border-b border-slate-200/80 sticky top-0 z-20">
+                <div>
+                    <h2 id="page-title" class="font-display font-bold text-xl text-slate-900">e-Panitia Sejarah — SMK Taman Jasmin 2</h2>
+                    <p id="page-subtitle" class="text-xs text-slate-500 mt-0.5">Panitia Sejarah Sesi Petang (Tingkatan 1 & Tingkatan 2) • Selaras SKPMg2</p>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                    <!-- Carian Pantas -->
+                    <div class="relative w-56">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input id="global-search" type="text" oninput="handleSearch(this.value)" placeholder="Cari dokumen fail..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-100 border border-transparent focus:bg-white focus:border-amber-500 rounded-xl transition-all focus:outline-none">
+                    </div>
+
+                    <!-- Penapis Tahun Akademik -->
+                    <select id="filter-year" onchange="changeAcademicYear(this.value)" class="px-3 py-2 text-xs font-bold bg-amber-50 border border-amber-200 text-amber-900 rounded-xl focus:outline-none focus:border-amber-500 cursor-pointer">
+                        <option value="2026">Tahun 2026</option>
+                        <option value="2027">Tahun 2027</option>
+                    </select>
+
+                    <!-- Refresh Data Google Sheet -->
+                    <button onclick="syncGoogleSheet(true)" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span>Refresh Data</span>
+                    </button>
+
+                    <!-- Muat Turun index.html untuk GitHub -->
+                    <button onclick="downloadUpdatedHtml()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors" title="Muat turun fail index.html untuk menggantikan fail lama di GitHub">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Muat Turun index.html</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Konten Utama -->
+            <div class="p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+
+                <!-- BANNER GOOGLE SHEET & KONGSI GURU -->
+                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-2xl p-4 sm:p-5 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-start sm:items-center gap-3.5">
+                        <div class="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 shrink-0">
+                            <i data-lucide="sheet" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="font-display font-bold text-sm sm:text-base">Google Sheet: "Pantia Sejarah Ai" (Akses Editor Terbuka)</h3>
+                                <span id="sheet-sync-pill" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">Disambung • Sesi 2026</span>
+                            </div>
+                            <p class="text-xs text-slate-300 mt-1">Semua guru Sejarah Sesi Petang SMK Taman Jasmin 2 boleh membuka, menyemak dan mengemas kini rekod tahun 2026 & 2027.</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <a href="https://docs.google.com/spreadsheets/d/1IDRv2QCN08MgWWQZm861qpqAUcuVZYnwBKebbMz4bs4/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1.5 border border-white/15 transition-colors">
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                            <span>Buka & Edit Sheet</span>
+                        </a>
+                        <button onclick="copyTeacherShareLink()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-colors">
+                            <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                            <span>Kongsi Pautan Guru</span>
+                        </button>
+                        <button onclick="downloadUpdatedHtml()" class="px-3.5 py-2 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-300 text-xs font-bold flex items-center gap-1.5 border border-amber-400/40 shadow-sm transition-colors">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                            <span>Muat Turun index.html</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- VIEW 1: DASHBOARD INDEKS 8 KATEGORI RASMI -->
+                <section id="view-dashboard" class="space-y-6">
+                    <!-- Kad Statistik Ringkas -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Kategori e-Panitia</span>
+                                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                                    <i data-lucide="folders" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="flex items-baseline gap-2">
+                                    <span class="font-display font-extrabold text-2xl text-slate-900">8 Kategori</span>
+                                    <span class="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">SKPMg2</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Struktur rasmi SMK Taman Jasmin 2</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Dokumen Direkodkan</span>
+                                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                    <i data-lucide="file-check" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="flex items-baseline gap-2">
+                                    <span id="stat-total-docs" class="font-display font-extrabold text-2xl text-slate-900">10</span>
+                                    <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">Tersusun</span>
+                                </div>
+                                <p id="stat-year-label" class="text-xs text-slate-500 mt-1">Arkib Digital Tahun 2026</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Status Sedia Audit</span>
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <div class="flex items-baseline gap-2">
+                                    <span id="stat-completion" class="font-display font-extrabold text-2xl text-slate-900">100%</span>
+                                    <span id="stat-folder-fraction" class="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">8 / 8 Lengkap</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1">Tingkatan 1 & 2 (Sesi Petang)</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-slate-900 to-slate-800 p-5 rounded-2xl text-white shadow-md flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-amber-400">Auto-Draf Dokumen</span>
+                                <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                            </div>
+                            <div class="mt-3">
+                                <p class="text-xs text-slate-300 leading-relaxed">Jana draf Minit Mesyuarat, Kertas Kerja Program atau Laporan OPR secara pantas.</p>
+                                <button onclick="switchView('ai-studio')" class="mt-3 w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-colors">
+                                    Buka Penjana AI
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid 8 Kategori Rasmi SMK Taman Jasmin 2 -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+                            <div>
+                                <h3 class="font-display font-bold text-base text-slate-900">8 Kategori Pengurusan & Evidens Panitia (Sesi Petang)</h3>
+                                <p class="text-xs text-slate-500">Klik pada mana-mana kategori untuk melihat senarai fail atau menambah pautan baharu</p>
+                            </div>
+                            <span id="active-year-pill" class="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-xs font-semibold self-start sm:self-center">Tahun Akademik 2026</span>
+                        </div>
+                        <div id="categories-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- Dijana oleh JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: SEMUA DOKUMEN e-FAIL -->
+                <section id="view-documents" class="hidden space-y-5">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="filterByCategory('ALL')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white" data-cat="ALL">Semua (8 Kategori)</button>
+                            <button onclick="filterByCategory('Standard 1-5 & Evidens')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200" data-cat="Standard 1-5 & Evidens">Standard 1–5</button>
+                            <button onclick="filterByCategory('Pelan & Perancangan')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200" data-cat="Pelan & Perancangan">Pelan</button>
+                            <button onclick="filterByCategory('Mesyuarat Panitia')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200" data-cat="Mesyuarat Panitia">Mesyuarat</button>
+                            <button onclick="filterByCategory('Takwim & Program')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200" data-cat="Takwim & Program">Takwim</button>
+                            <button onclick="filterByCategory('PBD, UASA & Intervensi')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200" data-cat="PBD, UASA & Intervensi">PBD & UASA</button>
+                            <button onclick="filterByCategory('Inovasi PdP Digital')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200" data-cat="Inovasi PdP Digital">Inovasi Digital</button>
+                            <button onclick="filterByCategory('Organisasi & Guru')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200" data-cat="Organisasi & Guru">Organisasi</button>
+                            <button onclick="filterByCategory('Galeri & Pencapaian')" class="cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200" data-cat="Galeri & Pencapaian">Galeri</button>
+                        </div>
+                        <button onclick="openAddDocModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs flex items-center gap-1.5">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Tambah Fail</span>
+                        </button>
+                    </div>
+
+                    <div id="documents-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Kad dokumen dijana oleh JS -->
+                    </div>
+                </section>
+
+                <!-- VIEW 3: SENARAI SEMAK AUDIT -->
+                <section id="view-checklist" class="hidden space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
+                            <div>
+                                <h3 class="font-display font-bold text-base text-slate-900">Senarai Semak Pemantauan e-Panitia (SKPMg2)</h3>
+                                <p class="text-xs text-slate-500 mt-0.5">Semakan automatik kandungan bagi Panitia Sejarah Sesi Petang SMK Taman Jasmin 2</p>
+                            </div>
+                            <button onclick="openAddDocModal()" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold hover:bg-slate-800">
+                                + Lengkapkan Dokumen
+                            </button>
+                        </div>
+                        <div id="audit-checklist-table" class="divide-y divide-slate-100">
+                            <!-- Dijana oleh JS -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 4: PENJANA MINIT & LAPORAN AI -->
+                <section id="view-ai-studio" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-display font-bold text-base text-slate-900">Auto-Draf Dokumen Panitia</h3>
+                                    <p class="text-xs text-slate-500">SMK Taman Jasmin 2 • Sesi Petang</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-3 pt-2">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Dokumen</label>
+                                    <select id="ai-doc-type" class="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500">
+                                        <option value="minit">Minit Mesyuarat Panitia Sejarah (Petang)</option>
+                                        <option value="intervensi">Pelan Intervensi PBD & UASA (T1 & T2)</option>
+                                        <option value="opr">Laporan OPR Program / Minggu Sejarah</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tajuk / Perkara Utama</label>
+                                    <input id="ai-topic" type="text" placeholder="Contoh: Mesyuarat Panitia Bil. 1/2026 (Sesi Petang)" class="w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500">
+                                </div>
+
+                                <button onclick="generatePanitiaDraft()" class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-display font-bold text-sm flex items-center justify-center gap-2 shadow-md transition-all">
+                                    <i data-lucide="wand-2" class="w-4 h-4 text-amber-400"></i>
+                                    <span>Jana Draf Rasmi</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between min-h-[400px]">
+                            <div>
+                                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pratonton Draf</span>
+                                    <div class="flex items-center gap-2">
+                                        <button onclick="copyGeneratedDraft()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5">
+                                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                            <span>Salin Teks</span>
+                                        </button>
+                                        <button onclick="saveDraftToRepo()" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold flex items-center gap-1.5">
+                                            <i data-lucide="folder-plus" class="w-3.5 h-3.5"></i>
+                                            <span>Simpan ke e-Fail</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="ai-output-area" class="mt-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line font-normal">
+                                    Pilih jenis dokumen di sebelah kiri dan klik "Jana Draf Rasmi" untuk menghasilkan templat rasmi Panitia Sejarah SMK Taman Jasmin 2.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL TAMBAH DOKUMEN e-FAIL -->
+    <div id="add-doc-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                        <i data-lucide="folder-plus" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-base">Tambah Dokumen e-Panitia</h3>
+                        <p class="text-xs text-slate-400">SMK Taman Jasmin 2 • Sesi Petang (T1 & T2)</p>
+                    </div>
+                </div>
+                <button onclick="closeAddDocModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form id="add-doc-form" onsubmit="handleSaveDocument(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori e-Panitia <span class="text-rose-500">*</span></label>
+                    <select id="doc-category" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500">
+                        <option value="Standard 1-5 & Evidens">01 • Standard 1–5 & Evidens (SKPMg2)</option>
+                        <option value="Pelan & Perancangan">02 • Pelan & Perancangan (Strategik, Taktikal, Operasi)</option>
+                        <option value="Mesyuarat Panitia">03 • Mesyuarat Panitia (Notis, Minit & Maklum Balas)</option>
+                        <option value="Takwim & Program">04 • Takwim & Program (Kertas Kerja & Laporan OPR)</option>
+                        <option value="PBD, UASA & Intervensi">05 • PBD, UASA & Intervensi (T1 & T2)</option>
+                        <option value="Inovasi PdP Digital">06 • Inovasi PdP Digital (HistoryVerse 360 & BBM)</option>
+                        <option value="Organisasi & Guru">07 • Organisasi & Guru (Carta, Agihan Tugas, PLC & LDP)</option>
+                        <option value="Galeri & Pencapaian">08 • Galeri & Pencapaian (Program, Murid & Anugerah)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Tajuk Fail / Dokumen <span class="text-rose-500">*</span></label>
+                    <input id="doc-title" type="text" required placeholder="Contoh: Minit Mesyuarat Panitia Sejarah Bil. 1/2026" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tahun Akademik</label>
+                        <select id="doc-year" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500">
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Tingkatan / Sasaran</label>
+                        <select id="doc-form" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500">
+                            <option value="T1 & T2 (Sesi Petang)">T1 & T2 (Sesi Petang)</option>
+                            <option value="Tingkatan 1">Tingkatan 1</option>
+                            <option value="Tingkatan 2">Tingkatan 2</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Pautan Google Drive / Kandungan Dokumen <span class="text-rose-500">*</span></label>
+                    <textarea id="doc-content" rows="3" required placeholder="Tampal pautan Google Drive / PDF atau ringkasan kandungan fail..." class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeAddDocModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                    <button type="submit" class="px-5 py-2 text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl shadow-xs">Simpan ke e-Fail</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_ID = "1IDRv2QCN08MgWWQZm861qpqAUcuVZYnwBKebbMz4bs4";
+        const SHEET_GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+        const panitiaCategories = [
+            { id: "Standard 1-5 & Evidens", code: "01", title: "Standard 1–5 & Evidens", icon: "folder-check", desc: "Standard 1 Kepimpinan, Pengurusan Kurikulum, PdPc & Kemenjadian Murid" },
+            { id: "Pelan & Perancangan", code: "02", title: "Pelan & Perancangan", icon: "compass", desc: "Pelan Strategik, Pelan Taktikal, Pelan Operasi & Sasaran KPI" },
+            { id: "Mesyuarat Panitia", code: "03", title: "Mesyuarat Panitia", icon: "file-signature", desc: "Notis & Agenda, Minit Mesyuarat Bil. 1–4 & Maklum Balas Tindakan" },
+            { id: "Takwim & Program", code: "04", title: "Takwim & Program", icon: "calendar-days", desc: "Takwim Tahunan, Kertas Kerja, Laporan OPR & Laporan Bergambar" },
+            { id: "PBD, UASA & Intervensi", code: "05", title: "PBD, UASA & Intervensi", icon: "bar-chart-3", desc: "Rumusan PBD TP1–TP6, Cetak PBD, Analisis UASA & Intervensi" },
+            { id: "Inovasi PdP Digital", code: "06", title: "Inovasi PdP Digital", icon: "cpu", desc: "HistoryVerse 360, Aktiviti HIP, BBM Digital & Seni Bina Islam" },
+            { id: "Organisasi & Guru", code: "07", title: "Organisasi & Guru", icon: "users", desc: "Ahli Panitia Sesi Petang, Carta Organisasi, Agihan Tugas & PLC/LDP" },
+            { id: "Galeri & Pencapaian", code: "08", title: "Galeri & Pencapaian", icon: "award", desc: "Galeri Program Patriotik, Pencapaian Murid, Panitia & Sijil" }
+        ];
+
+        const defaultRecords2026 = [
+            { id: "d1", year: "2026", category: "Standard 1-5 & Evidens", title: "Evidens SKPMg2 Standard 3.1.2 & Semakan Buku Latihan 2026", form: "T1 & T2 (Sesi Petang)", content: "DSKP KSSM Tingkatan 1 & 2, RPT 2026, rekod pencerapan PdPc Standard 4 serta semakan buku latihan Fasa 1 & 2.", date: "Sesi 2026" },
+            { id: "d2", year: "2026", category: "Pelan & Perancangan", title: "Pelan Strategik, Pelan Taktikal & Pelan Operasi Panitia Sejarah 2026", form: "T1 & T2 (Sesi Petang)", content: "Perancangan peningkatan peratus lulus dan sasaran KPI murid menguasai sekurang-kurangnya TP3 bagi Tingkatan 1 & 2.", date: "Sesi 2026" },
+            { id: "d3", year: "2026", category: "Mesyuarat Panitia", title: "Minit Mesyuarat Panitia Sejarah Bil. 1 & Bil. 2/2026 (Sesi Petang)", form: "T1 & T2 (Sesi Petang)", content: "Notis panggilan, agenda mesyuarat, minit rasmi serta borang maklum balas tindakan guru Sejarah sesi petang.", date: "Sesi 2026" },
+            { id: "d4", year: "2026", category: "Mesyuarat Panitia", title: "Minit Mesyuarat Panitia Sejarah Bil. 3 & Bil. 4/2026 (Post-Mortem UASA)", form: "T1 & T2 (Sesi Petang)", content: "Pembentangan analisis keputusan UASA 2026, status kewangan PCG dan penambahbaikan sesi 2027.", date: "Sesi 2026" },
+            { id: "d5", year: "2026", category: "Takwim & Program", title: "Takwim Tahunan & Laporan OPR Minggu Sejarah / Bulan Kebangsaan 2026", form: "T1 & T2 (Sesi Petang)", content: "Kertas kerja aktiviti patriotik Tingkatan 1 & 2, pertandingan kuiz sejarah dan laporan bergambar OPR.", date: "Sesi 2026" },
+            { id: "d6", year: "2026", category: "PBD, UASA & Intervensi", title: "Rumusan PBD (TP1–TP6) & Analisis Keputusan UASA 2026 (T1 & T2)", form: "T1 & T2 (Sesi Petang)", content: "Rekod pengisian PBD pertengahan & akhir tahun, analisis UASA 2026 serta program Klinik Sejarah murid TP1–TP2.", date: "Sesi 2026" },
+            { id: "d7", year: "2026", category: "Inovasi PdP Digital", title: "Modul HistoryVerse 360, Aktiviti HIP & BBM Seni Bina Islam", form: "T1 & T2 (Sesi Petang)", content: "Koleksi bahan bantu mengajar digital interaktif untuk bab Tamadun Islam (T1) dan Kerajaan Alam Melayu (T2).", date: "Sesi 2026" },
+            { id: "d8", year: "2026", category: "Organisasi & Guru", title: "Carta Organisasi, Agihan Tugas & Laporan PLC/LDP Guru Petang 2026", form: "T1 & T2 (Sesi Petang)", content: "Senarai ahli panitia sesi petang SMK Taman Jasmin 2, jadual penggubal soalan dan laporan Peer Coaching.", date: "Sesi 2026" },
+            { id: "d9", year: "2026", category: "Galeri & Pencapaian", title: "Galeri Program Patriotik, Pencapaian Murid & Sijil Penghargaan 2026", form: "T1 & T2 (Sesi Petang)", content: "Dokumentasi bergambar aktiviti murid serta rekod pencapaian dan anugerah Panitia Sejarah tahun 2026.", date: "Sesi 2026" }
+        ];
+
+        let documents = [...defaultRecords2026];
+        let currentYear = "2026";
+        let activeCategory = "ALL";
+        let currentSearch = "";
+
+        function loadLocalRecords() {
+            try {
+                const saved = localStorage.getItem("sj2_epanitia_modern_v1");
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) documents = parsed;
+                }
+            } catch (e) {}
+        }
+
+        function saveLocalRecords() {
+            try {
+                localStorage.setItem("sj2_epanitia_modern_v1", JSON.stringify(documents));
+            } catch (e) {}
+        }
+
+        function renderDashboard() {
+            const yearDocs = documents.filter(d => String(d.year) === String(currentYear));
+            const grid = document.getElementById("categories-grid");
+
+            let filledCount = 0;
+            grid.innerHTML = panitiaCategories.map(cat => {
+                const count = yearDocs.filter(d => d.category === cat.id).length;
+                if (count > 0) filledCount++;
+                return `
+                    <div onclick="filterByCategory('${cat.id}')" class="cursor-pointer group p-4 rounded-2xl border border-slate-200/90 hover:border-amber-400 bg-slate-50/60 hover:bg-amber-50/40 transition-all flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-amber-400 font-display font-bold text-xs">KAT ${cat.code}</span>
+                                <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full ${count > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'}">
+                                    ${count} Fail
+                                </span>
+                            </div>
+                            <h4 class="font-display font-bold text-sm text-slate-900 group-hover:text-amber-700 transition-colors">${cat.title}</h4>
+                            <p class="text-xs text-slate-500 mt-1 leading-relaxed">${cat.desc}</p>
+                        </div>
+                        <div class="mt-4 pt-2.5 border-t border-slate-200/70 flex items-center justify-between text-[11px] font-semibold text-amber-700">
+                            <span>Lihat Fail ${currentYear}</span>
+                            <i data-lucide="arrow-right" class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"></i>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            const pct = Math.round((filledCount / panitiaCategories.length) * 100);
+            document.getElementById("stat-total-docs").textContent = yearDocs.length;
+            document.getElementById("sidebar-doc-count").textContent = yearDocs.length;
+            document.getElementById("stat-year-label").textContent = `Arkib Digital Tahun ${currentYear}`;
+            document.getElementById("stat-completion").textContent = `${pct}%`;
+            document.getElementById("stat-folder-fraction").textContent = `${filledCount} / 8 Lengkap`;
+            document.getElementById("active-year-pill").textContent = `Tahun Akademik ${currentYear}`;
+        }
+
+        function renderDocuments() {
+            const grid = document.getElementById("documents-grid");
+            const filtered = documents.filter(doc => {
+                const matchYear = String(doc.year) === String(currentYear);
+                const matchCat = activeCategory === "ALL" || doc.category === activeCategory;
+                const matchSearch = currentSearch === "" ||
+                    doc.title.toLowerCase().includes(currentSearch) ||
+                    doc.category.toLowerCase().includes(currentSearch) ||
+                    doc.content.toLowerCase().includes(currentSearch);
+                return matchYear && matchCat && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center">
+                        <h4 class="font-display font-bold text-base text-slate-800">Tiada fail ditemui untuk ${currentYear}</h4>
+                        <p class="text-xs text-slate-500 mt-1">Klik butang di bawah untuk menambah fail bagi kategori ini.</p>
+                        <button onclick="openAddDocModal()" class="mt-4 px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-semibold text-xs">+ Tambah Fail Baharu</button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(doc => {
+                const urlMatch = doc.content.match(/https?:\/\/[^\s]+/);
+                const linkBtn = urlMatch
+                    ? `<a href="${urlMatch[0]}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold inline-flex items-center gap-1">Buka Fail <i data-lucide="external-link" class="w-3 h-3"></i></a>`
+                    : "";
+
+                return `
+                    <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between gap-4">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-3">
+                                <span class="px-2.5 py-0.5 text-[11px] font-semibold rounded-md bg-amber-100 text-amber-800">${doc.category}</span>
+                                <span class="text-[11px] font-medium text-slate-400">${doc.form}</span>
+                            </div>
+                            <h4 class="font-display font-bold text-base text-slate-900 leading-snug">${doc.title}</h4>
+                            <p class="text-xs text-slate-600 mt-2.5 leading-relaxed whitespace-pre-line break-words">${doc.content}</p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                            <span class="text-[11px] text-slate-400">Tahun ${doc.year}</span>
+                            <div class="flex items-center gap-1.5">
+                                ${linkBtn}
+                                <button onclick="deleteDocument('${doc.id}')" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50" title="Padam Fail">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById("audit-checklist-table");
+            const yearDocs = documents.filter(d => String(d.year) === String(currentYear));
+            container.innerHTML = panitiaCategories.map(cat => {
+                const count = yearDocs.filter(d => d.category === cat.id).length;
+                const isReady = count > 0;
+                return `
+                    <div class="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg ${isReady ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'} font-display font-bold text-xs flex items-center justify-center">
+                                ${cat.code}
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900">${cat.title}</p>
+                                <p class="text-xs text-slate-500">${cat.desc}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 self-end sm:self-center">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${isReady ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+                                ${isReady ? `Lengkap (${count} Fail)` : 'Belum Dimuat Naik'}
+                            </span>
+                            <button onclick="filterByCategory('${cat.id}')" class="text-xs font-semibold text-slate-700 hover:text-amber-600 underline">
+                                Buka
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        window.switchView = function(viewName) {
+            ["dashboard", "documents", "checklist", "ai-studio"].forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add("hidden");
+            });
+            document.getElementById(`view-${viewName}`).classList.remove("hidden");
+
+            document.querySelectorAll(".nav-btn").forEach(btn => {
+                btn.classList.remove("tab-active");
+                btn.classList.add("text-slate-400");
+            });
+            const activeBtn = document.getElementById(`nav-${viewName}`);
+            if (activeBtn) {
+                activeBtn.classList.add("tab-active");
+                activeBtn.classList.remove("text-slate-400");
+            }
+
+            if (viewName === "dashboard") renderDashboard();
+            if (viewName === "documents") renderDocuments();
+            if (viewName === "checklist") renderChecklist();
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.filterByCategory = function(cat) {
+            activeCategory = cat;
+            document.querySelectorAll(".cat-chip").forEach(chip => {
+                if (chip.dataset.cat === cat) {
+                    chip.className = "cat-chip px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white";
+                } else {
+                    chip.className = "cat-chip px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200";
+                }
+            });
+            switchView("documents");
+        };
+
+        window.changeAcademicYear = function(yr) {
+            currentYear = yr;
+            renderDashboard();
+            renderDocuments();
+            renderChecklist();
+            if (window.lucide) lucide.createIcons();
+            showToast(`Tahun Akademik ditukar ke ${yr}`, "info");
+        };
+
+        window.handleSearch = function(val) {
+            currentSearch = val.trim().toLowerCase();
+            if (currentSearch !== "") {
+                switchView("documents");
+            } else {
+                renderDocuments();
+            }
+        };
+
+        window.openAddDocModal = function() {
+            document.getElementById("doc-year").value = currentYear;
+            if (activeCategory !== "ALL") {
+                document.getElementById("doc-category").value = activeCategory;
+            }
+            const modal = document.getElementById("add-doc-modal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        };
+
+        window.closeAddDocModal = function() {
+            const modal = document.getElementById("add-doc-modal");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        };
+
+        window.handleSaveDocument = function(e) {
+            e.preventDefault();
+            const category = document.getElementById("doc-category").value;
+            const title = document.getElementById("doc-title").value.trim();
+            const year = document.getElementById("doc-year").value;
+            const form = document.getElementById("doc-form").value;
+            const content = document.getElementById("doc-content").value.trim();
+
+            documents.unshift({
+                id: "doc-" + Date.now(),
+                year,
+                category,
+                title,
+                form,
+                content,
+                date: `Sesi ${year}`
+            });
+
+            saveLocalRecords();
+            currentYear = year;
+            document.getElementById("filter-year").value = year;
+            document.getElementById("add-doc-form").reset();
+            closeAddDocModal();
+            renderDashboard();
+            filterByCategory(category);
+            showToast(`Fail berjaya disimpan ke ${category} (${year})!`, "success");
+        };
+
+        window.deleteDocument = function(id) {
+            documents = documents.filter(d => d.id !== id);
+            saveLocalRecords();
+            renderDashboard();
+            renderDocuments();
+            renderChecklist();
+            showToast("Rekod fail telah dipadam.", "info");
+        };
+
+        // Penyelarasan automatik dengan Google Sheet "Pantia Sejarah Ai"
+        window.syncGoogleSheet = async function(manual = false) {
+            const pill = document.getElementById("sheet-sync-pill");
+            if (pill) pill.textContent = "Menyegerak Sheet...";
+            try {
+                const res = await fetch(SHEET_GVIZ_URL);
+                const text = await res.text();
+                const jsonStr = text.substring(text.indexOf("{"), text.lastIndexOf("}") + 1);
+                const data = JSON.parse(jsonStr);
+                const rows = data.table?.rows || [];
+
+                let fetched = [];
+                rows.forEach((row, idx) => {
+                    const cells = (row.c || []).map(c => (c && c.v !== null ? String(c.v).trim() : ""));
+                    if (cells.every(v => v === "")) return;
+                    const joined = cells.join(" ").toLowerCase();
+                    if (idx === 0 && (joined.includes("tajuk") || joined.includes("kategori") || joined.includes("tahun"))) return;
+
+                    const fullText = cells.join(" | ");
+                    const yrMatch = fullText.match(/2026|2027/);
+                    const year = yrMatch ? yrMatch[0] : "2026";
+
+                    let cat = "Standard 1-5 & Evidens";
+                    if (/pelan|strategik|taktikal|operasi|kpi/i.test(fullText)) cat = "Pelan & Perancangan";
+                    else if (/mesyuarat|minit|notis|agenda/i.test(fullText)) cat = "Mesyuarat Panitia";
+                    else if (/takwim|program|kertas kerja|opr/i.test(fullText)) cat = "Takwim & Program";
+                    else if (/pbd|uasa|intervensi|peperiksaan|markah/i.test(fullText)) cat = "PBD, UASA & Intervensi";
+                    else if (/inovasi|digital|historyverse|hip|bbm/i.test(fullText)) cat = "Inovasi PdP Digital";
+                    else if (/organisasi|guru|carta|agihan|plc|ldp/i.test(fullText)) cat = "Organisasi & Guru";
+                    else if (/galeri|pencapaian|anugerah|sijil/i.test(fullText)) cat = "Galeri & Pencapaian";
+
+                    const cleanCells = cells.filter(c => c !== "");
+                    fetched.push({
+                        id: `gs-${idx}`,
+                        year,
+                        category: cat,
+                        title: cleanCells[1] || cleanCells[0] || `Rekod Sheet #${idx + 1}`,
+                        form: "T1 & T2 (Sesi Petang)",
+                        content: cleanCells.join("\n"),
+                        date: `Sesi ${year}`
+                    });
+                });
+
+                if (fetched.length > 0) {
+                    const merged = [...fetched];
+                    defaultRecords2026.forEach(def => {
+                        if (!merged.some(m => m.title.toLowerCase() === def.title.toLowerCase())) merged.push(def);
+                    });
+                    documents = merged;
+                    saveLocalRecords();
+                    renderDashboard();
+                    renderDocuments();
+                    if (pill) pill.textContent = `Disegerak (${fetched.length} Rekod Sheet)`;
+                    if (manual) showToast(`Berjaya menarik ${fetched.length} rekod dari Google Sheet!`, "success");
+                } else {
+                    if (pill) pill.textContent = `Disambung • Sesi ${currentYear}`;
+                    if (manual) showToast("Google Sheet disambungkan (rekod 2026 sedia dipaparkan).", "info");
+                }
+            } catch (e) {
+                if (pill) pill.textContent = `Arkib Sesi ${currentYear}`;
+                if (manual) showToast("Memaparkan arkib rasmi SMK Taman Jasmin 2.", "info");
+            }
+            if (window.lucide) lucide.createIcons();
+        };
+
+        window.generatePanitiaDraft = function() {
+            const type = document.getElementById("ai-doc-type").value;
+            const topic = document.getElementById("ai-topic").value.trim() || "Mesyuarat Panitia Sejarah Bil. 1/2026";
+            let draft = "";
+
+            if (type === "minit") {
+                draft = `MINIT MESYUARAT PANITIA SEJARAH (SESI PETANG)\nSMK TAMAN JASMIN 2, KAJANG\n\nPerkara: ${topic}\nSasaran: Tingkatan 1 & Tingkatan 2 (Sesi Petang)\n\n1.0 UCAPAN PENGERUSI\nPengerusi mengalu-alukan kehadiran semua guru Sejarah sesi petang serta mengucapkan terima kasih atas komitmen PdPc KSSM Tingkatan 1 dan Tingkatan 2.\n\n2.0 PENGURUSAN KURIKULUM & PBD\n2.1 Semua guru memastikan RPT 2026 dan DSKP terkini dimuat naik ke dalam e-Panitia.\n2.2 Perekodan PBD (TP1–TP6) dilaksanakan secara berterusan dan diselaraskan sebelum tarikh tutup pentaksiran.\n\n3.0 PENUTUP\nMesyuarat ditangguhkan dengan ucapan terima kasih.`;
+            } else if (type === "intervensi") {
+                draft = `PELAN INTERVENSI PBD & UASA SEJARAH (SESI PETANG)\nSMK TAMAN JASMIN 2\n\nFokus: ${topic}\nKumpulan Sasaran: Murid TP1 & TP2 (Tingkatan 1 & 2)\n\n1. Klinik Asas Fakta & Peta Minda Bergambar (10 minit awal PdPc).\n2. Modul Latih Tubi Berfokus Soalan Objektif & Struktur KSSM.\n3. Bimbingan Rakan Sebaya (Guru Muda Sejarah) bagi kelas sesi petang.`;
+            } else {
+                draft = `LAPORAN ONE-PAGE REPORT (OPR) PANITIA SEJARAH\nSMK TAMAN JASMIN 2 (SESI PETANG)\n\nProgram: ${topic}\nSasaran: Semua Murid Tingkatan 1 & Tingkatan 2\n\nImpak Program:\n1. Meningkatkan minat dan penghayatan sejarah tanah air dalam kalangan murid sesi petang.\n2. Penglibatan aktif murid dalam aktiviti kuiz dan sudut patriotik kelas.`;
+            }
+            document.getElementById("ai-output-area").textContent = draft;
+            showToast("Draf rasmi berjaya dijana!", "success");
+        };
+
+        window.copyGeneratedDraft = function() {
+            const text = document.getElementById("ai-output-area").textContent;
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            showToast("Teks draf disalin!", "success");
+        };
+
+        window.saveDraftToRepo = function() {
+            const content = document.getElementById("ai-output-area").textContent;
+            const title = document.getElementById("ai-topic").value.trim() || "Draf Dokumen Panitia 2026";
+            documents.unshift({
+                id: "draft-" + Date.now(),
+                year: currentYear,
+                category: "Mesyuarat Panitia",
+                title,
+                form: "T1 & T2 (Sesi Petang)",
+                content,
+                date: `Sesi ${currentYear}`
+            });
+            saveLocalRecords();
+            renderDashboard();
+            showToast("Draf berjaya disimpan ke e-Fail!", "success");
+        };
+
+        window.copyTeacherShareLink = function() {
+            const msg = `Assalamualaikum & Salam Sejahtera guru-guru Panitia Sejarah Sesi Petang SMK Taman Jasmin 2.\n\nBerikut ialah pautan rasmi e-Panitia Sejarah & Google Sheet rekod bersama:\n1. Portal e-Panitia: https://teacherziela.github.io/sejarah_hub_ai_v4/\n2. Google Sheet Rekod: https://docs.google.com/spreadsheets/d/1IDRv2QCN08MgWWQZm861qpqAUcuVZYnwBKebbMz4bs4/edit?usp=sharing\n\nSila buka untuk menyemak & mengemas kini fail bagi Tahun Akademik 2026.`;
+            const ta = document.createElement("textarea");
+            ta.value = msg;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            showToast("Pautan & mesej untuk guru telah disalin!", "success");
+        };
+
+        window.downloadUpdatedHtml = function() {
+            const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+            const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "index.html";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Fail index.html dimuat turun! Muat naik ke GitHub untuk menggantikan yang lama.", "success");
+        };
+
+        window.toggleMobileSidebar = function() {
+            const sidebar = document.getElementById("sidebar");
+            const backdrop = document.getElementById("sidebar-backdrop");
+            sidebar.classList.toggle("-translate-x-full");
+            backdrop.classList.toggle("hidden");
+        };
+
+        window.showToast = function(message, type = "info") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = "pointer-events-auto flex items-center gap-2.5 bg-slate-900 text-white text-xs font-medium px-4 py-3 rounded-xl shadow-xl border border-slate-700 transition-all";
+            toast.innerHTML = `<span class="w-2 h-2 rounded-full ${type === "success" ? "bg-emerald-400" : "bg-amber-400"}"></span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadLocalRecords();
+            renderDashboard();
+            renderDocuments();
+            renderChecklist();
+            syncGoogleSheet(false);
+            if (window.lucide) lucide.createIcons();
+
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("v")?.includes("adddoc") || params.has("adddoc")) {
+                setTimeout(() => openAddDocModal(), 350);
+            }
+        });
+    </script>
+</body>
+</html>
