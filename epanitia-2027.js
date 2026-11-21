@@ -61,7 +61,7 @@ function quickTarget(key){
 function show(){
  const root=document.getElementById('epanitiaRoot');if(!root)return;
  const y=year();
- const home=()=>{activeModule=null;show();};
+ const home=()=>{document.querySelectorAll('.ep-reveal').forEach(el=>el.classList.remove('ep-reveal'));activeModule=null;show();};
  const heading='<div class="ep-simple-heading"><span>ARKIB TAHUN '+esc(y)+'</span><h2>e-Panitia Sejarah</h2></div>';
  if(activeModule===null){
   root.innerHTML=heading+'<p class="ep-simple-note">Pilih modul untuk membuka fungsi atau dokumen tahun '+esc(y)+'.</p><div class="ep-hex-grid">'+HEX_MODULES.map((m,i)=>'<button type="button" class="ep-hex" data-module="'+i+'"><span class="ep-hex-icon">'+m[0]+'</span><strong>'+esc(m[1])+'</strong></button>').join('')+'</div>';
@@ -86,7 +86,7 @@ function show(){
  const open=root.querySelector('.ep-open-module');
  if(m[2]==='panel'&&open)open.addEventListener('click',()=>{
   const target=document.getElementById(m[3]);
-  if(target){target.scrollIntoView({behavior:'smooth',block:'start'});}else{open.replaceWith(Object.assign(document.createElement('p'),{textContent:'Belum dikemas kini.'}));}
+  if(target){document.querySelectorAll('.ep-reveal').forEach(el=>el.classList.remove('ep-reveal'));target.classList.add('ep-reveal');target.scrollIntoView({behavior:'smooth',block:'start'});}else{open.replaceWith(Object.assign(document.createElement('p'),{textContent:'Belum dikemas kini.'}));}
  });
 }
 function setup(){
@@ -95,7 +95,7 @@ function setup(){
  const active=select.value||'2027';
  for(let y=2026;y<=Math.max(2029,new Date().getFullYear()+2);y++)if(![...select.options].some(o=>o.value===String(y))){const opt=document.createElement('option');opt.value=String(y);opt.textContent=String(y);select.add(opt);}
  // Preserve existing application's year selection and API behaviour.
- select.addEventListener('change',()=>{activeModule=null;show();});
+ select.addEventListener('change',()=>{document.querySelectorAll('.ep-reveal').forEach(el=>el.classList.remove('ep-reveal'));activeModule=null;show();});
  show();
  const apps=document.getElementById('epApps');
  if(apps)apps.innerHTML=APP_LINKS.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" class="ep-app"><strong>${esc(a.label)} ↗</strong><span>${esc(a.desc)}</span></a>`).join('');
