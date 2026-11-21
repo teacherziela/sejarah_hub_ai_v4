@@ -73,3 +73,18 @@ main.wrap>section.ep-reveal{display:block!important}
 #epanitiaRoot .ep-document-list a{color:#c9f2ff}
 @media(max-width:900px){#epanitiaRoot .ep-hex-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){#epanitiaRoot .ep-hex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#epanitiaRoot .ep-hex{min-height:130px;padding:16px}#epanitiaRoot .ep-hex strong{font-size:12px}}
+
+/* Grouped eight-card dashboard matching the original e-Panitia category layout */
+#epanitiaRoot .ep-section-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+#epanitiaRoot .ep-section-card{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:10px;min-width:0;padding:20px;border:1px solid rgba(220,210,255,.22);border-radius:18px;background:linear-gradient(145deg,rgba(123,88,190,.32),rgba(42,29,92,.48));color:#fff;font:inherit;cursor:pointer}
+#epanitiaRoot .ep-section-card:hover,#epanitiaRoot .ep-section-card:focus-visible{border-color:#b7a4ff;background:rgba(115,84,185,.45)}
+#epanitiaRoot .ep-section-icon{font-size:28px}
+#epanitiaRoot .ep-section-card strong{font-size:18px;line-height:1.3}
+#epanitiaRoot .ep-section-card>span:not(.ep-section-icon){font-size:13px;color:#ddd6f7;line-height:1.5;min-height:45px}
+#epanitiaRoot .ep-section-card ul{padding-left:18px;margin:0;flex:1;color:#eee7ff;font-size:12px;line-height:1.8}
+#epanitiaRoot .ep-section-card em{display:block;text-align:center;font-style:normal;font-weight:700;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:10px;border-radius:10px}
+#epanitiaRoot .ep-submodule-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+#epanitiaRoot .ep-submodule-grid button{padding:22px 18px;border:1px solid rgba(220,210,255,.3);border-radius:14px;background:rgba(111,84,180,.3);color:white;text-align:left;font-size:16px;font-weight:700;cursor:pointer}
+#epanitiaRoot .ep-submodule-grid button:hover{background:rgba(125,100,200,.55)}
+@media(max-width:900px){#epanitiaRoot .ep-section-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#epanitiaRoot .ep-submodule-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){#epanitiaRoot .ep-section-grid,#epanitiaRoot .ep-submodule-grid{grid-template-columns:1fr}}
