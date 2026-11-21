@@ -51,3 +51,25 @@
 #epanitiaRoot .ep-card ul{display:block;margin:8px 0;padding-left:18px}
 #epanitiaRoot .ep-card .ep-item-btn{background:transparent;border:0;box-shadow:none;color:#e9ddff;text-align:left;padding:4px 2px;margin:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 #epanitiaRoot .ep-card .ep-item-btn:hover{color:#fff}
+
+/* 2026+ simplified original-style module dashboard */
+main.wrap>.ep-legacy,main.wrap>#epAppsPanel{display:none!important}
+main.wrap>section:not(.ep-welcome):not(#epanitiaRoot){display:none}
+main.wrap>section.ep-reveal{display:block!important}
+#epanitiaRoot .ep-simple-heading span{color:#b9efff;font-size:12px;letter-spacing:2px;font-weight:800}
+#epanitiaRoot .ep-simple-heading h2{margin:9px 0 12px}
+#epanitiaRoot .ep-simple-note{margin:10px 0 22px;color:#e4dcfa}
+#epanitiaRoot .ep-hex-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:20px 12px;padding:15px 0}
+#epanitiaRoot .ep-hex{width:100%;min-height:165px;aspect-ratio:1.1;background:linear-gradient(140deg,#6553b7,#2865a4);border:0;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px 25px;cursor:pointer;text-align:center;font:inherit}
+#epanitiaRoot .ep-hex:hover,#epanitiaRoot .ep-hex:focus-visible{filter:brightness(1.25);transform:translateY(-2px)}
+#epanitiaRoot .ep-hex-icon{font-size:36px}
+#epanitiaRoot .ep-hex strong{font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+#epanitiaRoot .ep-navigation{display:flex;gap:10px;margin-bottom:20px}
+#epanitiaRoot .ep-navigation button,#epanitiaRoot .ep-open-module{display:inline-block;border:1px solid #a6a0d9;background:#51449c;color:white;border-radius:12px;padding:12px 20px;font-weight:700;cursor:pointer;text-decoration:none}
+#epanitiaRoot .ep-module-title{margin:24px 0}
+#epanitiaRoot .ep-not-updated{padding:25px;border:1px dashed #aaa1ce;border-radius:12px}
+#epanitiaRoot .ep-document-list{display:grid;gap:12px}
+#epanitiaRoot .ep-document-list article{display:flex;justify-content:space-between;gap:15px;align-items:center;border:1px solid #8274b0;border-radius:12px;padding:18px}
+#epanitiaRoot .ep-document-list a{color:#c9f2ff}
+@media(max-width:900px){#epanitiaRoot .ep-hex-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){#epanitiaRoot .ep-hex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#epanitiaRoot .ep-hex{min-height:130px;padding:16px}#epanitiaRoot .ep-hex strong{font-size:12px}}
