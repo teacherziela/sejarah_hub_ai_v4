@@ -31,3 +31,18 @@
 .ep-app span{font-size:13px;color:#d9d1f4}.ep-app:hover{background:rgba(139,92,246,.42)}
 @media(max-width:1000px){.ep-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.ep-cards,.ep-apps,.ep-editor form{grid-template-columns:1fr}.ep-heading{align-items:flex-start}.ep-tools>*{width:100%}.ep-link{flex-wrap:wrap}.ep-link div{flex-basis:100%}}
+
+/* Year-first dashboard refresh */
+.hero h1{font-size:clamp(2.1rem,5vw,4.3rem)}
+.ep-welcome{padding:20px 26px;margin-bottom:18px}
+#epanitiaRoot{margin-top:12px}
+#epanitiaRoot .ep-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#epanitiaRoot .ep-card{padding:20px 22px;gap:8px;background:rgba(255,255,255,.065);border:1px solid rgba(230,220,255,.2)}
+#epanitiaRoot .ep-card h3{font-size:19px}
+#epanitiaRoot .ep-card ul{display:none}
+#epanitiaRoot .ep-card p{font-size:14px}
+#epanitiaRoot .ep-card button{margin-top:auto;align-self:flex-start;padding:8px 14px}
+.ep-legacy{margin:20px 0;border:1px solid rgba(255,255,255,.25);border-radius:18px;padding:18px 22px;background:rgba(255,255,255,.07)}
+.ep-legacy>summary{cursor:pointer;font-weight:800;color:#e8dcff;font-size:17px}
+.ep-legacy .hex-grid{margin-top:20px}
+@media(max-width:680px){#epanitiaRoot .ep-cards{grid-template-columns:1fr}.ep-welcome{padding:16px}.ep-legacy{padding:14px}}
