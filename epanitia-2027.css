@@ -1,0 +1,33 @@
+/* 2027 e-Panitia add-on: isolated selectors preserve old controls */
+#epanitiaRoot{scroll-margin-top:20px}
+.ep-heading,.ep-subhead{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.ep-heading h2{font-size:clamp(24px,3vw,34px);margin:4px 0 9px}
+.ep-heading p{color:#e0d7ff;max-width:750px;line-height:1.55}
+.ep-eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:850;color:#9ff1ff!important}
+.ep-count{min-width:150px;text-align:center;border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:16px;background:rgba(255,255,255,.09)}
+.ep-count b{display:block;font-size:32px;color:#67e8f9}.ep-count small{display:block;opacity:.8}
+.ep-tools{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:24px 0}
+.ep-tools label,.ep-editor label{display:flex;flex-direction:column;gap:7px;font-weight:700;color:#e4ddff;flex:1;min-width:190px}
+.ep-tools input,.ep-tools select,.ep-editor input,.ep-editor select{width:100%;background:#1c1944;color:white;border:1px solid rgba(210,190,255,.35);border-radius:12px;padding:12px}
+.ep-tools select option,.ep-editor select option{color:#111}
+.ep-action{border:0;background:linear-gradient(110deg,#8956e7,#3b94cf);color:white;border-radius:13px;padding:13px 17px;font-weight:800;cursor:pointer}
+.ep-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin:18px 0 32px}
+.ep-card{display:flex;flex-direction:column;gap:8px;padding:20px;background:linear-gradient(155deg,rgba(125,77,203,.23),rgba(35,30,80,.65));border:1px solid rgba(205,178,255,.27);border-radius:20px;min-width:0}
+.ep-icon{font-size:28px}.ep-card h3{font-size:18px;line-height:1.3;margin:0}.ep-card p{margin:0;font-size:13px;color:#cfc8f0;line-height:1.55}
+.ep-card ul{padding-left:20px;font-size:12px;color:#dfd8f9;line-height:1.7;flex:1;margin:3px 0}
+.ep-card button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:white;border-radius:10px;padding:10px;cursor:pointer;font-weight:800}
+.ep-card button:hover,.ep-action:hover{filter:brightness(1.15)}
+.ep-subhead{margin:20px 0 10px}.ep-subhead h3{margin:0}.ep-subhead span{color:#d4cafa;font-size:13px}
+.ep-links{display:grid;gap:10px}.ep-link{display:flex;align-items:center;gap:12px;padding:13px 16px;border:1px solid rgba(255,255,255,.19);border-radius:14px;background:rgba(10,10,38,.4)}
+.ep-link div{flex:1;min-width:0}.ep-link strong,.ep-link small{display:block;overflow-wrap:anywhere}.ep-link small{color:#c7c5e5;margin-top:5px}
+.ep-link a{color:white;font-weight:750;padding:10px 12px;border-radius:10px;background:#6d43b8;text-decoration:none}
+.ep-link button{border:1px solid #d8b5e9;color:#fff;background:transparent;border-radius:10px;cursor:pointer;font-size:20px;width:36px;height:36px}
+.ep-empty,.ep-privacy,.ep-hint{color:#d9d3ef;font-size:13px;line-height:1.6}
+.ep-editor{margin:22px 0;border-radius:18px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.17);padding:16px}
+.ep-editor summary{cursor:pointer;font-weight:800}.ep-editor form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:17px}
+.ep-editor form>button,.ep-editor form>p{grid-column:1/-1;margin:0}
+.ep-apps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ep-app{padding:17px 18px;border:1px solid rgba(255,255,255,.24);border-radius:15px;background:rgba(100,60,170,.24);text-decoration:none;color:white;display:flex;flex-direction:column;gap:8px}
+.ep-app span{font-size:13px;color:#d9d1f4}.ep-app:hover{background:rgba(139,92,246,.42)}
+@media(max-width:1000px){.ep-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.ep-cards,.ep-apps,.ep-editor form{grid-template-columns:1fr}.ep-heading{align-items:flex-start}.ep-tools>*{width:100%}.ep-link{flex-wrap:wrap}.ep-link div{flex-basis:100%}}
