@@ -73,3 +73,20 @@ main.wrap>section.ep-reveal{display:block!important}
 #epanitiaRoot .ep-document-list a{color:#c9f2ff}
 @media(max-width:900px){#epanitiaRoot .ep-hex-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){#epanitiaRoot .ep-hex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#epanitiaRoot .ep-hex{min-height:130px;padding:16px}#epanitiaRoot .ep-hex strong{font-size:12px}}
+
+#epanitiaRoot .ep-section-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+#epanitiaRoot .ep-section-card{min-width:0;display:flex;flex-direction:column;gap:10px;text-align:left;padding:20px;border:1px solid #7766b4;border-radius:18px;background:linear-gradient(145deg,#54418f,#30265e);color:#fff;cursor:pointer;font:inherit}
+#epanitiaRoot .ep-section-card strong{font-size:17px}
+#epanitiaRoot .ep-section-icon{font-size:30px}
+#epanitiaRoot .ep-section-card ul{flex:1;margin:4px 0;padding-left:18px;font-size:12px;line-height:1.9}
+#epanitiaRoot .ep-section-card em{font-style:normal;text-align:center;padding:11px;border-radius:10px;background:#66558f;font-weight:700}
+#epanitiaRoot .ep-submodule-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+#epanitiaRoot .ep-submodule-grid button{background:#514187;border:1px solid #8678b3;color:white;border-radius:12px;padding:20px;text-align:left;cursor:pointer;font-weight:700}
+#epanitiaRoot .ep-add-doc{margin-top:24px;padding:20px;border:1px solid #8172ac;border-radius:14px}
+#epanitiaRoot .ep-add-doc summary{cursor:pointer;font-weight:800}
+#epanitiaRoot .ep-add-doc form{display:grid;gap:12px;margin-top:15px}
+#epanitiaRoot .ep-add-doc label{display:grid;gap:6px}
+#epanitiaRoot .ep-add-doc input{width:100%;padding:12px;border-radius:8px;border:1px solid #8e80bd;background:#19183a;color:#fff}
+#epanitiaRoot .ep-add-doc button,#epanitiaRoot [data-delete]{border-radius:8px;padding:10px 16px;cursor:pointer}
+@media(max-width:900px){#epanitiaRoot .ep-section-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#epanitiaRoot .ep-submodule-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){#epanitiaRoot .ep-section-grid,#epanitiaRoot .ep-submodule-grid{grid-template-columns:1fr}}
