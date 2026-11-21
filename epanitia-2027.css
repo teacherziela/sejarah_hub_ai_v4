@@ -46,3 +46,8 @@
 .ep-legacy>summary{cursor:pointer;font-weight:800;color:#e8dcff;font-size:17px}
 .ep-legacy .hex-grid{margin-top:20px}
 @media(max-width:680px){#epanitiaRoot .ep-cards{grid-template-columns:1fr}.ep-welcome{padding:16px}.ep-legacy{padding:14px}}
+
+/* Individual subfolders are clickable; existing links remain intact. */
+#epanitiaRoot .ep-card ul{display:block;margin:8px 0;padding-left:18px}
+#epanitiaRoot .ep-card .ep-item-btn{background:transparent;border:0;box-shadow:none;color:#e9ddff;text-align:left;padding:4px 2px;margin:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+#epanitiaRoot .ep-card .ep-item-btn:hover{color:#fff}
