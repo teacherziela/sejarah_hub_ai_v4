@@ -34,23 +34,21 @@ function meetingDocs(){
 window.refreshEpanitiaDocuments=()=>show();
 function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(links));return true;}catch{return false;}}
 
-const HEX_MODULES=[
- ['📊','PBD / Rumusan','panel','pbdPanel'],
- ['📸','Foto Murid','panel','studentPhotoPanel'],
- ['🖼️','Hasil Murid','panel','pbdEvidenceGalleryPanel'],
- ['🎬','Aktiviti HIP','panel','hipActivityPanel'],
- ['🧩','Analisis Peperiksaan','panel','examPanel'],
- ['👥','Ahli Panitia','panel','guruPanel'],
- ['📚','Dashboard & Cetak PBD','quick','dashboard cetak pbd'],
- ['📝','Isi PBD','quick','isi pbd'],
- ['📈','Analisis Item','quick','analisis item'],
- ['📘','DSKP Tingkatan 1','quick','dskp tingkatan 1'],
- ['📗','DSKP Tingkatan 2','quick','dskp tingkatan 2'],
- ['📖','Buku Teks Tingkatan 2','quick','buku teks tingkatan 2'],
- ['🕌','Seni Bina Islam','quick','seni bina islam'],
- ['🤝','Minit Mesyuarat','meeting','']
+let selectedCategory=-1,selectedSub='';
+const SECTIONS=[
+ ['📁','Standard 1–5 & Evidens',['Standard 1 – Kepimpinan','Standard 2 – Pengurusan Organisasi','Standard 3 – Pengurusan Kurikulum','Standard 4 – PdPc','Standard 5 – Kemenjadian Murid']],
+ ['🗂️','Pelan & Perancangan',['Pelan Strategik','Pelan Taktikal','Pelan Operasi','Sasaran & KPI']],
+ ['📝','Mesyuarat Panitia',['Notis & Agenda','Minit Mesyuarat','Maklum Balas & Tindakan','Bahan Pembentangan']],
+ ['🗓️','Takwim & Program',['Takwim Tahunan','Kertas Kerja','Laporan OPR','Laporan Bergambar']],
+ ['📊','PBD, UASA & Intervensi',['PBD / Rumusan','Dashboard & Cetak PBD','Isi PBD','Analisis Peperiksaan','Analisis Item','Hasil Murid','Foto Murid','Intervensi & Tindakan Susulan']],
+ ['🎮','Inovasi PdP Digital',['HistoryVerse 360','Aktiviti HIP','BBM Digital','Seni Bina Islam','Impak & Suara Murid']],
+ ['👥','Organisasi & Guru',['Ahli Panitia','Carta Organisasi','Agihan Tugas','PLC & LDP','Biodata Guru','DSKP Tingkatan 1','DSKP Tingkatan 2','Buku Teks Tingkatan 2']],
+ ['🖼️','Galeri & Pencapaian',['Galeri Program','Pencapaian Murid','Pencapaian Panitia','Anugerah & Sijil']]
 ];
-let activeModule=null;
+const MODULE_MAP={
+ 'PBD / Rumusan':['panel','pbdPanel'],'Foto Murid':['panel','studentPhotoPanel'],'Hasil Murid':['panel','pbdEvidenceGalleryPanel'],'Aktiviti HIP':['panel','hipActivityPanel'],'Analisis Peperiksaan':['panel','examPanel'],'Ahli Panitia':['panel','guruPanel'],
+ 'Dashboard & Cetak PBD':['quick','dashboard cetak pbd'],'Isi PBD':['quick','isi pbd'],'Analisis Item':['quick','analisis item'],'DSKP Tingkatan 1':['quick','dskp tingkatan 1'],'DSKP Tingkatan 2':['quick','dskp tingkatan 2'],'Buku Teks Tingkatan 2':['quick','buku teks tingkatan 2'],'Seni Bina Islam':['quick','seni bina islam']
+};
 function hideOldPanels(){
  const main=document.querySelector('main.wrap');
  if(!main)return;
@@ -85,33 +83,41 @@ function quickTarget(key){
 function show(){
  const root=document.getElementById('epanitiaRoot');if(!root)return;
  const y=year();
- const home=()=>{hideOldPanels();activeModule=null;show();};
- const heading='<div class="ep-simple-heading"><span>ARKIB TAHUN '+esc(y)+'</span><h2>e-Panitia Sejarah</h2></div>';
- if(activeModule===null){
-  root.innerHTML=heading+'<p class="ep-simple-note">Pilih modul untuk membuka fungsi atau dokumen tahun '+esc(y)+'.</p><div class="ep-hex-grid">'+HEX_MODULES.map((m,i)=>'<button type="button" class="ep-hex" data-module="'+i+'"><span class="ep-hex-icon">'+m[0]+'</span><strong>'+esc(m[1])+'</strong></button>').join('')+'</div>';
-  root.querySelectorAll('[data-module]').forEach(b=>b.addEventListener('click',()=>{activeModule=Number(b.dataset.module);show();}));
+ const heading='<div class="ep-simple-heading"><span>ARKIB DIGITAL TAHUN '+esc(y)+'</span><h2>📚 Pengurusan & Evidens Panitia</h2></div>';
+ const nav='<div class="ep-navigation"><button type="button" id="epBack">← Kembali</button><button type="button" id="epHome">⌂ Home</button></div>';
+ const bindNav=()=>{
+  root.querySelector('#epHome')?.addEventListener('click',()=>{hideOldPanels();selectedCategory=-1;selectedSub='';show();root.scrollIntoView({block:'start'});});
+  root.querySelector('#epBack')?.addEventListener('click',()=>{hideOldPanels();if(selectedSub)selectedSub='';else selectedCategory=-1;show();root.scrollIntoView({block:'start'});});
+ };
+ if(selectedCategory<0){
+  root.innerHTML=heading+'<p class="ep-simple-note">Pilih kategori untuk melihat dokumen dan fungsi tahun '+esc(y)+'.</p><div class="ep-section-grid">'+SECTIONS.map((c,i)=>'<button type="button" class="ep-section-card" data-section="'+i+'"><span class="ep-section-icon">'+c[0]+'</span><strong>'+esc(c[1])+'</strong><ul>'+c[2].map(t=>'<li>'+esc(t)+'</li>').join('')+'</ul><em>Lihat fail '+esc(y)+'</em></button>').join('')+'</div>';
+  root.querySelectorAll('[data-section]').forEach(el=>el.addEventListener('click',()=>{selectedCategory=Number(el.dataset.section);selectedSub='';show();root.scrollIntoView({block:'start'});}));
   return;
  }
- const m=HEX_MODULES[activeModule];
- if(!m){home();return;}
- let body='';
- if(m[2]==='panel'){
-  body='<p class="ep-simple-note">Buka modul '+esc(m[1])+' yang sedia ada.</p><button type="button" class="ep-open-module">Buka '+esc(m[1])+'</button>';
- }else if(m[2]==='quick'){
-  const url=quickTarget(m[3]);
-  body=url?'<a class="ep-open-module" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Buka '+esc(m[1])+' ↗</a>':'<p class="ep-not-updated">Belum dikemas kini untuk tahun '+esc(y)+'.</p>';
- }else{
-  const docs=meetingDocs().filter(x=>x.year===y);
-  body=docs.length?'<div class="ep-document-list">'+docs.map(x=>'<article><strong>'+esc(x.name)+'</strong><a href="'+esc(validUrl(x.url))+'" target="_blank" rel="noopener noreferrer">Buka dokumen ↗</a></article>').join('')+'</div>':'<p class="ep-not-updated">Belum dikemas kini untuk tahun '+esc(y)+'.</p>';
+ const cat=SECTIONS[selectedCategory];
+ if(!selectedSub){
+  root.innerHTML=nav+heading+'<h3 class="ep-module-title">'+cat[0]+' '+esc(cat[1])+' — '+esc(y)+'</h3><div class="ep-submodule-grid">'+cat[2].map((v,i)=>'<button type="button" data-sub="'+i+'">'+esc(v)+' →</button>').join('')+'</div>';
+  bindNav();
+  root.querySelectorAll('[data-sub]').forEach(el=>el.addEventListener('click',()=>{selectedSub=cat[2][Number(el.dataset.sub)];show();root.scrollIntoView({block:'start'});}));
+  return;
  }
- root.innerHTML='<div class="ep-navigation"><button type="button" id="epBack">← Kembali</button><button type="button" id="epHome">⌂ Home</button></div>'+heading+'<h3 class="ep-module-title">'+m[0]+' '+esc(m[1])+'</h3>'+body;
- root.querySelector('#epBack').addEventListener('click',home);
- root.querySelector('#epHome').addEventListener('click',home);
- const open=root.querySelector('.ep-open-module');
- if(m[2]==='panel'&&open)open.addEventListener('click',()=>{
-  const target=document.getElementById(m[3]);
-  if(target){revealPanel(m[3]);}else{open.replaceWith(Object.assign(document.createElement('p'),{textContent:'Belum dikemas kini.'}));}
+ const saved=links.filter(x=>String(x.year)===y&&x.folder===cat[1]&&x.submodule===selectedSub);
+ const existing=selectedSub==='Minit Mesyuarat'?meetingDocs().filter(x=>String(x.year)===y):[];
+ const docs=[...existing,...saved];
+ const list=docs.length?'<div class="ep-document-list">'+docs.map(x=>'<article><strong>'+esc(x.name)+'</strong><div><a href="'+esc(validUrl(x.url))+'" target="_blank" rel="noopener noreferrer">Buka ↗</a> '+(x.readonly?'':'<button type="button" data-delete="'+esc(x.id)+'">Padam</button>')+'</div></article>').join('')+'</div>':'<p class="ep-not-updated">Belum dikemas kini untuk tahun '+esc(y)+'.</p>';
+ const def=MODULE_MAP[selectedSub],quick=def?.[0]==='quick'?quickTarget(def[1]):'';
+ const module=def?.[0]==='panel'?'<button type="button" class="ep-open-module" id="epOpenPanel">Buka '+esc(selectedSub)+'</button>':quick?'<a class="ep-open-module" target="_blank" rel="noopener noreferrer" href="'+esc(quick)+'">Buka '+esc(selectedSub)+' ↗</a>':selectedSub==='HistoryVerse 360'?'<a class="ep-open-module" target="_blank" rel="noopener noreferrer" href="'+esc(APP_LINKS[0].url)+'">Buka HistoryVerse 360 ↗</a>':'';
+ root.innerHTML=nav+heading+'<h3 class="ep-module-title">'+cat[0]+' '+esc(cat[1])+' / '+esc(selectedSub)+'</h3>'+module+list+
+ '<details class="ep-add-doc"><summary>＋ Tambah Dokumen / Pautan</summary><form id="epAddForm"><label>Nama dokumen<input name="title" required maxlength="120" placeholder="Contoh: Minit Mesyuarat Bil. 3/2026"></label><label>Pautan Google Drive / dokumen<input name="url" type="url" required placeholder="https://docs.google.com/..."></label><button type="submit">Simpan pautan</button></form><p class="ep-simple-note">Pautan ini disimpan pada pelayar/peranti ini sahaja, bukan untuk semua guru. Fail asal kekal di Google Drive.</p></details>';
+ bindNav();
+ root.querySelector('#epOpenPanel')?.addEventListener('click',()=>{if(!revealPanel(def[1]))root.querySelector('#epOpenPanel').textContent='Belum dikemas kini';});
+ root.querySelector('#epAddForm').addEventListener('submit',e=>{
+  e.preventDefault();const f=new FormData(e.currentTarget),url=validUrl(String(f.get('url')||'').trim()),name=String(f.get('title')||'').trim();
+  if(!url||!name){alert('Masukkan nama dan pautan yang sah.');return;}
+  links.push({id:'doc-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),year:y,folder:cat[1],submodule:selectedSub,name,url});
+  if(!persist()){links.pop();alert('Gagal menyimpan pada pelayar ini.');return;}show();
  });
+ root.querySelectorAll('[data-delete]').forEach(el=>el.addEventListener('click',()=>{if(!confirm('Padam pautan daripada senarai pada pelayar ini?'))return;links=links.filter(x=>x.id!==el.dataset.delete);persist();show();}));
 }
 function setup(){
  const select=document.getElementById('yearSelect');
@@ -120,7 +126,7 @@ function setup(){
  for(let y=2026;y<=Math.max(2029,new Date().getFullYear()+2);y++)if(![...select.options].some(o=>o.value===String(y))){const opt=document.createElement('option');opt.value=String(y);opt.textContent=String(y);select.add(opt);}
  hideOldPanels();
  // Preserve existing application's year selection and API behaviour.
- select.addEventListener('change',()=>{hideOldPanels();activeModule=null;show();});
+ select.addEventListener('change',()=>{hideOldPanels();selectedCategory=-1;selectedSub='';show();});
  show();
  const apps=document.getElementById('epApps');
  if(apps)apps.innerHTML=APP_LINKS.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener noreferrer" class="ep-app"><strong>${esc(a.label)} ↗</strong><span>${esc(a.desc)}</span></a>`).join('');
