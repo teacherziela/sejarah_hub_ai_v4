@@ -106,7 +106,21 @@ function show(){
  if(!selectedSub){
   root.innerHTML=nav+heading+'<h3 class="ep-module-title">'+cat[0]+' '+esc(cat[1])+' — '+esc(y)+'</h3><div class="ep-submodule-grid">'+cat[2].map((v,i)=>'<button type="button" data-sub="'+i+'">'+esc(v)+' →</button>').join('')+'</div>';
   bindNav();
-  root.querySelectorAll('[data-sub]').forEach(el=>el.addEventListener('click',()=>{selectedSub=cat[2][Number(el.dataset.sub)];show();root.scrollIntoView({block:'start'});}));
+  root.querySelectorAll('[data-sub]').forEach(el=>el.addEventListener('click',()=>{
+  selectedSub=cat[2][Number(el.dataset.sub)];
+  const def=MODULE_MAP[selectedSub];
+  if(def?.[0]==='panel' && document.getElementById(def[1])){
+   if(revealPanel(def[1])){
+    root.hidden=true;root.style.setProperty('display','none','important');
+    const target=document.getElementById(def[1]);
+    let back=document.getElementById('epReturnToDirectory');
+    if(!back){back=document.createElement('button');back.id='epReturnToDirectory';back.type='button';back.className='ep-open-module';back.textContent='← Kembali ke e-Panitia';target.prepend(back);}
+    back.onclick=()=>{hideOldPanels();root.hidden=false;root.style.removeProperty('display');selectedSub='';show();root.scrollIntoView({block:'start'});};
+    return;
+   }
+  }
+  show();root.scrollIntoView({block:'start'});
+ }));
   return;
  }
  const saved=links.filter(x=>String(x.year)===y&&x.folder===cat[1]&&x.submodule===selectedSub);
