@@ -80,6 +80,14 @@ function quickTarget(key){
  const item=list.find(x=>normalize(x.Nama)===wanted&&validUrl(x.Link)&&String(x.Status||'Aktif').toLowerCase()!=='tidak aktif'&&(!x.Tahun||String(x.Tahun)===year()));
  return item?validUrl(item.Link):'';
 }
+function existingQuickDocs(name,y){
+ const entries=(typeof hub!=='undefined'&&Array.isArray(hub.linkPantas))?hub.linkPantas:[];
+ const n=v=>String(v||'').toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,' ').trim();
+ const wanted=n(name);
+ const aliases={'Ahli Panitia':['ahli panitia','biodata guru'],'PBD / Rumusan':['pbd','rumusan pbd'],'Dashboard & Cetak PBD':['dashboard','cetak pbd'],'Isi PBD':['isi pbd','pengisian data pbd'],'Analisis Item':['analisis item'],'DSKP Tingkatan 1':['dskp tingkatan 1'],'DSKP Tingkatan 2':['dskp tingkatan 2'],'Buku Teks Tingkatan 2':['buku teks tingkatan 2'],'Analisis Peperiksaan':['analisis peperiksaan']};
+ const terms=aliases[name]||[wanted];
+ return entries.filter(x=>validUrl(x.Link)&&String(x.Status||'Aktif').toLowerCase()!=='tidak aktif'&&(!x.Tahun||String(x.Tahun)===y)&&terms.some(t=>n(x.Nama).includes(n(t)))).map((x,i)=>({id:'quick-'+i,name:String(x.Nama||name),url:x.Link,readonly:true}));
+}
 function show(){
  const root=document.getElementById('epanitiaRoot');if(!root)return;
  const y=year();
@@ -103,8 +111,10 @@ function show(){
  }
  const saved=links.filter(x=>String(x.year)===y&&x.folder===cat[1]&&x.submodule===selectedSub);
  const existing=selectedSub==='Minit Mesyuarat'?meetingDocs().filter(x=>String(x.year)===y):[];
- const docs=[...existing,...saved];
- const list=docs.length?'<div class="ep-document-list">'+docs.map(x=>'<article><strong>'+esc(x.name)+'</strong><div><a href="'+esc(validUrl(x.url))+'" target="_blank" rel="noopener noreferrer">Buka ↗</a> '+(x.readonly?'':'<button type="button" data-delete="'+esc(x.id)+'">Padam</button>')+'</div></article>').join('')+'</div>':'<p class="ep-not-updated">Belum dikemas kini untuk tahun '+esc(y)+'.</p>';
+ const quickDocs=existingQuickDocs(selectedSub,y);
+ const docs=[...existing,...quickDocs,...saved].filter((x,i,all)=>all.findIndex(v=>validUrl(v.url)===validUrl(x.url))===i);
+ const hasModule=!!MODULE_MAP[selectedSub]||selectedSub==='HistoryVerse 360';
+ const list=docs.length?'<div class="ep-document-list">'+docs.map(x=>'<article><strong>'+esc(x.name)+'</strong><div><a href="'+esc(validUrl(x.url))+'" target="_blank" rel="noopener noreferrer">Buka ↗</a> '+(x.readonly?'':'<button type="button" data-delete="'+esc(x.id)+'">Padam</button>')+'</div></article>').join('')+'</div>' :hasModule?'<p class="ep-simple-note">Fungsi asal tersedia melalui butang di atas. Tiada dokumen tambahan didaftarkan bagi tahun '+esc(y)+'.</p>':'<p class="ep-not-updated">Belum dikemas kini untuk tahun '+esc(y)+'.</p>';
  const def=MODULE_MAP[selectedSub],quick=def?.[0]==='quick'?quickTarget(def[1]):'';
  const module=def?.[0]==='panel'?'<button type="button" class="ep-open-module" id="epOpenPanel">Buka '+esc(selectedSub)+'</button>':quick?'<a class="ep-open-module" target="_blank" rel="noopener noreferrer" href="'+esc(quick)+'">Buka '+esc(selectedSub)+' ↗</a>':selectedSub==='HistoryVerse 360'?'<a class="ep-open-module" target="_blank" rel="noopener noreferrer" href="'+esc(APP_LINKS[0].url)+'">Buka HistoryVerse 360 ↗</a>':'';
  root.innerHTML=nav+heading+'<h3 class="ep-module-title">'+cat[0]+' '+esc(cat[1])+' / '+esc(selectedSub)+'</h3>'+module+list+
