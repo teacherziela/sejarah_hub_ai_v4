@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arkib Aktiviti 2026 | Panitia Sejarah SMKTJ2</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#faf7ff;background:#100d1c}
+*{box-sizing:border-box}body{margin:0}main{max-width:1200px;margin:auto;padding:28px 20px 48px}
+h1{font-size:clamp(26px,4vw,40px);margin:8px 0}p{line-height:1.6}
+.eyebrow{color:#d6b6ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+.desc{color:#cfc3e0;margin:8px 0 24px}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}
+input{background:#211832;color:#fff;border:1px solid #81689c;border-radius:12px;padding:13px 16px;width:100%;font:inherit}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.card{background:linear-gradient(135deg,#32233f,#21182f);border:1px solid #59416d;border-radius:18px;overflow:hidden}
+.card img{width:100%;height:210px;object-fit:cover;background:#302643}
+.card-body{padding:18px}.card h2{font-size:19px;margin:4px 0 8px}.date{font-size:13px;color:#d0b6ec}.card p{margin:8px 0;color:#e1d7ea;white-space:pre-wrap;overflow-wrap:anywhere}
+#status{padding:22px;border:1px dashed #6a5081;border-radius:14px;color:#dacded}
+.count{font-size:14px;color:#d8c1ed}
+@media(max-width:600px){main{padding:20px 14px}.card img{height:190px}}
+</style></head><body><main>
+<div class="eyebrow">SMK Taman Jasmin 2 · Sesi Petang</div>
+<h1>Galeri Program & Aktiviti 2026</h1>
+<p class="desc">Arkib bergambar Panitia Sejarah. Paparan ini memuatkan rekod aktiviti 2026 sahaja daripada Sejarah Hub AI.</p>
+<div class="toolbar"><input id="cari" type="search" placeholder="Cari nama program, kelas atau penerangan..." aria-label="Cari aktiviti"></div>
+<p id="count" class="count"></p>
+<div id="status" role="status">Sedang mendapatkan rekod aktiviti 2026...</div>
+<section id="galeri" class="grid" aria-label="Galeri Aktiviti 2026"></section>
+</main>
+<script>
+'use strict';
+const API='https://script.google.com/macros/s/AKfycbxGDlKJAh2z2pXDCX9rNAbbhdLLblGx3kU64j0LSp5usS8ZiTG50fF91KOQmSdS3mCu/exec';
+const $=id=>document.getElementById(id);
+let all=[];
+function str(x){return x==null?'':String(x);}
+function date(s){if(!s)return '';const d=new Date(s);return Number.isNaN(d.getTime())?str(s):d.toLocaleDateString('ms-MY',{day:'2-digit',month:'long',year:'numeric'});}
+function photo(url){
+ const raw=str(url).trim();if(!raw)return '';
+ const match=raw.match(/\/d\/([^/?#]+)|[?&]id=([^&#]+)/);
+ if(match)return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(match[1]||match[2])+'&sz=w900';
+ try{const u=new URL(raw);return u.protocol==='https:'?u.href:'';}catch{return '';}
+}
+function field(el,tag,cls,value){const x=document.createElement(tag);if(cls)x.className=cls;x.textContent=str(value);el.appendChild(x);return x;}
+function render(){
+ const q=$('cari').value.trim().toLocaleLowerCase('ms');
+ const rows=all.filter(x=>[x.Tajuk,x.Kelas,x.Penerangan].some(v=>str(v).toLocaleLowerCase('ms').includes(q)));
+ $('galeri').replaceChildren();
+ $('count').textContent=rows.length+' aktiviti dipaparkan';
+ if(!rows.length){$('status').hidden=false;$('status').textContent=all.length?'Tiada aktiviti sepadan dengan carian.':'Belum ada rekod Galeri Aktiviti 2026.';return;}
+ $('status').hidden=true;
+ rows.forEach(g=>{
+ const card=document.createElement('article');card.className='card';
+ const img=photo(g.Photo||g.Foto);
+ if(img){const im=document.createElement('img');im.src=img;im.alt='Gambar '+str(g.Tajuk);im.loading='lazy';im.onerror=()=>{im.style.display='none'};card.appendChild(im);}
+ const body=document.createElement('div');body.className='card-body';
+ field(body,'span','date',[date(g.Tarikh),str(g.Kelas)].filter(Boolean).join(' · '));
+ field(body,'h2','',g.Tajuk||'Aktiviti Panitia');
+ if(g.Penerangan)field(body,'p','',g.Penerangan);
+ card.appendChild(body);$('galeri').appendChild(card);
+ });
+}
+$('cari').addEventListener('input',render);
+(async()=>{
+ try{
+ const res=await fetch(API+'?action=hub&year=2026',{redirect:'follow'});
+ if(!res.ok)throw Error('Respons '+res.status);
+ const data=await res.json();
+ if(!data||!Array.isArray(data.galeri))throw Error('Data GALERI tiada dalam respons');
+ all=data.galeri.filter(x=>str(x.Tahun||'2026')==='2026'&&str(x.Status||'Aktif').toLowerCase()!=='tidak aktif');
+ render();
+ }catch(e){
+ $('status').hidden=false;
+ $('status').textContent='Galeri belum dapat dimuatkan. Semak akses dan respons Web App Sejarah Hub AI. ('+e.message+')';
+ $('count').textContent='';
+ }
+})();
+</script></body></html>
