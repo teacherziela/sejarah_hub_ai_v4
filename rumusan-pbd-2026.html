@@ -16,12 +16,19 @@ button.secondary{background:#392a53}button:disabled{opacity:.55;cursor:not-allow
 .track{height:20px;border-radius:7px;background:#392d50;overflow:hidden}.bar{height:100%;border-radius:7px;background:linear-gradient(90deg,#8f61db,#45c5e7);min-width:0}
 #status{color:#e4cfff;margin:12px 0}#result[hidden]{display:none}
 .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
-.report-heading{text-align:center;display:none;color:#000}.footnote{font-size:12px;color:#c6b9d9;margin-top:15px}
+.report-heading{text-align:center;display:none;color:#000}
+#namesSection[hidden]{display:none}.list-overflow{overflow:auto}#studentTable{width:100%;border-collapse:collapse;text-align:left;font-size:14px}
+#studentTable th,#studentTable td{border:1px solid #77618e;padding:10px 12px}#studentTable thead{background:#46305f}
+#studentTable td:last-child{text-align:center;font-weight:700}.footnote{font-size:12px;color:#c6b9d9;margin-top:15px}
 @media(max-width:650px){.controls{grid-template-columns:1fr}.panel{padding:16px}}
-@media print{@page{size:A4;margin:17mm} :root{color:#111;background:white}body{background:white;color:#111}main{padding:0;max-width:none}.eyebrow,h1,.muted,.controls,.actions,.footnote,#status{display:none!important}.report-heading{display:block}.panel{background:white;border:0;padding:0;margin:12px 0}.kpi{background:#f5f2f8;border:1px solid #ccc;break-inside:avoid}.kpi span,.kpi strong{color:#111}.track{background:#eee}.bar{background:#6a428f!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.chartrow{break-inside:avoid}#detailTitle{color:#111}}
+@media print{@page{size:A4;margin:17mm} :root{color:#111;background:white}body{background:white;color:#111}main{padding:0;max-width:none}.eyebrow,h1,.muted,.controls,.actions,.footnote,#status{display:none!important}.report-heading{display:block}.panel{background:white;border:0;padding:0;margin:12px 0}.kpi{background:#f5f2f8;border:1px solid #ccc;break-inside:avoid}.kpi span,.kpi strong{color:#111}.track{background:#eee}.bar{background:#6a428f!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.chartrow{break-inside:avoid}#detailTitle{color:#111}
+#namesSection{display:block!important;break-before:page;page-break-before:always}
+#namesSection h2{color:#111}#studentTable{font-size:10pt}#studentTable th,#studentTable td{border-color:#777;color:#111;padding:6px 8px}
+#studentTable thead{background:#eee;color:#111;display:table-header-group}#studentTable tr{break-inside:avoid;page-break-inside:avoid}
+#namesSection .muted{display:block!important;color:#444}}
 </style></head><body><main>
 <div class="eyebrow">SMK TAMAN JASMIN 2 · SESI PETANG</div><h1>Rumusan PBD Sejarah · 2026</h1>
-<p class="muted">Analisis kelas berdasarkan rekod PBD sebenar daripada Sejarah Hub AI. Paparan ringkasan sahaja tanpa nama murid.</p>
+<p class="muted">Analisis kelas berdasarkan rekod PBD sebenar daripada Sejarah Hub AI. Rumusan statistik dipaparkan pada skrin; cetakan boleh mengandungi senarai nama murid dan TP tertinggi untuk kegunaan guru.</p>
 <div class="panel"><div class="controls">
 <label>Tingkatan<select id="ting"><option value="">Pilih tingkatan</option><option value="1">Tingkatan 1</option><option value="2">Tingkatan 2</option></select></label>
 <label>Kelas<select id="kelas"><option value="">Pilih kelas</option></select></label>
@@ -35,6 +42,11 @@ button.secondary{background:#392a53}button:disabled{opacity:.55;cursor:not-allow
  <p class="footnote">Sumber: Sejarah Hub AI (pbdClassSummary). Laporan menggambarkan data semasa yang tersedia pada sumber 2026, bukan arkib beku.</p>
  <div class="actions"><button id="print" type="button">🖨️ Cetak / Simpan PDF Rumusan Kelas</button><button id="full" class="secondary" type="button">📋 Laporan Lengkap Murid (Akses Guru)</button><button id="clear" class="secondary" type="button">Pilih Kelas Lain</button></div>
  </div>
+ <section class="panel" id="namesSection" hidden>
+  <h2>Senarai Nama Murid & TP Tertinggi</h2>
+  <p class="muted">Untuk rujukan guru sahaja. TP yang belum direkodkan ditanda dengan —, bukan TP3 anggaran.</p>
+  <div class="list-overflow"><table id="studentTable"><thead><tr><th>Bil.</th><th>Nama Murid</th><th>TP tertinggi</th></tr></thead><tbody id="studentRows"></tbody></table></div>
+ </section>
 </section>
 </main><script>
 'use strict';
@@ -46,7 +58,9 @@ $('ting').addEventListener('change',()=>{const list=classes;$('kelas').replaceCh
 $('kelas').addEventListener('change',()=>{$('result').hidden=true;});
 function card(title,value){const c=document.createElement('div');c.className='kpi';const t=document.createElement('span');t.textContent=title;const v=document.createElement('strong');v.textContent=value;c.append(t,v);return c;}
 function n(x){const v=Number(x);return Number.isFinite(v)?v:0}
+let lastSummary=null;
 function show(data){
+ lastSummary=data;
  const s=data.summary||{};const counts=s.tpCounts||{};const total=n(s.totalActive);const has=n(s.adaTp);
  $('detailTitle').textContent='Tingkatan '+$('ting').value+' '+$('kelas').value;
  $('guru').textContent='Guru Sejarah: '+(Array.isArray(data.guruKelas)&&data.guruKelas.length?data.guruKelas.join(', '):'Belum dipadankan');
@@ -55,8 +69,20 @@ function show(data){
  const chart=$('chart');chart.replaceChildren();
  const max=Math.max(1,...[1,2,3,4,5,6].map(i=>n(counts[i])));
  for(let i=1;i<=6;i++){const r=document.createElement('div');r.className='chartrow';const label=document.createElement('strong');label.textContent='TP'+i;const track=document.createElement('div');track.className='track';const bar=document.createElement('div');bar.className='bar';bar.style.width=(100*n(counts[i])/max)+'%';track.appendChild(bar);const val=document.createElement('strong');val.textContent=n(counts[i]);r.append(label,track,val);chart.appendChild(r);}
+ const students=Array.isArray(data.allList)?data.allList:[];
+ const tbody=$('studentRows');tbody.replaceChildren();
+ students.forEach((student,i)=>{
+  const tr=document.createElement('tr');
+  const name=String(student.nama||student.Nama||'').trim();
+  const tp=Number(student.tp);
+  for(const value of [i+1,name||'Nama tiada dalam rekod',tp>=1&&tp<=6?'TP'+tp:'—']){
+    const td=document.createElement('td');td.textContent=value;tr.appendChild(td);
+  }
+  tbody.appendChild(tr);
+ });
+ $('namesSection').hidden=true;
  $('result').hidden=false;
- $('status').textContent='Rumusan berjaya dipaparkan. Semak rekod sebelum cetak.';
+ $('status').textContent='Rumusan berjaya dipaparkan. Cetakan boleh sertakan senarai nama murid dan TP tertinggi jika tersedia.';
 }
 $('lihat').onclick=async()=>{
  const ting=$('ting').value,kelas=$('kelas').value;if(!ting||!kelas){$('status').textContent='Pilih tingkatan dan kelas dahulu.';return;}
@@ -67,7 +93,14 @@ $('lihat').onclick=async()=>{
  }catch(e){$('status').textContent='Gagal memuatkan rumusan: '+e.message;}
  finally{$('lihat').disabled=false;}
 };
-$('print').onclick=()=>window.print();
+$('print').onclick=()=>{
+ if(!lastSummary||!Array.isArray(lastSummary.allList)||!lastSummary.allList.length){
+  $('status').textContent='Senarai murid tidak tersedia. Cetakan rumusan statistik sahaja dibenarkan sehingga rekod individu dapat disahkan.';
+  window.print();return;
+ }
+ $('namesSection').hidden=false;
+ window.print();
+};
 $('full').onclick=()=>{
  const ting=$('ting').value,kelas=$('kelas').value;
  if(!ting||!kelas){$('status').textContent='Pilih tingkatan dan kelas dahulu.';return;}
