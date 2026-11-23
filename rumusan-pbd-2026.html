@@ -28,7 +28,7 @@ button.secondary{background:#392a53}button:disabled{opacity:.55;cursor:not-allow
 #namesSection .muted{display:block!important;color:#444}}
 </style></head><body><main>
 <div class="eyebrow">SMK TAMAN JASMIN 2 · SESI PETANG</div><h1>Rumusan PBD Sejarah · 2026</h1>
-<p class="muted">Analisis kelas berdasarkan rekod PBD sebenar daripada Sejarah Hub AI. Rumusan statistik dipaparkan pada skrin; cetakan boleh mengandungi senarai nama murid dan TP tertinggi untuk kegunaan guru.</p>
+<p class="muted">Analisis kelas berdasarkan rekod PBD sebenar daripada Sejarah Hub AI. Rumusan kelas dan graf TP. Untuk nama murid serta TP mengikut setiap topik, gunakan laporan PBD asal mengikut kelas.</p>
 <div class="panel"><div class="controls">
 <label>Tingkatan<select id="ting"><option value="">Pilih tingkatan</option><option value="1">Tingkatan 1</option><option value="2">Tingkatan 2</option></select></label>
 <label>Kelas<select id="kelas"><option value="">Pilih kelas</option></select></label>
@@ -40,14 +40,9 @@ button.secondary{background:#392a53}button:disabled{opacity:.55;cursor:not-allow
  <div class="grid" id="kpi"></div></div>
  <div class="panel"><h2>Taburan Tahap Penguasaan (TP tertinggi)</h2><div id="chart"></div>
  <p class="footnote">Sumber: Sejarah Hub AI (pbdClassSummary). Laporan menggambarkan data semasa yang tersedia pada sumber 2026, bukan arkib beku.</p>
- <div class="actions"><button id="print" type="button">🖨️ Cetak / Simpan PDF Rumusan Kelas</button><button id="full" class="secondary" type="button">📋 Laporan Lengkap Murid (Akses Guru)</button><button id="clear" class="secondary" type="button">Pilih Kelas Lain</button></div>
+ <div class="actions"><button id="print" type="button">🖨️ Cetak Rumusan & Graf</button><button id="full" class="secondary" type="button">📋 Buka Laporan PBD Asal Mengikut Kelas</button><button id="clear" class="secondary" type="button">Pilih Kelas Lain</button></div>
  </div>
- <section class="panel" id="namesSection" hidden>
-  <h2>Senarai Nama Murid & TP Tertinggi</h2>
-  <p class="muted">Untuk rujukan guru sahaja. TP yang belum direkodkan ditanda dengan —, bukan TP3 anggaran.</p>
-  <div class="list-overflow"><table id="studentTable"><thead><tr><th>Bil.</th><th>Nama Murid</th><th>TP tertinggi</th></tr></thead><tbody id="studentRows"></tbody></table></div>
  </section>
-</section>
 </main><script>
 'use strict';
 const API='https://script.google.com/macros/s/AKfycbxGDlKJAh2z2pXDCX9rNAbbhdLLblGx3kU64j0LSp5usS8ZiTG50fF91KOQmSdS3mCu/exec';
@@ -69,20 +64,8 @@ function show(data){
  const chart=$('chart');chart.replaceChildren();
  const max=Math.max(1,...[1,2,3,4,5,6].map(i=>n(counts[i])));
  for(let i=1;i<=6;i++){const r=document.createElement('div');r.className='chartrow';const label=document.createElement('strong');label.textContent='TP'+i;const track=document.createElement('div');track.className='track';const bar=document.createElement('div');bar.className='bar';bar.style.width=(100*n(counts[i])/max)+'%';track.appendChild(bar);const val=document.createElement('strong');val.textContent=n(counts[i]);r.append(label,track,val);chart.appendChild(r);}
- const students=Array.isArray(data.allList)?data.allList:[];
- const tbody=$('studentRows');tbody.replaceChildren();
- students.forEach((student,i)=>{
-  const tr=document.createElement('tr');
-  const name=String(student.nama||student.Nama||'').trim();
-  const tp=Number(student.tp);
-  for(const value of [i+1,name||'Nama tiada dalam rekod',tp>=1&&tp<=6?'TP'+tp:'—']){
-    const td=document.createElement('td');td.textContent=value;tr.appendChild(td);
-  }
-  tbody.appendChild(tr);
- });
- $('namesSection').hidden=true;
  $('result').hidden=false;
- $('status').textContent='Rumusan berjaya dipaparkan. Cetakan boleh sertakan senarai nama murid dan TP tertinggi jika tersedia.';
+ $('status').textContent='Rumusan berjaya dipaparkan. Gunakan butang Laporan PBD Asal untuk nama murid dan TP mengikut topik.';
 }
 $('lihat').onclick=async()=>{
  const ting=$('ting').value,kelas=$('kelas').value;if(!ting||!kelas){$('status').textContent='Pilih tingkatan dan kelas dahulu.';return;}
@@ -93,20 +76,12 @@ $('lihat').onclick=async()=>{
  }catch(e){$('status').textContent='Gagal memuatkan rumusan: '+e.message;}
  finally{$('lihat').disabled=false;}
 };
-$('print').onclick=()=>{
- if(!lastSummary||!Array.isArray(lastSummary.allList)||!lastSummary.allList.length){
-  $('status').textContent='Senarai murid tidak tersedia. Cetakan rumusan statistik sahaja dibenarkan sehingga rekod individu dapat disahkan.';
-  window.print();return;
- }
- $('namesSection').hidden=false;
- window.print();
-};
+$('print').onclick=()=>window.print();
 $('full').onclick=()=>{
  const ting=$('ting').value,kelas=$('kelas').value;
  if(!ting||!kelas){$('status').textContent='Pilih tingkatan dan kelas dahulu.';return;}
  const q=new URLSearchParams({pbdReportTing:ting,pbdReportKelas:kelas});
  window.open('./index.html?'+q.toString()+'#pbdPanel','_blank','noopener,noreferrer');
 };
-window.addEventListener('afterprint',()=>{$('namesSection').hidden=true;});
 $('clear').onclick=()=>{window.scrollTo({top:0,behavior:'smooth'});$('result').hidden=true;};
 </script></body></html>
