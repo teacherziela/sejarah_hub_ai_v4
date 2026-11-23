@@ -107,5 +107,6 @@ $('full').onclick=()=>{
  const q=new URLSearchParams({pbdReportTing:ting,pbdReportKelas:kelas});
  window.open('./index.html?'+q.toString()+'#pbdPanel','_blank','noopener,noreferrer');
 };
+window.addEventListener('afterprint',()=>{$('namesSection').hidden=true;});
 $('clear').onclick=()=>{window.scrollTo({top:0,behavior:'smooth'});$('result').hidden=true;};
 </script></body></html>
