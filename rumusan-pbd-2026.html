@@ -42,7 +42,7 @@ const API='https://script.google.com/macros/s/AKfycbxGDlKJAh2z2pXDCX9rNAbbhdLLbl
 const $=id=>document.getElementById(id);
 const classes=['ADIL','BESTARI','CENDEKIA','DEDIKASI','EHSAN','GIGIH','JUJUR','PROGRESIF','RASIONAL','TEKUN','USAHA','YAKIN'];
 const allClasses={'1':['ADIL','BESTARI','CENDEKIA','GIGIH','TEKUN','USAHA','YAKIN'],'2':['ADIL','CENDEKIA','DEDIKASI','EHSAN','GIGIH','MURNI','PROGRESIF','RASIONAL']};
-$('ting').addEventListener('change',()=>{const list=allClasses[$('ting').value]||classes;$('kelas').replaceChildren(new Option('Pilih kelas',''),...list.map(n=>new Option(n,n)));$('result').hidden=true;});
+$('ting').addEventListener('change',()=>{const list=classes;$('kelas').replaceChildren(new Option('Pilih kelas',''),...list.map(n=>new Option(n,n)));$('result').hidden=true;});
 $('kelas').addEventListener('change',()=>{$('result').hidden=true;});
 function card(title,value){const c=document.createElement('div');c.className='kpi';const t=document.createElement('span');t.textContent=title;const v=document.createElement('strong');v.textContent=value;c.append(t,v);return c;}
 function n(x){const v=Number(x);return Number.isFinite(v)?v:0}
@@ -50,7 +50,7 @@ function show(data){
  const s=data.summary||{};const counts=s.tpCounts||{};const total=n(s.totalActive);const has=n(s.adaTp);
  $('detailTitle').textContent='Tingkatan '+$('ting').value+' '+$('kelas').value;
  $('guru').textContent='Guru Sejarah: '+(Array.isArray(data.guruKelas)&&data.guruKelas.length?data.guruKelas.join(', '):'Belum dipadankan');
- const items=[['Murid Aktif',total],['Ada Rekod TP',has],['Tiada Rekod',n(s.tiadaTp)],['TP1–TP2',n(s.weakCount)],['Purata TP',n(s.avgTp||s.purataTp).toFixed(2)],['Jumlah Rekod',n(s.totalRecords||s.jumlahRekod)]];
+ const items=[['Murid Aktif',total],['Ada Rekod TP',has],['Tiada Rekod',n(s.tiadaTp)],['TP1–TP2',n(s.weakCount)],['Purata TP',s.avgTp||s.purataTp||'—'],['Jumlah Rekod',n(s.totalRecords||s.jumlahRekod)]];
  $('kpi').replaceChildren(...items.map(x=>card(...x)));
  const chart=$('chart');chart.replaceChildren();
  const max=Math.max(1,...[1,2,3,4,5,6].map(i=>n(counts[i])));
@@ -61,7 +61,7 @@ function show(data){
 $('lihat').onclick=async()=>{
  const ting=$('ting').value,kelas=$('kelas').value;if(!ting||!kelas){$('status').textContent='Pilih tingkatan dan kelas dahulu.';return;}
  $('lihat').disabled=true;$('result').hidden=true;$('status').textContent='Sedang mengambil rumusan kelas...';
- try{const q=new URLSearchParams({action:'pbdClassSummary',tingkatan:ting,kelas,ujian:'UPSA',v:String(Date.now())});
+ try{const q=new URLSearchParams({action:'pbdClassSummary',tingkatan:ting,kelas,ujian:'UPSA',year:'2026',v:String(Date.now())});
  const response=await fetch(API+'?'+q,{cache:'no-store'});if(!response.ok)throw Error('Respons '+response.status);
  const data=await response.json();if(!data.success)throw Error(data.message||'Rumusan tidak dapat dimuatkan');show(data);
  }catch(e){$('status').textContent='Gagal memuatkan rumusan: '+e.message;}
