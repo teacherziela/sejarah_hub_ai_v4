@@ -312,6 +312,7 @@ async function initPbd(){
     renderPbdGuruOptions();
     rebuildGuruDropdownSafe();
     initPbdSummaryControls();
+    applyPbdReportDeepLink();
     renderPbdSummary();
     document.getElementById('pbdStatus').textContent='Sedia. Pilih tingkatan dan kelas untuk rumusan, atau isi PBD seperti biasa.';
   }catch(e){
@@ -320,6 +321,7 @@ async function initPbd(){
     pbdData = pbdData || {murid:[],topik:[],rekod:[]};
     forcePopulatePbdFilters();
     initPbdSummaryControls();
+    applyPbdReportDeepLink();
     document.getElementById('pbdStatus').textContent='Data murid belum penuh dimuatkan, tetapi filter asas telah dipulihkan. Cuba pilih kelas dan papar rumusan.';
   }
 }
@@ -3647,3 +3649,24 @@ function ensureTamadunIslamT1Options(){
   for(let i=1;i<=18;i++) setTimeout(function(){ patchRender(); ensureTamadunIslamT1Options(); }, i*350);
   window.ensureTamadunIslamT1Options = ensureTamadunIslamT1Options;
 })();
+
+
+// Pautan daripada rumusan PBD 2026: pilih kelas pada laporan asal secara automatik.
+function applyPbdReportDeepLink(){
+  const params=new URLSearchParams(location.search);
+  const ting=params.get('pbdReportTing'),kelas=params.get('pbdReportKelas');
+  if(!/^[12]$/.test(ting||'') || !/^[A-Za-z ]{2,30}$/.test(kelas||''))return;
+  const tingEl=document.getElementById('rumusTingkatan');
+  const kelasEl=document.getElementById('rumusKelas');
+  if(!tingEl||!kelasEl)return;
+  if(!Array.from(tingEl.options).some(o=>o.value===ting))return;
+  tingEl.value=ting;
+  onRumusTingkatan();
+  const target=kelas.trim().toUpperCase();
+  if(Array.from(kelasEl.options).some(o=>o.value.toUpperCase()===target)){
+    kelasEl.value=Array.from(kelasEl.options).find(o=>o.value.toUpperCase()===target).value;
+    renderPbdSummary();
+  }
+  const anchor=document.getElementById('pbdPanel');
+  if(anchor)setTimeout(()=>anchor.scrollIntoView({block:'start'}),450);
+}
