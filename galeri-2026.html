@@ -17,6 +17,17 @@ input{background:#211832;color:#fff;border:1px solid #81689c;border-radius:12px;
 .card-body{padding:18px}.card h2{font-size:19px;margin:4px 0 8px}.date{font-size:13px;color:#d0b6ec}.card p{margin:8px 0;color:#e1d7ea;white-space:pre-wrap;overflow-wrap:anywhere}
 #status{padding:22px;border:1px dashed #6a5081;border-radius:14px;color:#dacded}
 .count{font-size:14px;color:#d8c1ed}
+.card{cursor:pointer;transition:transform .16s,border-color .16s}.card:hover,.card:focus-within{transform:translateY(-3px);border-color:#a97bdc}
+.open-report{display:block;width:100%;margin-top:14px;border:1px solid #a27cd5;background:#7551aa;color:white;padding:11px;border-radius:10px;cursor:pointer;font:inherit}
+dialog{width:min(850px,96vw);max-height:92vh;overflow:auto;border:1px solid #9771c7;border-radius:18px;background:#fafafa;color:#23202b;padding:0}
+dialog::backdrop{background:#0d0819d9}
+.report{padding:25px 32px 36px}.report-head{text-align:center;border-bottom:2px solid #503179;padding-bottom:15px}
+.report h2{font-size:25px;color:#48296d}.report-logo{font-size:12px;letter-spacing:.08em;font-weight:750}
+.report-table{width:100%;border-collapse:collapse;margin:18px 0}.report-table th,.report-table td{border:1px solid #d7cedf;padding:10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.report-table th{width:30%;background:#f0ebf5}.report-photo{max-width:100%;max-height:350px;object-fit:contain;display:block;margin:16px auto}
+.report-note{font-size:13px;color:#775a87}.report-actions{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px;background:#2a1d3e;position:sticky;top:0;z-index:1}
+.report-actions button{padding:10px 17px;border:1px solid #ae90d3;background:#7650b3;color:#fff;border-radius:9px;cursor:pointer}
+@media print{body>main{display:none!important}dialog[open]{position:static;display:block;width:100%;max-height:none;border:0;overflow:visible;background:white;color:black}dialog::backdrop{display:none}.report-actions{display:none!important}.report{padding:0}.report-note{color:#444}@page{size:A4;margin:15mm}}
 @media(max-width:600px){main{padding:20px 14px}.card img{height:190px}}
 </style></head><body><main>
 <div class="eyebrow">SMK Taman Jasmin 2 · Sesi Petang</div>
@@ -27,6 +38,10 @@ input{background:#211832;color:#fff;border:1px solid #81689c;border-radius:12px;
 <div id="status" role="status">Sedang mendapatkan rekod aktiviti 2026...</div>
 <section id="galeri" class="grid" aria-label="Galeri Aktiviti 2026"></section>
 </main>
+<dialog id="oprDialog" aria-label="Laporan OPR Aktiviti 2026">
+ <div class="report-actions"><button id="printOpr" type="button">Cetak / Simpan PDF</button><button id="closeOpr" type="button">Tutup</button></div>
+ <div class="report" id="oprContent"></div>
+</dialog>
 <script>
 'use strict';
 const API='https://script.google.com/macros/s/AKfycbxGDlKJAh2z2pXDCX9rNAbbhdLLblGx3kU64j0LSp5usS8ZiTG50fF91KOQmSdS3mCu/exec';
@@ -56,9 +71,35 @@ function render(){
  field(body,'span','date',[date(g.Tarikh),str(g.Kelas)].filter(Boolean).join(' · '));
  field(body,'h2','',g.Tajuk||'Aktiviti Panitia');
  if(g.Penerangan)field(body,'p','',g.Penerangan);
+ const btn=field(body,'button','open-report','Lihat Laporan OPR');btn.type='button';btn.onclick=()=>openOpr(g);
  card.appendChild(body);$('galeri').appendChild(card);
  });
 }
+function reportRow(table,label,value){const tr=table.insertRow();field(tr,'th','',label);field(tr,'td','',str(value).trim()||'Belum direkodkan');}
+function openOpr(g){
+ const root=$('oprContent');root.replaceChildren();
+ const head=field(root,'div','report-head','');
+ field(head,'div','report-logo','SMK TAMAN JASMIN 2 · SESI PETANG');
+ field(head,'h2','','LAPORAN ONE PAGE REPORT (OPR)');
+ field(head,'p','','PANITIA SEJARAH · TAHUN 2026');
+ const table=field(root,'table','report-table','');
+ reportRow(table,'Nama program / aktiviti',g.Tajuk);
+ reportRow(table,'Tarikh pelaksanaan',date(g.Tarikh));
+ reportRow(table,'Kelas / Kumpulan sasaran',g.Kelas);
+ reportRow(table,'Tempat',g.Tempat||g.Lokasi);
+ reportRow(table,'Penyelaras',g.Penyelaras||g.Guru);
+ reportRow(table,'Objektif',g.Objektif);
+ reportRow(table,'Ringkasan pelaksanaan',g.Penerangan);
+ reportRow(table,'Impak / pencapaian',g.Impak||g.Keberhasilan);
+ const src=photo(g.Photo||g.Foto);
+ if(src){field(root,'h3','','Dokumentasi Bergambar');const im=document.createElement('img');im.className='report-photo';im.alt='Dokumentasi aktiviti';im.src=src;root.appendChild(im);}
+ const raw=str(g.OPR||g.Laporan||g.LinkOPR||g.PautanLaporan).trim();
+ if(/^https:\/\//i.test(raw)){const p=field(root,'p','','');const a=document.createElement('a');a.href=raw;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Buka laporan OPR asal';p.appendChild(a);}
+ field(root,'p','report-note','Draf automatik berdasarkan rekod Galeri Aktiviti 2026. Sila semak dan lengkapkan maklumat yang belum direkodkan sebelum digunakan sebagai laporan rasmi.');
+ $('oprDialog').showModal();
+}
+$('closeOpr').onclick=()=>$('oprDialog').close();
+$('printOpr').onclick=()=>window.print();
 $('cari').addEventListener('input',render);
 (async()=>{
  try{
