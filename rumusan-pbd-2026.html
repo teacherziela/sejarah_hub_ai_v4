@@ -33,7 +33,7 @@ button.secondary{background:#392a53}button:disabled{opacity:.55;cursor:not-allow
  <div class="grid" id="kpi"></div></div>
  <div class="panel"><h2>Taburan Tahap Penguasaan (TP tertinggi)</h2><div id="chart"></div>
  <p class="footnote">Sumber: Sejarah Hub AI (pbdClassSummary). Laporan menggambarkan data semasa yang tersedia pada sumber 2026, bukan arkib beku.</p>
- <div class="actions"><button id="print" type="button">🖨️ Cetak / Simpan PDF Rumusan Kelas</button><button id="clear" class="secondary" type="button">Pilih Kelas Lain</button></div>
+ <div class="actions"><button id="print" type="button">🖨️ Cetak / Simpan PDF Rumusan Kelas</button><button id="full" class="secondary" type="button">📋 Laporan Lengkap Murid (Akses Guru)</button><button id="clear" class="secondary" type="button">Pilih Kelas Lain</button></div>
  </div>
 </section>
 </main><script>
@@ -68,5 +68,11 @@ $('lihat').onclick=async()=>{
  finally{$('lihat').disabled=false;}
 };
 $('print').onclick=()=>window.print();
+$('full').onclick=()=>{
+ const ting=$('ting').value,kelas=$('kelas').value;
+ if(!ting||!kelas){$('status').textContent='Pilih tingkatan dan kelas dahulu.';return;}
+ const q=new URLSearchParams({pbdReportTing:ting,pbdReportKelas:kelas});
+ window.open('./index.html?'+q.toString()+'#pbdPanel','_blank','noopener,noreferrer');
+};
 $('clear').onclick=()=>{window.scrollTo({top:0,behavior:'smooth'});$('result').hidden=true;};
 </script></body></html>
