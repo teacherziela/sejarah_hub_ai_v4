@@ -1,0 +1,51 @@
+<!doctype html><html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard UASA 2026 | Panitia Sejarah</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f8f3ff;background:#100c20}
+*{box-sizing:border-box}body{margin:0}main{max-width:1170px;margin:auto;padding:28px 20px 45px}
+h1{font-size:clamp(27px,4vw,40px);margin:8px 0}h2{font-size:21px;margin:0 0 18px}
+.eyebrow{color:#dab9ff;font-size:12px;font-weight:800;letter-spacing:.08em}.sub{color:#c5b7d6;line-height:1.5}
+.tabs{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}.tabs button,button{border:1px solid #9271be;background:#3a2a58;color:white;padding:12px 16px;border-radius:10px;cursor:pointer;font:inherit}.tabs button.active{background:#8657c5}
+.panel{background:#231a36;border:1px solid #594272;border-radius:18px;padding:22px;margin:18px 0}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.kpi{background:#342548;border-radius:13px;padding:17px}.kpi span{font-size:12px;color:#ddccea}.kpi strong{font-size:30px;display:block;margin-top:8px;color:#63dde6}
+select{background:#352649;color:#fff;border:1px solid #9271be;border-radius:10px;padding:12px;min-width:200px;max-width:100%}
+.barrow{display:grid;grid-template-columns:60px 1fr 55px;gap:12px;align-items:center;margin:12px 0}.track{background:#392c50;height:21px;border-radius:7px;overflow:hidden}.fill{background:linear-gradient(90deg,#9864dd,#55c3e9);height:100%;border-radius:7px}.count{text-align:right;font-weight:700}
+.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:center;border-bottom:1px solid #59466d;padding:10px 9px;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+.note{font-size:12px;color:#c2b6d0;line-height:1.5}.actions{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0}.actions button{background:#7953b6}
+.view[hidden]{display:none}.bottom{margin-top:20px}
+@media(max-width:680px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.panel{padding:15px}.kpi strong{font-size:25px}}
+@media print{@page{size:A4 landscape;margin:12mm}body{background:white;color:black}main{max-width:none;padding:0}.eyebrow,.tabs,.actions,.sub{display:none!important}.panel{background:white;border:0;padding:0;margin:8px 0}.kpi{background:#eee!important;break-inside:avoid}.kpi span,.kpi strong{color:black}.track{background:#eee}.fill{background:#754aa6!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.note{color:#444}th,td{border-color:#999}h1{font-size:22pt}}
+</style></head><body><main>
+<div class="eyebrow">SMK TAMAN JASMIN 2 · SESI PETANG</div>
+<h1>Dashboard Pentaksiran UASA · 2026</h1>
+<p class="sub">Rumusan keputusan Tingkatan 2 daripada dua Google Sheets sedia ada. Hanya statistik agregat dipaparkan — tiada maklumat peribadi murid.</p>
+<div class="tabs"><button id="tabSej" class="active" type="button">Sejarah 2026</button><button id="tabAll" type="button">UASA Semua Subjek</button></div>
+<section id="viewSej" class="view">
+<div class="panel"><h2>Rumusan Sejarah Tingkatan 2</h2><div class="grid" id="sejKpi"></div></div>
+<div class="panel"><h2>Taburan Gred Sejarah</h2><div id="grades"></div></div>
+<div class="panel"><h2>Analisis Mengikut Kelas</h2><label for="kelas">Pilih kelas: </label><select id="kelas"></select><div class="grid bottom" id="classKpi"></div><h2 class="bottom">Taburan Gred Kelas</h2><div id="classGrades"></div><h2 class="bottom">Perbandingan Prestasi Kelas</h2><div class="tablewrap"><table><thead><tr><th>Kelas</th><th>Bil. Murid</th><th>Dinilai</th><th>Purata %</th><th>Lulus %</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>TH</th></tr></thead><tbody id="classRows"></tbody></table></div></div>
+</section>
+<section id="viewAll" class="view" hidden><div class="panel"><h2>Ringkasan UASA Tingkatan 2 · Mengikut Subjek</h2><div class="tablewrap"><table><thead><tr><th>Subjek</th><th>Hadir</th><th>% Lulus</th><th>GPMP</th></tr></thead><tbody id="subjectRows"></tbody></table></div><p class="note">Sumber fail T2 UASA 2026, tab ANALISIS TINGKATAN 2. Bilangan hadir berbeza mengikut subjek.</p></div></section>
+<p class="note">Sumber Sejarah: fail “Markah sejarah 2026” (tab DASHBOARD). Sumber subjek: fail “T2 UASA 2026” (tab ANALISIS TINGKATAN 2). Angka kedua-dua sumber dikekalkan secara berasingan kerana mungkin terdapat perbezaan semakan data. Ini ialah snapshot pada 23 November 2026, bukan kemas kini langsung.</p>
+<div class="actions"><button id="print" type="button">🖨️ Cetak / Simpan PDF</button><button id="source1" type="button">Buka Sheet Sejarah</button><button id="source2" type="button">Buka Sheet UASA T2</button></div>
+</main><script>
+'use strict';
+const db={"overall":{"total":571,"assessed":529,"mean":35,"pass":73.3},"grades":[{"grade":"A","n":17},{"grade":"B","n":38},{"grade":"C","n":77},{"grade":"D","n":97},{"grade":"E","n":159},{"grade":"F","n":141},{"grade":"TH","n":21}],"classes":[{"name":"2 ADIL","total":44,"assessed":44,"mean":59.5,"pass":95.5,"grades":[9,11,11,3,8,2,0]},{"name":"2 BESTARI","total":36,"assessed":36,"mean":35.9,"pass":80.6,"grades":[1,2,5,9,12,7,0]},{"name":"2 CENDEKIA","total":25,"assessed":25,"mean":66.1,"pass":100,"grades":[4,8,11,1,1,0,0]},{"name":"2 DEDIKASI","total":33,"assessed":33,"mean":52.4,"pass":100,"grades":[2,2,18,8,3,0,0]},{"name":"2 EHSAN","total":40,"assessed":40,"mean":54.9,"pass":100,"grades":[1,11,13,13,2,0,0]},{"name":"2 GIGIH","total":40,"assessed":40,"mean":43.8,"pass":97.5,"grades":[0,2,10,20,7,1,0]},{"name":"2 HARMONI","total":40,"assessed":38,"mean":41.9,"pass":100,"grades":[0,2,8,15,13,0,0]},{"name":"2 IKHLAS","total":40,"assessed":39,"mean":30,"pass":87.2,"grades":[0,0,1,10,23,5,0]},{"name":"2 KREATIF","total":39,"assessed":35,"mean":23.4,"pass":54.3,"grades":[0,0,0,5,14,16,4]},{"name":"2 MURNI","total":39,"assessed":35,"mean":17.5,"pass":42.9,"grades":[0,0,0,0,15,20,4]},{"name":"2 PROGRESIF","total":39,"assessed":32,"mean":18.1,"pass":46.9,"grades":[0,0,0,2,13,17,0]},{"name":"2 RASIONAL","total":38,"assessed":31,"mean":20.1,"pass":54.8,"grades":[0,0,0,5,12,14,7]},{"name":"2 TEKUN","total":41,"assessed":35,"mean":18.2,"pass":48.6,"grades":[0,0,0,0,17,18,0]},{"name":"2 USAHA","total":39,"assessed":33,"mean":15.1,"pass":18.2,"grades":[0,0,0,1,5,27,6]},{"name":"2 YAKIN","total":38,"assessed":33,"mean":22.2,"pass":57.6,"grades":[0,0,0,5,14,14,0]}],"subjects":[{"name":"BM","present":109,"pass":"93.58%","gpmp":"3.26"},{"name":"BI","present":546,"pass":"87.18%","gpmp":"3.29"},{"name":"MAT","present":401,"pass":"82.54%","gpmp":"4.33"},{"name":"SEJ","present":529,"pass":"74.86%","gpmp":"4.43"},{"name":"SN","present":73,"pass":"100.00%","gpmp":"3.56"},{"name":"PAI","present":82,"pass":"100.00%","gpmp":"2.89"},{"name":"RBT","present":247,"pass":"99.60%","gpmp":"2.18"},{"name":"BC","present":44,"pass":"68.18%","gpmp":"5.02"}]};
+const $=id=>document.getElementById(id);
+const labels=['A','B','C','D','E','F','TH'];
+const num=x=>Number(x)||0;
+function kpi(title,value){const div=document.createElement('div');div.className='kpi';const a=document.createElement('span');a.textContent=title;const b=document.createElement('strong');b.textContent=String(value);div.append(a,b);return div}
+function chart(node,values){node.replaceChildren();const max=Math.max(1,...values.map(x=>x.n));values.forEach(v=>{const row=document.createElement('div');row.className='barrow';const title=document.createElement('strong');title.textContent=v.grade;const track=document.createElement('div');track.className='track';const bar=document.createElement('div');bar.className='fill';bar.style.width=(100*v.n/max)+'%';track.append(bar);const n=document.createElement('span');n.className='count';n.textContent=v.n;row.append(title,track,n);node.append(row)})}
+function td(row,value){const c=document.createElement('td');c.textContent=String(value);row.append(c)}
+function choose(v){const c=db.classes.find(x=>x.name===v)||db.classes[0];if(!c)return; $('classKpi').replaceChildren(kpi('Murid',c.total),kpi('Dinilai',c.assessed),kpi('Purata %',c.mean),kpi('Lulus %',c.pass));chart($('classGrades'),labels.map((grade,i)=>({grade,n:c.grades[i]})))}
+$('sejKpi').replaceChildren(kpi('Jumlah Murid',db.overall.total),kpi('Dinilai',db.overall.assessed),kpi('Purata %',db.overall.mean),kpi('Lulus %',db.overall.pass));
+chart($('grades'),db.grades);
+db.classes.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;$('kelas').append(o);const row=document.createElement('tr');[c.name,c.total,c.assessed,c.mean,c.pass,...c.grades].forEach(x=>td(row,x));$('classRows').append(row)});
+$('kelas').onchange=()=>choose($('kelas').value);choose(db.classes[0]?.name);
+db.subjects.forEach(s=>{const tr=document.createElement('tr');[s.name,s.present,s.pass,s.gpmp].forEach(x=>td(tr,x));$('subjectRows').append(tr)});
+function tab(which){$('viewSej').hidden=which!=='sej';$('viewAll').hidden=which!=='all';$('tabSej').classList.toggle('active',which==='sej');$('tabAll').classList.toggle('active',which==='all')}
+$('tabSej').onclick=()=>tab('sej');$('tabAll').onclick=()=>tab('all');
+$('print').onclick=()=>window.print();
+$('source1').onclick=()=>window.open('https://docs.google.com/spreadsheets/d/1ZOr9ASygtWhnIDlrunv2K-Y0iduvlT7toKIrN_Kygxo/edit','_blank','noopener,noreferrer');
+$('source2').onclick=()=>window.open('https://docs.google.com/spreadsheets/d/1Hyz2B3jpWBy53AwjAL8Tt-Xwe37zlqSXc2A5tg_-O-4/edit','_blank','noopener,noreferrer');
+</script></body></html>
