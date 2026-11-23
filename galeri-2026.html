@@ -57,7 +57,7 @@ function photo(url){
  try{const u=new URL(raw);return u.protocol==='https:'?u.href:'';}catch{return '';}
 }
 function field(el,tag,cls,value){const x=document.createElement(tag);if(cls)x.className=cls;x.textContent=str(value);el.appendChild(x);return x;}
-function cleanName(s){return str(s).toLocaleLowerCase('ms').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
+function cleanName(s){return str(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('ms').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
 function mergeOpr(rows){
  const out=Array.isArray(rows)?rows.slice():[];
  for(const opr of OPR_2026){
@@ -154,19 +154,20 @@ function openOpr(g){
 $('closeOpr').onclick=()=>$('oprDialog').close();
 $('printOpr').onclick=()=>window.print();
 $('cari').addEventListener('input',render);
+// Tunjukkan OPR yang sudah disahkan walaupun sambungan Hub lama terganggu.
+all=mergeOpr([]);render();
 (async()=>{
  try{
- const res=await fetch(API+'?action=hub&year=2026',{redirect:'follow'});
+ const res=await fetch(API+'?action=hub&year=2026',{redirect:'follow',cache:'no-store'});
  if(!res.ok)throw Error('Respons '+res.status);
  const data=await res.json();
- if(!data||!Array.isArray(data.galeri))throw Error('Data GALERI tiada dalam respons');
- all=mergeOpr(data.galeri.filter(x=>str(x.Tahun||'2026')==='2026'&&str(x.Status||'Aktif').toLowerCase()!=='tidak aktif'));
-
+ if(!data||!Array.isArray(data.galeri))throw Error('Data GALERI tiada');
+ const published=data.galeri.filter(x=>str(x.Tahun||'2026')==='2026'&&str(x.Status||'Aktif').toLowerCase()!=='tidak aktif');
+ all=mergeOpr(published);
  render();
  }catch(e){
- $('status').hidden=false;
- $('status').textContent='Galeri belum dapat dimuatkan. Semak akses dan respons Web App Sejarah Hub AI. ('+e.message+')';
- $('count').textContent='';
+ $('status').hidden=true;
+ $('count').textContent=all.length+' aktiviti dipaparkan · Rekod OPR tersedia; sambungan galeri lama perlu disemak';
  }
 })();
 </script></body></html>
