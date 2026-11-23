@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ms"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rumusan PBD Kelas 2026 — Panitia Sejarah SMKTJ2</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f7f2ff;background:#100d1f}*{box-sizing:border-box}body{margin:0}
+main{max-width:1140px;margin:auto;padding:25px 18px 50px}.eyebrow{font-weight:700;letter-spacing:.08em;color:#c9a4ff;font-size:12px}
+h1{font-size:clamp(25px,4vw,37px);margin:10px 0}.muted{color:#cabfdc;font-size:14px}
+.panel{background:#241a39;border:1px solid #60447f;border-radius:17px;padding:21px;margin-top:20px}
+.controls{display:grid;grid-template-columns:1fr 1.2fr auto;align-items:end;gap:14px}
+label{display:grid;gap:8px;font-weight:650;font-size:14px}select,button{font:inherit;padding:12px 14px;border-radius:10px}
+select{width:100%;background:#392a53;color:white;border:1px solid #8161a6}button{border:1px solid #9f79cf;background:#7650ae;color:white;cursor:pointer}
+button.secondary{background:#392a53}button:disabled{opacity:.55;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:13px;margin-top:18px}
+.kpi{background:#38294f;padding:16px;border:1px solid #684b85;border-radius:13px}.kpi span{color:#d0bddf;font-size:13px}.kpi strong{display:block;font-size:30px;margin-top:9px;color:#59e4e6}
+.chartrow{display:grid;grid-template-columns:54px 1fr 55px;gap:12px;align-items:center;padding:9px 0}
+.track{height:20px;border-radius:7px;background:#392d50;overflow:hidden}.bar{height:100%;border-radius:7px;background:linear-gradient(90deg,#8f61db,#45c5e7);min-width:0}
+#status{color:#e4cfff;margin:12px 0}#result[hidden]{display:none}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+.report-heading{text-align:center;display:none;color:#000}.footnote{font-size:12px;color:#c6b9d9;margin-top:15px}
+@media(max-width:650px){.controls{grid-template-columns:1fr}.panel{padding:16px}}
+@media print{@page{size:A4;margin:17mm} :root{color:#111;background:white}body{background:white;color:#111}main{padding:0;max-width:none}.eyebrow,h1,.muted,.controls,.actions,.footnote,#status{display:none!important}.report-heading{display:block}.panel{background:white;border:0;padding:0;margin:12px 0}.kpi{background:#f5f2f8;border:1px solid #ccc;break-inside:avoid}.kpi span,.kpi strong{color:#111}.track{background:#eee}.bar{background:#6a428f!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.chartrow{break-inside:avoid}#detailTitle{color:#111}}
+</style></head><body><main>
+<div class="eyebrow">SMK TAMAN JASMIN 2 · SESI PETANG</div><h1>Rumusan PBD Sejarah · 2026</h1>
+<p class="muted">Analisis kelas berdasarkan rekod PBD sebenar daripada Sejarah Hub AI. Paparan ringkasan sahaja tanpa nama murid.</p>
+<div class="panel"><div class="controls">
+<label>Tingkatan<select id="ting"><option value="">Pilih tingkatan</option><option value="1">Tingkatan 1</option><option value="2">Tingkatan 2</option></select></label>
+<label>Kelas<select id="kelas"><option value="">Pilih kelas</option></select></label>
+<button id="lihat" type="button">Papar Rumusan</button>
+</div><p id="status" role="status">Pilih tingkatan dan kelas.</p></div>
+<section id="result" hidden>
+ <div class="report-heading"><h2>RUMUSAN PBD SEJARAH TAHUN 2026</h2><p>SMK TAMAN JASMIN 2 · SESI PETANG</p></div>
+ <div class="panel"><h2 id="detailTitle"></h2><p id="guru" class="muted"></p>
+ <div class="grid" id="kpi"></div></div>
+ <div class="panel"><h2>Taburan Tahap Penguasaan (TP tertinggi)</h2><div id="chart"></div>
+ <p class="footnote">Sumber: Sejarah Hub AI (pbdClassSummary). Laporan menggambarkan data semasa yang tersedia pada sumber 2026, bukan arkib beku.</p>
+ <div class="actions"><button id="print" type="button">🖨️ Cetak / Simpan PDF Rumusan Kelas</button><button id="clear" class="secondary" type="button">Pilih Kelas Lain</button></div>
+ </div>
+</section>
+</main><script>
+'use strict';
+const API='https://script.google.com/macros/s/AKfycbxGDlKJAh2z2pXDCX9rNAbbhdLLblGx3kU64j0LSp5usS8ZiTG50fF91KOQmSdS3mCu/exec';
+const $=id=>document.getElementById(id);
+const classes=['ADIL','BESTARI','CENDEKIA','DEDIKASI','EHSAN','GIGIH','JUJUR','PROGRESIF','RASIONAL','TEKUN','USAHA','YAKIN'];
+const allClasses={'1':['ADIL','BESTARI','CENDEKIA','GIGIH','TEKUN','USAHA','YAKIN'],'2':['ADIL','CENDEKIA','DEDIKASI','EHSAN','GIGIH','MURNI','PROGRESIF','RASIONAL']};
+$('ting').addEventListener('change',()=>{const list=allClasses[$('ting').value]||classes;$('kelas').replaceChildren(new Option('Pilih kelas',''),...list.map(n=>new Option(n,n)));$('result').hidden=true;});
+$('kelas').addEventListener('change',()=>{$('result').hidden=true;});
+function card(title,value){const c=document.createElement('div');c.className='kpi';const t=document.createElement('span');t.textContent=title;const v=document.createElement('strong');v.textContent=value;c.append(t,v);return c;}
+function n(x){const v=Number(x);return Number.isFinite(v)?v:0}
+function show(data){
+ const s=data.summary||{};const counts=s.tpCounts||{};const total=n(s.totalActive);const has=n(s.adaTp);
+ $('detailTitle').textContent='Tingkatan '+$('ting').value+' '+$('kelas').value;
+ $('guru').textContent='Guru Sejarah: '+(Array.isArray(data.guruKelas)&&data.guruKelas.length?data.guruKelas.join(', '):'Belum dipadankan');
+ const items=[['Murid Aktif',total],['Ada Rekod TP',has],['Tiada Rekod',n(s.tiadaTp)],['TP1–TP2',n(s.weakCount)],['Purata TP',n(s.avgTp||s.purataTp).toFixed(2)],['Jumlah Rekod',n(s.totalRecords||s.jumlahRekod)]];
+ $('kpi').replaceChildren(...items.map(x=>card(...x)));
+ const chart=$('chart');chart.replaceChildren();
+ const max=Math.max(1,...[1,2,3,4,5,6].map(i=>n(counts[i])));
+ for(let i=1;i<=6;i++){const r=document.createElement('div');r.className='chartrow';const label=document.createElement('strong');label.textContent='TP'+i;const track=document.createElement('div');track.className='track';const bar=document.createElement('div');bar.className='bar';bar.style.width=(100*n(counts[i])/max)+'%';track.appendChild(bar);const val=document.createElement('strong');val.textContent=n(counts[i]);r.append(label,track,val);chart.appendChild(r);}
+ $('result').hidden=false;
+ $('status').textContent='Rumusan berjaya dipaparkan. Semak rekod sebelum cetak.';
+}
+$('lihat').onclick=async()=>{
+ const ting=$('ting').value,kelas=$('kelas').value;if(!ting||!kelas){$('status').textContent='Pilih tingkatan dan kelas dahulu.';return;}
+ $('lihat').disabled=true;$('result').hidden=true;$('status').textContent='Sedang mengambil rumusan kelas...';
+ try{const q=new URLSearchParams({action:'pbdClassSummary',tingkatan:ting,kelas,ujian:'UPSA',v:String(Date.now())});
+ const response=await fetch(API+'?'+q,{cache:'no-store'});if(!response.ok)throw Error('Respons '+response.status);
+ const data=await response.json();if(!data.success)throw Error(data.message||'Rumusan tidak dapat dimuatkan');show(data);
+ }catch(e){$('status').textContent='Gagal memuatkan rumusan: '+e.message;}
+ finally{$('lihat').disabled=false;}
+};
+$('print').onclick=()=>window.print();
+$('clear').onclick=()=>{window.scrollTo({top:0,behavior:'smooth'});$('result').hidden=true;};
+</script></body></html>
