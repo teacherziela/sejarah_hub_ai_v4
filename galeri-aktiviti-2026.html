@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arkib Aktiviti 2026 | Panitia Sejarah SMKTJ2</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#faf7ff;background:#100d1c}
+*{box-sizing:border-box}body{margin:0}main{max-width:1200px;margin:auto;padding:28px 20px 48px}
+h1{font-size:clamp(26px,4vw,40px);margin:8px 0}p{line-height:1.6}
+.eyebrow{color:#d6b6ff;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+.desc{color:#cfc3e0;margin:8px 0 24px}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;margin:20px 0}
+input{background:#211832;color:#fff;border:1px solid #81689c;border-radius:12px;padding:13px 16px;width:100%;font:inherit}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.card{background:linear-gradient(135deg,#32233f,#21182f);border:1px solid #59416d;border-radius:18px;overflow:hidden}
+.card img{width:100%;height:210px;object-fit:cover;background:#302643}
+.card-body{padding:18px}.card h2{font-size:19px;margin:4px 0 8px}.date{font-size:13px;color:#d0b6ec}.card p{margin:8px 0;color:#e1d7ea;white-space:pre-wrap;overflow-wrap:anywhere}
+#status{padding:22px;border:1px dashed #6a5081;border-radius:14px;color:#dacded}
+.count{font-size:14px;color:#d8c1ed}
+.card{cursor:pointer;transition:transform .16s,border-color .16s}.card:hover,.card:focus-within{transform:translateY(-3px);border-color:#a97bdc}
+.open-report{display:block;width:100%;margin-top:14px;border:1px solid #a27cd5;background:#7551aa;color:white;padding:11px;border-radius:10px;cursor:pointer;font:inherit}
+dialog{width:min(850px,96vw);max-height:92vh;overflow:auto;border:1px solid #9771c7;border-radius:18px;background:#fafafa;color:#23202b;padding:0}
+dialog::backdrop{background:#0d0819d9}
+.report{padding:25px 32px 36px}.report-head{text-align:center;border-bottom:2px solid #503179;padding-bottom:15px}
+.report h2{font-size:25px;color:#48296d}.report-logo{font-size:12px;letter-spacing:.08em;font-weight:750}
+.report-table{width:100%;border-collapse:collapse;margin:18px 0}.report-table th,.report-table td{border:1px solid #d7cedf;padding:10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.report-table th{width:30%;background:#f0ebf5}.report-photo{max-width:100%;max-height:350px;object-fit:contain;display:block;margin:16px auto}
+.report-note{font-size:13px;color:#775a87}.report-actions{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px;background:#2a1d3e;position:sticky;top:0;z-index:1}
+.report-actions button{padding:10px 17px;border:1px solid #ae90d3;background:#7650b3;color:#fff;border-radius:9px;cursor:pointer}
+@media print{body>main{display:none!important}dialog[open]{position:static;display:block;width:100%;max-height:none;border:0;overflow:visible;background:white;color:black}dialog::backdrop{display:none}.report-actions{display:none!important}.report{padding:0}.report-note{color:#444}@page{size:A4;margin:15mm}}
+@media(max-width:600px){main{padding:20px 14px}.card img{height:190px}}
+</style></head><body><main>
+<div class="eyebrow">SMK Taman Jasmin 2 · Sesi Petang</div>
+<h1>Galeri Program & Aktiviti 2026</h1>
+<p class="desc">Arkib bergambar Panitia Sejarah. Paparan ini memuatkan rekod aktiviti 2026 sahaja daripada Sejarah Hub AI.</p>
+<div class="toolbar"><input id="cari" type="search" placeholder="Cari nama program, kelas atau penerangan..." aria-label="Cari aktiviti"></div>
+<p id="count" class="count"></p>
+<div id="status" role="status">Sedang mendapatkan rekod aktiviti 2026...</div>
+<section id="galeri" class="grid" aria-label="Galeri Aktiviti 2026"></section>
+</main>
+<dialog id="oprDialog" aria-label="Laporan OPR Aktiviti 2026">
+ <div class="report-actions"><button id="printOpr" type="button">Cetak / Simpan PDF</button><button id="closeOpr" type="button">Tutup</button></div>
+ <div class="report" id="oprContent"></div>
+</dialog>
+<script>
+'use strict';
+const API='https://script.google.com/macros/s/AKfycbxGDlKJAh2z2pXDCX9rNAbbhdLLblGx3kU64j0LSp5usS8ZiTG50fF91KOQmSdS3mCu/exec';
+const $=id=>document.getElementById(id);
+const OPR_2026=[{"Tajuk":"Bengkel Teknik PASAK (KBAT) Subjek Sejarah Tingkatan 1","Tarikh":"2026-05-20","Kelas":"Tingkatan 1 — 1 Adil, 1 Rasional, 1 Cendekia, 1 Dedikasi, 1 Gigih, 1 Harmoni","Masa":"11.00 pagi – 12.30 tengah hari","Tempat":"Bilik Mawar","Penyelaras":"Panitia Sejarah","Objektif":"Meningkatkan kemahiran murid menjawab soalan KBAT menggunakan teknik PASAK; membimbing murid memahami struktur jawapan yang sistematik dan berfakta; menggalakkan pemikiran kritis dan analitikal.","Penerangan":"Bengkel memberi pendedahan teknik PASAK dan sesi latihan menjawab soalan KBAT secara berstruktur, termasuk perbincangan dan bimbingan kepada murid.","Impak":"Kekuatan: Murid memahami teknik menjawab soalan KBAT dengan lebih jelas dan tersusun; teknik PASAK membantu menghasilkan jawapan lebih lengkap; murid terlibat secara aktif. Kelemahan: Masa bengkel yang singkat mengehadkan latihan; sebahagian murid masih memerlukan bimbingan lanjut. Cadangan: Bengkel susulan dan latihan berfokus mengikut aras keupayaan murid.","source":"OPR bergambar PASAK yang dibekalkan"},{"Tajuk":"Penataran Kurikulum Sejarah Tingkatan 1 Tahun 2027","Tarikh":"2026-11-13","Kelas":"Semua guru mata pelajaran Sejarah","Masa":"11.00 pagi – 3.30 petang","Tempat":"Bilik Mesyuarat","Penyelaras":"Panitia Sejarah","Objektif":"Memberi pendedahan tentang Kurikulum Persekolahan 2027 (KP2027) serta memantapkan kefahaman guru terhadap dokumen kurikulum, Kemahiran Pemikiran Sejarah dan pendekatan PdP.","Penerangan":"Taklimat KP2027 dan dokumen kurikulum Sejarah, perbincangan Kemahiran Pemikiran Sejarah, nilai patriotisme serta aplikasi PdP. Guru menjalankan latihan kumpulan bagi merancang aktiviti PdP dan membentangkan hasil perbincangan.","Impak":"Meningkatkan kefahaman guru tentang keperluan KP2027, menggalakkan kolaborasi dan perkongsian idea melalui latihan berkumpulan, serta membantu persediaan PdP Sejarah yang lebih bermakna.","OPR":"https://drive.google.com/file/d/1g2_aBb7BCyfrRxfOiZhoQAOHlNVAHLUv/view","photoFallback":"https://drive.google.com/thumbnail?id=1g2_aBb7BCyfrRxfOiZhoQAOHlNVAHLUv&sz=w1000"},{"Tajuk":"Sambutan Ambang Merdeka","Tarikh":"2026-08-28","Kelas":"Semua warga SMK Taman Jasmin 2","Masa":"7.30 – 8.30 pagi","Tempat":"Dataran Jasmin","Penyelaras":"Panitia Bidang Kemanusiaan / warga sekolah","Objektif":"Menghargai tokoh perjuangan kemerdekaan, menghayati erti kemerdekaan dan keamanan negara, serta menyemai perpaduan warga sekolah.","Penerangan":"Bacaan doa, ucapan pengetua, persembahan lakonan, laungan Merdeka sebanyak tujuh kali dan nyanyian lagu patriotik.","Impak":"Menyemarakkan rasa bangga semasa laungan Merdeka beramai-ramai serta memupuk kebersamaan melalui persediaan pentas, persembahan kumpulan dan gotong-royong.","OPR":"https://drive.google.com/file/d/1ZZjCUW5hjCkIXc7KsrNvB3y97uyTkr5A/view","photoFallback":"https://drive.google.com/thumbnail?id=1ZZjCUW5hjCkIXc7KsrNvB3y97uyTkr5A&sz=w1000"},{"Tajuk":"Penutup Bulan Kemerdekaan","Tarikh":"2026-09-15","Kelas":"Semua warga SMK Taman Jasmin 2","Masa":"7.30 – 8.30 pagi","Tempat":"Dataran Jasmin","Penyelaras":"Panitia Bidang Kemanusiaan / warga sekolah","Objektif":"Memupuk semangat perpaduan, nilai murni dan kerjasama warga sekolah.","Penerangan":"Nyanyian lagu Negaraku, lagu negeri Selangor dan lagu sekolah, bacaan doa, ucapan pengetua serta penyampaian hadiah pertandingan sempena Bulan Kemerdekaan.","Impak":"Mengiktiraf usaha dan bakat murid melalui pertandingan seperti kuiz Sejarah, melukis dan keceriaan kelas, serta menggalakkan penyertaan aktif pada masa hadapan.","OPR":"https://drive.google.com/file/d/1Zg9yzzBZ23dTLopx0y6xyDhriEd5fT5v/view","photoFallback":"https://drive.google.com/thumbnail?id=1Zg9yzzBZ23dTLopx0y6xyDhriEd5fT5v&sz=w1000"},{"Tajuk":"Penggunaan Hub Sejarah dalam Pengurusan Sumber Panitia dan Pengisian PBD","Tarikh":"2026-05-06","Kelas":"Guru-guru Sejarah sesi petang","Masa":"10.00 pagi – 1.00 tengah hari","Tempat":"Bilik Guru","Penyelaras":"Panitia Sejarah","Objektif":"Menyelaraskan penggunaan Hub Sejarah sebagai sumber utama panitia sesi petang dan meningkatkan kefahaman guru dalam pengisian PBD secara sistematik.","Penerangan":"Demonstrasi akses bahan panitia, pemilihan tingkatan, kelas dan topik serta pengisian Tahap Penguasaan TP1 hingga TP6. Guru diberi penerangan tentang perekodan secara seragam untuk pemantauan.","Impak":"Penggunaan Hub Sejarah menyeragamkan pengurusan sumber dan rekod PBD, mempercepat perekodan serta memudahkan semakan dan pemantauan pencapaian murid."},{"Tajuk":"Penyelarasan Skema Jawapan dan Penandaan Sejarah","Tarikh":"2026-03-11","Kelas":"Guru-guru Sejarah termasuk guru baharu","Masa":"10.00 pagi – 1.00 tengah hari","Tempat":"Bilik Guru","Penyelaras":"Panitia Sejarah","Objektif":"Menyelaraskan kefahaman guru tentang skema jawapan dan pemberian markah; memastikan penandaan seragam, adil dan konsisten; memberi bimbingan kepada guru baharu.","Penerangan":"Perbincangan skema jawapan dan pecahan markah, penerimaan jawapan murid, pemilihan fakta dan huraian, bimbingan standard penandaan serta penyelesaian kes jawapan yang memerlukan pertimbangan bersama.","Impak":"Membantu meningkatkan keseragaman dan ketepatan pemarkahan serta kefahaman terhadap standard penandaan; guru baharu mendapat bimbingan secara langsung."},{"Tajuk":"Gamification Learning Sejarah: Komik “Siapa Saya?”","Tarikh":"2026-01-14","Kelas":"Murid Tingkatan 2","Masa":"1.30 – 2.00 petang","Tempat":"Bilik Darjah","Penyelaras":"Unit Akademik / Panitia Sejarah","Objektif":"Meningkatkan kefahaman Sejarah melalui gamifikasi dan penghasilan komik; menggalakkan penglibatan aktif murid dan mengembangkan KBAT.","Penerangan":"Murid dibimbing menghasilkan komik Sejarah berdasarkan konsep “Siapa Saya?”, melukis watak dan mengaitkan fakta melalui perbincangan serta soal jawab bersama guru.","Impak":"Kekuatan: Minat serta penglibatan aktif murid, pemahaman fakta melalui gamifikasi dan interaksi dua hala. Kelemahan: Kekangan masa menghadkan pembentangan dan sebahagian murid memerlukan bimbingan kreativiti.","OPR":"https://drive.google.com/file/d/1uj0pSHIKEPblRshjt7XASpI_onS57vRz/view","photoFallback":"https://drive.google.com/thumbnail?id=1uj0pSHIKEPblRshjt7XASpI_onS57vRz&sz=w1000"}];
+let all=[];
+function str(x){return x==null?'':String(x);}
+function date(s){if(!s)return '';const d=new Date(s);return Number.isNaN(d.getTime())?str(s):d.toLocaleDateString('ms-MY',{day:'2-digit',month:'long',year:'numeric'});}
+function photo(url){
+ const raw=str(url).trim();if(!raw)return '';
+ const match=raw.match(/\/d\/([^/?#]+)|[?&]id=([^&#]+)/);
+ if(match)return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(match[1]||match[2])+'&sz=w900';
+ try{const u=new URL(raw);return u.protocol==='https:'?u.href:'';}catch{return '';}
+}
+function field(el,tag,cls,value){const x=document.createElement(tag);if(cls)x.className=cls;x.textContent=str(value);el.appendChild(x);return x;}
+function cleanName(s){return str(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('ms').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
+function mergeOpr(rows){
+ const out=Array.isArray(rows)?rows.slice():[];
+ for(const opr of OPR_2026){
+  const matches=out.find(g=>{
+    const a=cleanName(g.Tajuk),b=cleanName(g.Penerangan),target=cleanName(opr.Tajuk);
+    if(target.includes('pasak')) return a.includes('pasak')||b.includes('pasak');
+    return a===target||a.includes(target)||target.includes(a)&&a.length>18;
+  });
+  if(matches){
+    const oldImg=matches.Photo||matches.Foto||'';
+    Object.assign(matches,opr);
+    if(oldImg)matches.Photo=oldImg;
+  }else out.push({...opr});
+ }
+ out.sort((a,b)=>new Date(b.Tarikh)-new Date(a.Tarikh));
+ return out;
+}
+function render(){
+ const q=$('cari').value.trim().toLocaleLowerCase('ms');
+ const rows=all.filter(x=>[x.Tajuk,x.Kelas,x.Penerangan].some(v=>str(v).toLocaleLowerCase('ms').includes(q)));
+ $('galeri').replaceChildren();
+ $('count').textContent=rows.length+' aktiviti dipaparkan';
+ if(!rows.length){$('status').hidden=false;$('status').textContent=all.length?'Tiada aktiviti sepadan dengan carian.':'Belum ada rekod Galeri Aktiviti 2026.';return;}
+ $('status').hidden=true;
+ rows.forEach(g=>{
+ const card=document.createElement('article');card.className='card';
+ const img=photo(g.Photo||g.Foto||g.photoFallback);
+ if(img){const im=document.createElement('img');im.src=img;im.alt='Gambar '+str(g.Tajuk);im.loading='lazy';im.onerror=()=>{im.style.display='none'};card.appendChild(im);}
+ const body=document.createElement('div');body.className='card-body';
+ field(body,'span','date',[date(g.Tarikh),str(g.Kelas)].filter(Boolean).join(' · '));
+ field(body,'h2','',g.Tajuk||'Aktiviti Panitia');
+ if(g.Penerangan)field(body,'p','',g.Penerangan);
+ const btn=field(body,'button','open-report','Lihat Laporan OPR');btn.type='button';btn.onclick=()=>openOpr(g);
+ card.appendChild(body);$('galeri').appendChild(card);
+ });
+}
+function reportRow(table,label,value){const tr=table.insertRow();field(tr,'th','',label);field(tr,'td','',str(value).trim());}
+function oprDraft(g){
+ const title=str(g.Tajuk||'aktiviti Panitia Sejarah').trim();
+ const detail=str(g.Penerangan).trim();
+ const lower=(title+' '+detail).toLocaleLowerCase('ms');
+ let objektif='Meningkatkan penglibatan peserta dalam aktiviti berkaitan Sejarah serta mengukuhkan pengetahuan, pemikiran kritis dan kerjasama.';
+ let impak='Aktiviti menyediakan ruang pembelajaran dan perkongsian ilmu Sejarah secara aktif; tahap pencapaian khusus perlu disahkan melalui evidens program.';
+ if(/kbat|pasak|pemikiran kritis/.test(lower)){
+  objektif='Menggalakkan aplikasi kemahiran berfikir aras tinggi (KBAT), penaakulan dan penyelesaian masalah dalam pembelajaran Sejarah.';
+  impak='Pelaksanaan aktiviti memberi peluang peserta mempraktikkan penaakulan, perbincangan dan pemikiran kritis; hasil khusus belum diukur dalam rekod galeri.';
+ }else if(/musang berjanggut|lakonan|drama|teater/.test(lower)){
+  objektif='Mengukuhkan kefahaman kandungan Sejarah melalui aktiviti kreatif, penghayatan watak serta kerjasama kumpulan.';
+  impak='Aktiviti kreatif memberi ruang murid meneroka dan mempersembahkan pemahaman tentang topik Sejarah; pencapaian individu tidak dinyatakan dalam rekod galeri.';
+ }else if(/bengkel|latihan|kursus|penataran|perkongsian|guru/.test(lower)){
+  objektif='Meningkatkan pengetahuan profesional serta memperkasa amalan pengajaran Sejarah melalui perkongsian idea dan strategi PdP.';
+  impak='Program menyediakan ruang perkongsian amalan dan pengukuhan kompetensi profesional guru; keberhasilan susulan memerlukan pengesahan pelaksana.';
+ }else if(/explorace|kuiz|pertandingan|cabaran/.test(lower)){
+  objektif='Meningkatkan penguasaan fakta dan konsep Sejarah melalui cabaran interaktif yang menggalakkan kerja berpasukan.';
+  impak='Aktiviti menggalakkan penyertaan aktif, komunikasi dan aplikasi pengetahuan Sejarah; keputusan atau pencapaian khusus tidak disertakan dalam rekod.';
+ }else if(/replika|model|projek|hasil|pameran/.test(lower)){
+  objektif='Mengukuhkan pemahaman Sejarah melalui penghasilan bahan, kreativiti dan pembentangan hasil pembelajaran.';
+  impak='Penghasilan dan perkongsian bahan membantu menzahirkan kefahaman peserta terhadap kandungan Sejarah; penilaian rasmi tidak dinyatakan.';
+ }else if(/digital|vr|ar|aplikasi|game|permainan|indus/.test(lower)){
+  objektif='Mengintegrasikan bahan digital dan pembelajaran interaktif bagi membantu murid memahami topik Sejarah dengan lebih bermakna.';
+  impak='Aktiviti memberi peluang penerokaan kandungan Sejarah melalui media digital; tahap peningkatan kefahaman belum dinyatakan dalam rekod.';
+ }
+ return {
+  penyelaras:str(g.Penyelaras||g.Guru||g.Unit||'Panitia Sejarah SMK Taman Jasmin 2').trim(),
+  objektif:str(g.Objektif).trim()||objektif,
+  pelaksanaan:detail||'Pelaksanaan '+title+' melibatkan '+(str(g.Kelas).trim()||'peserta sasaran')+' melalui aktiviti anjuran Panitia Sejarah.',
+  impak:str(g.Impak||g.Keberhasilan).trim()||impak
+ };
+}
+function openOpr(g){
+ const root=$('oprContent');root.replaceChildren();
+ const head=field(root,'div','report-head','');
+ field(head,'div','report-logo','SMK TAMAN JASMIN 2 · SESI PETANG');
+ field(head,'h2','','LAPORAN ONE PAGE REPORT (OPR)');
+ field(head,'p','','PANITIA SEJARAH · TAHUN 2026');
+ const table=field(root,'table','report-table','');
+ const draf=oprDraft(g);
+ reportRow(table,'Nama program / aktiviti',g.Tajuk);
+ reportRow(table,'Tarikh pelaksanaan',date(g.Tarikh));
+ if(g.Masa)reportRow(table,'Masa',g.Masa);
+ reportRow(table,'Kelas / Kumpulan sasaran',g.Kelas);
+ reportRow(table,'Tempat','');
+ reportRow(table,'Penyelaras / Unit pelaksana',draf.penyelaras);
+ reportRow(table,'Objektif',draf.objektif);
+ reportRow(table,'Ringkasan pelaksanaan',draf.pelaksanaan);
+ reportRow(table,'Impak / pencapaian',draf.impak);
+ const src=photo(g.Photo||g.Foto||g.photoFallback);
+ if(src){field(root,'h3','','Dokumentasi Bergambar');const im=document.createElement('img');im.className='report-photo';im.alt='Dokumentasi aktiviti';im.src=src;root.appendChild(im);}
+ const raw=str(g.OPR||g.Laporan||g.LinkOPR||g.PautanLaporan).trim();
+ if(/^https:\/\//i.test(raw)){const p=field(root,'p','','');const a=document.createElement('a');a.href=raw;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Buka laporan OPR asal';p.appendChild(a);}
+ field(root,'p','report-note','Laporan dijana daripada rekod Galeri Aktiviti 2026. Objektif dan impak yang tiada dalam data asal merupakan cadangan ayat berdasarkan jenis aktiviti, bukan pencapaian yang telah disahkan. Sila semak sebelum cetakan rasmi.');
+ $('oprDialog').showModal();
+}
+$('closeOpr').onclick=()=>$('oprDialog').close();
+$('printOpr').onclick=()=>window.print();
+$('cari').addEventListener('input',render);
+// Tunjukkan OPR yang sudah disahkan walaupun sambungan Hub lama terganggu.
+all=mergeOpr([]);render();
+(async()=>{
+ try{
+ const res=await fetch(API+'?action=hub&year=2026',{redirect:'follow',cache:'no-store'});
+ if(!res.ok)throw Error('Respons '+res.status);
+ const data=await res.json();
+ if(!data||!Array.isArray(data.galeri))throw Error('Data GALERI tiada');
+ const published=data.galeri.filter(x=>str(x.Tahun||'2026')==='2026'&&str(x.Status||'Aktif').toLowerCase()!=='tidak aktif');
+ all=mergeOpr(published);
+ render();
+ }catch(e){
+ $('status').hidden=true;
+ $('count').textContent=all.length+' aktiviti dipaparkan · Rekod OPR tersedia; sambungan galeri lama perlu disemak';
+ }
+})();
+</script></body></html>
