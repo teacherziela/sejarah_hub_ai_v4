@@ -20,7 +20,7 @@ select{background:#352649;color:#fff;border:1px solid #9271be;border-radius:10px
 <h1>Dashboard UASA Sejarah Tingkatan 1 · 2026</h1>
 <p class="sub">Rumusan markah Sejarah Tingkatan 1 berdasarkan Google Sheets UASA 2026. Hanya statistik agregat dipaparkan.</p>
 <section id="viewSej" class="view">
-<div class="panel"><h2>Rumusan Sejarah Tingkatan 2</h2><div class="grid" id="sejKpi"></div></div>
+<div class="panel"><h2>Rumusan Sejarah Tingkatan 1</h2><div class="grid" id="sejKpi"></div></div>
 <div class="panel"><h2>Taburan Gred Sejarah</h2><div id="grades"></div></div>
 <div class="panel"><h2>Analisis Mengikut Kelas</h2><label for="kelas">Pilih kelas: </label><select id="kelas"></select><div class="grid bottom" id="classKpi"></div><h2 class="bottom">Taburan Gred Kelas</h2><div id="classGrades"></div><h2 class="bottom">Perbandingan Prestasi Kelas</h2><div class="tablewrap"><table><thead><tr><th>Kelas</th><th>Bil. Murid</th><th>Dinilai</th><th>Purata %</th><th>Lulus %</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>TH</th></tr></thead><tbody id="classRows"></tbody></table></div></div>
 </section>
@@ -38,7 +38,7 @@ function td(row,value){const c=document.createElement('td');c.textContent=String
 function choose(v){const c=db.classes.find(x=>x.name===v)||db.classes[0];if(!c)return; $('classKpi').replaceChildren(kpi('Murid',c.total),kpi('Dinilai',c.assessed),kpi('Purata %',c.mean??'Belum ada'),kpi('Lulus %',c.pass??'Belum ada'));chart($('classGrades'),labels.map((grade,i)=>({grade,n:c.grades[i]})))}
 $('sejKpi').replaceChildren(kpi('Jumlah Murid',db.overall.total),kpi('Dinilai',db.overall.assessed),kpi('Purata %',db.overall.mean),kpi('Lulus %',db.overall.pass));
 chart($('grades'),db.grades);
-db.classes.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;$('kelas').append(o);const row=document.createElement('tr');[c.name,c.total,c.assessed,c.mean,c.pass,...c.grades].forEach(x=>td(row,x));$('classRows').append(row)});
+db.classes.forEach(c=>{const o=document.createElement('option');o.value=c.name;o.textContent=c.name;$('kelas').append(o);const row=document.createElement('tr');[c.name,c.total,c.assessed,c.mean??'—',c.pass??'—',...c.grades].forEach(x=>td(row,x));$('classRows').append(row)});
 $('kelas').onchange=()=>choose($('kelas').value);choose(db.classes[0]?.name);
 $('print').onclick=()=>window.print();
 $('source1').onclick=()=>window.open('https://docs.google.com/spreadsheets/d/10w3qmbKRysdWtwxNgzfqi8WMs7Sf7a4KsM7sMEI0zs4/edit','_blank','noopener,noreferrer');
