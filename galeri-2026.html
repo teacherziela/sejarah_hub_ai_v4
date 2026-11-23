@@ -75,7 +75,39 @@ function render(){
  card.appendChild(body);$('galeri').appendChild(card);
  });
 }
-function reportRow(table,label,value){const tr=table.insertRow();field(tr,'th','',label);field(tr,'td','',str(value).trim()||'Belum direkodkan');}
+function reportRow(table,label,value){const tr=table.insertRow();field(tr,'th','',label);field(tr,'td','',str(value).trim());}
+function oprDraft(g){
+ const title=str(g.Tajuk||'aktiviti Panitia Sejarah').trim();
+ const detail=str(g.Penerangan).trim();
+ const lower=(title+' '+detail).toLocaleLowerCase('ms');
+ let objektif='Meningkatkan penglibatan peserta dalam aktiviti berkaitan Sejarah serta mengukuhkan pengetahuan, pemikiran kritis dan kerjasama.';
+ let impak='Aktiviti menyediakan ruang pembelajaran dan perkongsian ilmu Sejarah secara aktif; tahap pencapaian khusus perlu disahkan melalui evidens program.';
+ if(/kbat|pasak|pemikiran kritis/.test(lower)){
+  objektif='Menggalakkan aplikasi kemahiran berfikir aras tinggi (KBAT), penaakulan dan penyelesaian masalah dalam pembelajaran Sejarah.';
+  impak='Pelaksanaan aktiviti memberi peluang peserta mempraktikkan penaakulan, perbincangan dan pemikiran kritis; hasil khusus belum diukur dalam rekod galeri.';
+ }else if(/musang berjanggut|lakonan|drama|teater/.test(lower)){
+  objektif='Mengukuhkan kefahaman kandungan Sejarah melalui aktiviti kreatif, penghayatan watak serta kerjasama kumpulan.';
+  impak='Aktiviti kreatif memberi ruang murid meneroka dan mempersembahkan pemahaman tentang topik Sejarah; pencapaian individu tidak dinyatakan dalam rekod galeri.';
+ }else if(/bengkel|latihan|kursus|penataran|perkongsian|guru/.test(lower)){
+  objektif='Meningkatkan pengetahuan profesional serta memperkasa amalan pengajaran Sejarah melalui perkongsian idea dan strategi PdP.';
+  impak='Program menyediakan ruang perkongsian amalan dan pengukuhan kompetensi profesional guru; keberhasilan susulan memerlukan pengesahan pelaksana.';
+ }else if(/explorace|kuiz|pertandingan|cabaran/.test(lower)){
+  objektif='Meningkatkan penguasaan fakta dan konsep Sejarah melalui cabaran interaktif yang menggalakkan kerja berpasukan.';
+  impak='Aktiviti menggalakkan penyertaan aktif, komunikasi dan aplikasi pengetahuan Sejarah; keputusan atau pencapaian khusus tidak disertakan dalam rekod.';
+ }else if(/replika|model|projek|hasil|pameran/.test(lower)){
+  objektif='Mengukuhkan pemahaman Sejarah melalui penghasilan bahan, kreativiti dan pembentangan hasil pembelajaran.';
+  impak='Penghasilan dan perkongsian bahan membantu menzahirkan kefahaman peserta terhadap kandungan Sejarah; penilaian rasmi tidak dinyatakan.';
+ }else if(/digital|vr|ar|aplikasi|game|permainan|indus/.test(lower)){
+  objektif='Mengintegrasikan bahan digital dan pembelajaran interaktif bagi membantu murid memahami topik Sejarah dengan lebih bermakna.';
+  impak='Aktiviti memberi peluang penerokaan kandungan Sejarah melalui media digital; tahap peningkatan kefahaman belum dinyatakan dalam rekod.';
+ }
+ return {
+  penyelaras:str(g.Penyelaras||g.Guru||g.Unit||'Panitia Sejarah SMK Taman Jasmin 2').trim(),
+  objektif:str(g.Objektif).trim()||objektif,
+  pelaksanaan:detail||'Pelaksanaan '+title+' melibatkan '+(str(g.Kelas).trim()||'peserta sasaran')+' melalui aktiviti anjuran Panitia Sejarah.',
+  impak:str(g.Impak||g.Keberhasilan).trim()||impak
+ };
+}
 function openOpr(g){
  const root=$('oprContent');root.replaceChildren();
  const head=field(root,'div','report-head','');
@@ -83,19 +115,20 @@ function openOpr(g){
  field(head,'h2','','LAPORAN ONE PAGE REPORT (OPR)');
  field(head,'p','','PANITIA SEJARAH · TAHUN 2026');
  const table=field(root,'table','report-table','');
+ const draf=oprDraft(g);
  reportRow(table,'Nama program / aktiviti',g.Tajuk);
  reportRow(table,'Tarikh pelaksanaan',date(g.Tarikh));
  reportRow(table,'Kelas / Kumpulan sasaran',g.Kelas);
- reportRow(table,'Tempat',g.Tempat||g.Lokasi);
- reportRow(table,'Penyelaras',g.Penyelaras||g.Guru);
- reportRow(table,'Objektif',g.Objektif);
- reportRow(table,'Ringkasan pelaksanaan',g.Penerangan);
- reportRow(table,'Impak / pencapaian',g.Impak||g.Keberhasilan);
+ reportRow(table,'Tempat','');
+ reportRow(table,'Penyelaras / Unit pelaksana',draf.penyelaras);
+ reportRow(table,'Objektif',draf.objektif);
+ reportRow(table,'Ringkasan pelaksanaan',draf.pelaksanaan);
+ reportRow(table,'Impak / pencapaian',draf.impak);
  const src=photo(g.Photo||g.Foto);
  if(src){field(root,'h3','','Dokumentasi Bergambar');const im=document.createElement('img');im.className='report-photo';im.alt='Dokumentasi aktiviti';im.src=src;root.appendChild(im);}
  const raw=str(g.OPR||g.Laporan||g.LinkOPR||g.PautanLaporan).trim();
  if(/^https:\/\//i.test(raw)){const p=field(root,'p','','');const a=document.createElement('a');a.href=raw;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Buka laporan OPR asal';p.appendChild(a);}
- field(root,'p','report-note','Draf automatik berdasarkan rekod Galeri Aktiviti 2026. Sila semak dan lengkapkan maklumat yang belum direkodkan sebelum digunakan sebagai laporan rasmi.');
+ field(root,'p','report-note','Laporan dijana daripada rekod Galeri Aktiviti 2026. Objektif dan impak yang tiada dalam data asal merupakan cadangan ayat berdasarkan jenis aktiviti, bukan pencapaian yang telah disahkan. Sila semak sebelum cetakan rasmi.');
  $('oprDialog').showModal();
 }
 $('closeOpr').onclick=()=>$('oprDialog').close();
