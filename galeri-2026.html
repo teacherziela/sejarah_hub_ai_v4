@@ -57,7 +57,7 @@ function photo(url){
  try{const u=new URL(raw);return u.protocol==='https:'?u.href:'';}catch{return '';}
 }
 function field(el,tag,cls,value){const x=document.createElement(tag);if(cls)x.className=cls;x.textContent=str(value);el.appendChild(x);return x;}
-function cleanName(s){return str(s).toLocaleLowerCase('ms').replace(/[^a-z0-9 ]/g,' ').replace(/\\s+/g,' ').trim();}
+function cleanName(s){return str(s).toLocaleLowerCase('ms').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();}
 function mergeOpr(rows){
  const out=Array.isArray(rows)?rows.slice():[];
  for(const opr of OPR_2026){
